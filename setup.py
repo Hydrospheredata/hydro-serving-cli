@@ -4,7 +4,7 @@ with open("version") as v:
     version = v.read()
 
 setup(
-    name='hydroserving',
+    name='hs',
     version=version,
     packages=find_packages(),
     include_package_data=True,
