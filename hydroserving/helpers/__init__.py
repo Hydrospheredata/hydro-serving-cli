@@ -2,6 +2,8 @@ import click
 import tarfile
 import os
 import shutil
+import requests
+
 import hydro_serving_grpc as hs
 from google.protobuf import text_format
 
@@ -57,16 +59,33 @@ def pack_payload(model):
 
 
 def pack_model(model):
+    click.echo("Packing model snapshot...")
     payload_path = pack_payload(model)
     contract_path = pack_contract(model)
     return [payload_path, contract_path]
 
 
-def assemble_model(model, payload_list):
+def assemble_model(model):
+    payload_list = pack_model(model)
     package_name = "{}.tar.gz".format(model.name)
     package_path = os.path.join("target", package_name)
+    click.echo("Assembling {} ...".format(package_path))
+    model_root = os.path.join("target", "model")
     with tarfile.open(package_path, "w:gz") as tar:
         tar_name = tar.name
         for entry in payload_list:
-            tar.add(entry)
+            relative_name = os.path.relpath(entry, model_root)
+            tar.add(entry, arcname=relative_name)
     return tar_name
+
+
+def upload_model(host, port, model):
+    tar = assemble_model(model)
+    addr = "http://{}:{}/api/v1/model".format(host, port)
+    click.echo("Uploading {} to {}".format(tar, addr))
+    result = requests.post(
+        addr,
+        data={"model_name": model.name, "model_type": model.model_type},
+        files={"payload": open(tar, "rb")}
+    )
+    return result

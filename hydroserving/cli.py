@@ -5,18 +5,18 @@ import docker
 
 from hydroserving.constants import PACKAGE_PATH
 from hydroserving.context_object import ContextObject
-from hydroserving.help import UPLOAD_HELP, STATUS_HELP
-from hydroserving.help.local import LOCAL_HELP, START_HELP, STOP_HELP
-from hydroserving.helpers.metadata import read_metadata
+from hydroserving.help import *
 from hydroserving.helpers.docker import is_container_exists
-from hydroserving.helpers import assemble_model, pack_model, read_contract
+from hydroserving.helpers import assemble_model, pack_model, read_contract, upload_model
+from hydroserving.models import Metadata
+from hydroserving.settings import CONTEXT_SETTINGS, Defaults
 
 
 @click.group()
 @click.pass_context
 def hs_cli(ctx):
     ctx.obj = ContextObject()
-    metadata = read_metadata(os.getcwd())
+    metadata = Metadata.from_directory(os.getcwd())
     ctx.obj.metadata = metadata
 
 
@@ -36,7 +36,6 @@ def status(obj):
 @click.pass_obj
 def pack(obj):
     metadata = ensure_metadata(obj)
-    click.echo("Packing servable snapshot...")
     payload = pack_model(metadata.model)
     click.echo("Done. Packed: {}".format(payload))
 
@@ -45,10 +44,7 @@ def pack(obj):
 @click.pass_obj
 def assemble(obj):
     metadata = ensure_metadata(obj)
-    click.echo("Packing servable snapshot...")
-    payload = pack_model(metadata.model)
-    click.echo("Assembling tarball...")
-    assemble_model(metadata.model, payload)
+    assemble_model(metadata.model)
     click.echo("Done")
 
 
@@ -61,11 +57,21 @@ def contract(obj):
     click.echo(contract_obj)
 
 
-@hs_cli.command(help=UPLOAD_HELP)
+@hs_cli.command(help=UPLOAD_HELP, context_settings=CONTEXT_SETTINGS)
+@click.option('--host',
+              default=Defaults.HOST,
+              show_default=True,
+              help=UPLOAD_HOST_HELP,
+              required=False)
+@click.option('--port',
+              default=Defaults.PORT,
+              show_default=True,
+              help=UPLOAD_PORT_HELP,
+              required=False)
 @click.pass_obj
-def upload(obj):
-    click.echo("UPLOADING")
-    raise NotImplementedError("upload")
+def upload(obj, host, port):
+    metadata = ensure_metadata(obj)
+    upload_model(host, port, metadata.model)
 
 
 # LOCAL DEPLOYMENT COMMANDS
