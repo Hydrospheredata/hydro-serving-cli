@@ -1,4 +1,4 @@
-from hydroserving.settings import CONTEXT_SETTINGS, AUTO_ENVVAR_PREFIX
+from hydroserving.constants.click import CONTEXT_SETTINGS, AUTO_ENVVAR_PREFIX
 
 CONTRACT_HELP = """
 Show validated model contract.
@@ -36,9 +36,15 @@ Upload current model to the manager.
 """
 
 UPLOAD_HOST_HELP = """
-Hydroserving manager host. Can be set with {}_HOST environment variable
+Hydroserving manager host. Can be set with {}_HOST environment variable.
 """.format(CONTEXT_SETTINGS[AUTO_ENVVAR_PREFIX])
 
 UPLOAD_PORT_HELP = """
-Hydroserving manager port. Can be set with {}_PORT environment variable
+Hydroserving manager port. Can be set with {}_PORT environment variable.
 """.format(CONTEXT_SETTINGS[AUTO_ENVVAR_PREFIX])
+
+UPLOAD_SOURCE_HELP = """
+Hydroserving model source. 
+Define if you want to specify where to put model.
+If you update an existing model, this parameter is ignored.
+"""

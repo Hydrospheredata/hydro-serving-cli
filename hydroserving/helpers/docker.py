@@ -1,4 +1,3 @@
-import docker
 from docker.errors import NotFound
 
 

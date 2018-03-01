@@ -2,10 +2,10 @@ import os
 import yaml
 
 from hydroserving.models.deployment import LocalDeployment
-from hydroserving.models.model import Model
+from hydroserving.models.model_definition import ModelDefinition
 
 
-class Metadata:
+class FolderMetadata:
     def __init__(self, model, local_deployment):
         self.model = model
         self.local_deployment = local_deployment
@@ -17,8 +17,8 @@ class Metadata:
 
         model_dict = data_dict.get("model")
         runtime_dict = data_dict.get("local_deploy")
-        return Metadata(
-            model=Model.from_dict(model_dict),
+        return FolderMetadata(
+            model=ModelDefinition.from_dict(model_dict),
             local_deployment=LocalDeployment.from_dict(runtime_dict)
         )
 
@@ -34,4 +34,4 @@ class Metadata:
             return None
 
         with open(metafile, "r") as serving_file:
-            return Metadata.from_dict(yaml.load(serving_file.read()))
+            return FolderMetadata.from_dict(yaml.load(serving_file.read()))
