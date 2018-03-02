@@ -179,6 +179,7 @@ def publish(obj, kafka, topic, file):
 @click.option('--tail',
               help=TAIL_HELP,
               type=int,
+              default=10,
               required=False)
 @click.pass_obj
 def read(obj, kafka, topic, tail):

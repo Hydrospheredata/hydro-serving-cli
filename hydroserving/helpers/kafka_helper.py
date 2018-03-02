@@ -1,6 +1,4 @@
 from kafka import KafkaProducer, SimpleClient, KafkaConsumer
-from kafka.errors import NoBrokersAvailable
-from kafka.producer.future import FutureRecordMetadata
 from kafka.structs import OffsetRequestPayload, TopicPartition
 
 
