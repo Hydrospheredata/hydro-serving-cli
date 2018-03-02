@@ -1,20 +1,12 @@
-import os
-
-import click
 import docker
 
-from hydroserving.constants.package import PACKAGE_PATH
-from hydroserving.constants.click import CONTEXT_SETTINGS
 from hydroserving.constants.help import *
-
-from hydroserving.models.context_object import ContextObject
-from hydroserving.models import FolderMetadata
-
-from hydroserving.helpers.docker import is_container_exists
 from hydroserving.helpers.assembly import assemble_model
-from hydroserving.helpers.package import pack_model, read_contract
-from hydroserving.helpers.upload import upload_model
 from hydroserving.helpers.deployment import *
+from hydroserving.helpers.package import read_contract
+from hydroserving.helpers.upload import upload_model
+from hydroserving.models import FolderMetadata
+from hydroserving.models.context_object import ContextObject
 
 
 @click.group()
