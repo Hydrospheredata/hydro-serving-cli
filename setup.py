@@ -12,7 +12,8 @@ setup(
         'click==6.7',
         'docker==3.0.1',
         'pyyaml',
-        "hydro-serving-grpc==0.0.13"
+        'kafka-python==1.4.1',
+        "hydro-serving-grpc==0.0.14"
     ],
     entry_points='''
         [console_scripts]
