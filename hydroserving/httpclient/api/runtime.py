@@ -15,3 +15,12 @@ class RuntimeAPI:
             "configParams": config_params
         }
         return self.connection.post("/api/v1/runtime", data)
+
+    def list(self):
+        return self.connection.get("/api/v1/runtime")
+
+    def find(self, name, version):
+        for runtime in self.list():
+            if runtime["name"] == name and runtime["version"] == version:
+                return runtime
+        return None
