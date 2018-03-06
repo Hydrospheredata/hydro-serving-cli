@@ -1,15 +1,14 @@
 import docker
-import sys
 from kafka.errors import NoBrokersAvailable, IllegalStateError
 
 from hydroserving.helpers.kafka_helper import kafka_send, topic_offsets, consumer_with_offsets
 from hydroserving.helpers.proto import messages_from_file, to_json_string
-from hydroserving.httpclient.api import ModelAPI
-from hydroserving.constants.help import *
 from hydroserving.helpers.assembly import assemble_model
 from hydroserving.helpers.deployment import *
 from hydroserving.helpers.package import read_contract_cwd, build_model
 from hydroserving.helpers.upload import upload_model
+from hydroserving.httpclient.api import ModelAPI
+from hydroserving.constants.help import *
 from hydroserving.models import FolderMetadata
 from hydroserving.models.context_object import ContextObject
 from hydroserving.models.kafka_params import KafkaParams

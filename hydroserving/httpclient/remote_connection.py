@@ -53,8 +53,7 @@ class RemoteConnection:
         Sends GET request with to the given `url` and returns data as JSON dictionary.
         """
         req = urllib.request.Request(self.compose_url(url))
-        request = urllib.request.urlopen(req)
-        return RemoteConnection.send_request(request)
+        return RemoteConnection.send_request(req)
 
     def multipart_post(self, url, data, files):
         try:
