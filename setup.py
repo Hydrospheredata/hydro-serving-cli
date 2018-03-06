@@ -6,6 +6,9 @@ with open("version") as v:
 setup(
     name='hs',
     version=version,
+    description="Hydro-serving command line tool",
+    author="Hydrospheredata",
+    license="Apache 2.0",
     packages=find_packages(),
     include_package_data=True,
     install_requires=[

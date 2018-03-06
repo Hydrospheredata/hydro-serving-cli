@@ -1,19 +1,21 @@
+from hydroserving.httpclient.api import UploadMetadata
 from hydroserving.helpers.assembly import assemble_model
 from hydroserving.models.model_metadata import ModelMetadata
 import click
-import requests
 
 
-def upload_model(host, port, source, model):
+def upload_model(model_api, source, model):
     tar = assemble_model(model)
     model_metadata = ModelMetadata.from_folder_metadata(model)
-    addr = "http://{}:{}/api/v1/model".format(host, port)
-    click.echo("Uploading {} to {}".format(tar, addr))
-    data_dict = model_metadata.to_upload_data()
-    data_dict["target_source"] = source
-    result = requests.post(
-        addr,
-        data=data_dict,
-        files={"payload": open(tar, "rb")}
+
+    click.echo("Uploading {} to {}".format(tar, model_api.remote_addr))
+
+    metadata = UploadMetadata(
+        model_name=model_metadata.model_name,
+        model_type=model_metadata.model_type,
+        target_source=source,
+        model_contract=model_metadata.model_contract.SerializeToString(),
+        description=model_metadata.description
     )
-    return result
+
+    return model_api.upload(tar, metadata)

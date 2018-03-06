@@ -1,21 +1,15 @@
-import os
-
-import click
 import docker
 import sys
 from kafka.errors import NoBrokersAvailable, IllegalStateError
 
-from hydroserving.constants.package import PACKAGE_PATH
-from hydroserving.constants.click import CONTEXT_SETTINGS
+from hydroserving.httpclient.api import ModelAPI
 from hydroserving.constants.help import *
-
-from hydroserving.models.context_object import ContextObject
+from hydroserving.helpers.assembly import assemble_model
+from hydroserving.helpers.deployment import *
+from hydroserving.helpers.package import read_contract_cwd, build_model
+from hydroserving.helpers.upload import upload_model
 from hydroserving.models import FolderMetadata
-
-from hydroserving.helpers.docker import is_container_exists
-from hydroserving.helpers import assemble_model, pack_model, read_contract, upload_model
-from hydroserving.models import Metadata
-from hydroserving.settings import CONTEXT_SETTINGS, Defaults
+from hydroserving.models.context_object import ContextObject
 
 
 @click.group()
@@ -59,7 +53,7 @@ def assemble(obj):
 def contract(obj):
     metadata = ensure_metadata(obj)
     click.echo("Reading contract...")
-    contract_obj = read_contract(metadata.model)
+    contract_obj = read_contract_cwd(metadata.model)
     click.echo(contract_obj)
 
 
@@ -80,8 +74,9 @@ def contract(obj):
 @click.pass_obj
 def upload(obj, host, port, source):
     metadata = ensure_metadata(obj)
-    result = upload_model(host, port, source, metadata.model)
-    click.echo(result.json())
+    model_api = ModelAPI("http://{}:{}".format(host, port))
+    result = upload_model(model_api, source, metadata.model)
+    click.echo(result.text)
 
 
 # LOCAL DEPLOYMENT COMMANDS
@@ -98,6 +93,7 @@ def start(obj):
     metadata = ensure_metadata(obj)
     click.echo("Deploying model in runtime...")
     docker_client = obj.docker_client
+    build_model(metadata)
     start_runtime(metadata, docker_client)
 
 
@@ -107,6 +103,7 @@ def stop(obj):
     metadata = ensure_metadata(obj)
     docker_client = obj.docker_client
     stop_runtime(metadata, docker_client)
+
 
 def ensure_metadata(obj):
     if obj.metadata is None:
