@@ -5,22 +5,24 @@ import docker
 import sys
 from kafka.errors import NoBrokersAvailable, IllegalStateError
 
-from hydroserving.constants import PACKAGE_PATH
-from hydroserving.context_object import ContextObject
-from hydroserving.help import *
+from hydroserving.constants.package import PACKAGE_PATH
+from hydroserving.constants.click import CONTEXT_SETTINGS
+from hydroserving.constants.help import *
+
+from hydroserving.models.context_object import ContextObject
+from hydroserving.models import FolderMetadata
+
 from hydroserving.helpers.docker import is_container_exists
 from hydroserving.helpers import assemble_model, pack_model, read_contract, upload_model
 from hydroserving.models import Metadata
 from hydroserving.settings import CONTEXT_SETTINGS, Defaults
-from hydroserving.helpers.kafka_helper import kafka_send, topic_offsets, consumer_with_offsets
-from hydroserving.helpers.proto import messages_from_file, to_json_string
 
 
 @click.group()
 @click.pass_context
 def hs_cli(ctx):
     ctx.obj = ContextObject()
-    metadata = Metadata.from_directory(os.getcwd())
+    metadata = FolderMetadata.from_directory(os.getcwd())
     ctx.obj.metadata = metadata
 
 
@@ -63,19 +65,23 @@ def contract(obj):
 
 @hs_cli.command(help=UPLOAD_HELP, context_settings=CONTEXT_SETTINGS)
 @click.option('--host',
-              default=Defaults.HOST,
+              default="localhost",
               show_default=True,
               help=UPLOAD_HOST_HELP,
               required=False)
 @click.option('--port',
-              default=Defaults.PORT,
+              default=9090,
               show_default=True,
               help=UPLOAD_PORT_HELP,
               required=False)
+@click.option('--source',
+              help=UPLOAD_SOURCE_HELP,
+              required=False)
 @click.pass_obj
-def upload(obj, host, port):
+def upload(obj, host, port, source):
     metadata = ensure_metadata(obj)
-    upload_model(host, port, metadata.model)
+    result = upload_model(host, port, source, metadata.model)
+    click.echo(result.json())
 
 
 # LOCAL DEPLOYMENT COMMANDS
@@ -89,39 +95,18 @@ def local(ctx):
 @local.command(help=START_HELP)
 @click.pass_obj
 def start(obj):
-    metadata = obj.metadata
-    if not os.path.exists(PACKAGE_PATH):
-        click.echo("'{}' is not packed. Execute `pack` first.".format(metadata.model.name))
-        raise SystemExit(-1)
+    metadata = ensure_metadata(obj)
+    click.echo("Deploying model in runtime...")
     docker_client = obj.docker_client
-    deployment_config = metadata.local_deployment
-    if is_container_exists(docker_client, deployment_config.name):
-        click.echo("'{}' container is already started.".format(deployment_config.name))
-        raise SystemExit(-1)
-    image = deployment_config.runtime
-    docker_client.containers.run(
-        str(image),
-        remove=True, detach=True,
-        name=metadata.local_deployment.name,
-        ports={'9090/tcp': metadata.local_deployment.port},
-        volumes={os.path.abspath(PACKAGE_PATH): {'bind': '/model', 'mode': 'ro'}}
-    )
-    click.echo("'{}' container is started.".format(deployment_config.name))
+    start_runtime(metadata, docker_client)
 
 
 @local.command(help=STOP_HELP)
 @click.pass_obj
 def stop(obj):
-    metadata = obj.metadata
+    metadata = ensure_metadata(obj)
     docker_client = obj.docker_client
-
-    deployment_config = metadata.local_deployment
-    if not is_container_exists(docker_client, deployment_config.name):
-        click.echo("'{}' container is not found.".format(deployment_config.name))
-        raise SystemExit(-1)
-    container = docker_client.containers.get(deployment_config.name)
-    container.remove(force=True)
-    click.echo("'{}' container is removed".format(deployment_config.name))
+    stop_runtime(metadata, docker_client)
 
 def ensure_metadata(obj):
     if obj.metadata is None:

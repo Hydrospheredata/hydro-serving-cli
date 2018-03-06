@@ -1,5 +1,6 @@
 from hydroserving.models.runtime import Runtime
 
+
 class LocalDeployment:
     def __init__(self, name, runtime, port):
         self.name = name
