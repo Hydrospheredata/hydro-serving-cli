@@ -32,3 +32,12 @@ class ModelAPI:
             metadata.__dict__,
             {"payload": open(assembly_path, "rb")}
         )
+
+    def list_versions(self):
+        return self.connection.get("/api/v1/model/version")
+
+    def find_version(self, model_name, model_version):
+        for version in self.list_versions():
+            if version["modelName"] == model_name and version["modelVersion"] == model_version:
+                return version
+        return None
