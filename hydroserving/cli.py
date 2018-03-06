@@ -2,6 +2,8 @@ import docker
 import sys
 from kafka.errors import NoBrokersAvailable, IllegalStateError
 
+from hydroserving.helpers.kafka_helper import kafka_send, topic_offsets, consumer_with_offsets
+from hydroserving.helpers.proto import messages_from_file, to_json_string
 from hydroserving.httpclient.api import ModelAPI
 from hydroserving.constants.help import *
 from hydroserving.helpers.assembly import assemble_model
@@ -10,6 +12,7 @@ from hydroserving.helpers.package import read_contract_cwd, build_model
 from hydroserving.helpers.upload import upload_model
 from hydroserving.models import FolderMetadata
 from hydroserving.models.context_object import ContextObject
+from hydroserving.models.kafka_params import KafkaParams
 
 
 @click.group()
@@ -105,72 +108,60 @@ def stop(obj):
     stop_runtime(metadata, docker_client)
 
 
-def ensure_metadata(obj):
-    if obj.metadata is None:
-        click.echo("Directory doesn't have a serving metadata")
-        raise SystemExit(-1)
-    return obj.metadata
-
-
 @hs_cli.group(help=KAFKA_HELP)
-@click.pass_context
-def kafka(ctx):
-    ctx.obj.docker_client = docker.from_env()
-
-
-@kafka.command(help=PUBLISH_TO_KAFKA_HELP)
 @click.option('--kafka',
-              help=KAFKA_ADVERTISED_HOST_AND_PORT_HELP,
+              help=KAFKA_ADVERTISED_ADDR_HELP,
               type=str,
               required=True)
 @click.option('--topic',
-              help=TOPIC_HELP,
+              help=KAFKA_TOPIC_HELP,
               type=str,
               required=True)
+@click.pass_context
+def kafka(ctx, kafka, topic):
+    ctx.obj.kafka_params = KafkaParams(kafka, topic)
+
+
+@kafka.command(help=PUBLISH_TO_KAFKA_HELP)
 @click.option('--file',
-              help=PREDICT_REQUEST_FILE_HELP,
+              help=KAFKA_PREDICT_REQUEST_FILE_HELP,
               type=click.Path(),
               required=True)
 @click.pass_obj
-def publish(obj, kafka, topic, file):
+def publish(obj, file):
+    params = ensure_kafka_params(obj)
     click.echo("publishing message to kafka")
     try:
         messages = messages_from_file(file)
         for message in messages:
-            future = kafka_send(kafka, topic, message.SerializeToString())
+            future = kafka_send(params.kafka, params.topic, message.SerializeToString())
             result = future.get(timeout=60)
             click.echo("published: {}".format(result))
     except NoBrokersAvailable as e:
         click.echo("Couldn't publish message. No brokers available: {}".format(kafka))
     except IllegalStateError as e:
         click.echo("Couldn't publish message: {}".format(e))
-    except:
-        click.echo("Couldn't publish message. Unknown exception: {}".format(sys.exc_info()[0]))
-
+    except Exception as e:
+        click.echo("Couldn't publish message. Unknown exception: {}".format(e))
 
 
 @kafka.command(help=READ_FROM_KAFKA_HELP)
-@click.option('--kafka',
-              type=str,
-              help=KAFKA_ADVERTISED_HOST_AND_PORT_HELP,
-              required=True)
-@click.option('--topic',
-              help=TOPIC_HELP,
-              type=str,
-              required=True)
 @click.option('--tail',
-              help=TAIL_HELP,
+              help=KAFKA_TAIL_HELP,
               type=int,
               default=10,
               required=False)
 @click.pass_obj
-def read(obj, kafka, topic, tail):
+def read(obj, tail):
+    params = ensure_kafka_params(obj)
     click.echo("reading message from kafka:")
+    consumer = None
     try:
-        offsets = topic_offsets(kafka, topic)
+        offsets = topic_offsets(params.kafka, params.topic)
         click.echo("topics and offsets statistics:")
         for k, v in offsets.items():
-            click.echo("\ttopic_partition({} - {}).............................. offset:{}".format(k.topic, k.partition, v))
+            click.echo(
+                "\ttopic_partition({} - {}).............................. offset:{}".format(k.topic, k.partition, v))
 
         consumer = consumer_with_offsets(kafka, offsets, tail)
         for msg in consumer:
@@ -181,11 +172,22 @@ def read(obj, kafka, topic, tail):
         click.echo("Couldn't read messages. No brokers available: {}".format(kafka))
     except IllegalStateError as e:
         click.echo("Couldn't read messages. {}".format(e))
-    except:
-        click.echo("Couldn't read messages. Unknown exception: {}".format(sys.exc_info()[0]))
-    consumer.close()
+    except Exception as e:
+        click.echo("Couldn't read messages. Unknown exception: {}".format(e))
+    finally:
+        if consumer is not None:
+            consumer.close()
 
 
+def ensure_metadata(obj):
+    if obj.metadata is None:
+        click.echo("Directory doesn't have a serving metadata")
+        raise SystemExit(-1)
+    return obj.metadata
 
 
-
+def ensure_kafka_params(obj):
+    if obj.kafka_params is None:
+        click.echo("Kafka params aren't specified")
+        raise SystemExit(-1)
+    return obj.kafka_params

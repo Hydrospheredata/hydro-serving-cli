@@ -1,4 +1,4 @@
-from hydroserving.settings import CONTEXT_SETTINGS, AUTO_ENVVAR_PREFIX
+from hydroserving.constants.click import CONTEXT_SETTINGS, AUTO_ENVVAR_PREFIX
 
 CONTRACT_HELP = """
 Show validated model contract.
@@ -30,8 +30,25 @@ STOP_HELP = """
 Deletes the runtime with current model.
 """
 
+# KAFKA HELP
 KAFKA_HELP = """
 kafka read/write utils
+"""
+
+KAFKA_ADVERTISED_ADDR_HELP = """
+KAFKA_ADVERTISED_ADDR
+"""
+
+KAFKA_TOPIC_HELP = """
+KAFKA_TOPIC
+"""
+
+KAFKA_PREDICT_REQUEST_FILE_HELP = """
+KAFKA_PREDICT_REQUEST_FILE
+"""
+
+KAFKA_TAIL_HELP = """
+KAFKA_TAIL
 """
 
 PUBLISH_TO_KAFKA_HELP = """
@@ -54,3 +71,9 @@ Hydroserving manager host. Can be set with {}_HOST environment variable.
 UPLOAD_PORT_HELP = """
 Hydroserving manager port. Can be set with {}_PORT environment variable.
 """.format(CONTEXT_SETTINGS[AUTO_ENVVAR_PREFIX])
+
+UPLOAD_SOURCE_HELP = """
+Hydroserving model source. 
+Define if you want to specify where to put model.
+If you update an existing model, this parameter is ignored.
+"""
