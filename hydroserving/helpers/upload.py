@@ -8,7 +8,7 @@ def upload_model(model_api, source, model):
     tar = assemble_model(model)
     model_metadata = ModelMetadata.from_folder_metadata(model)
 
-    click.echo("Uploading {} to {}".format(tar, model_api.remote_addr))
+    click.echo("Uploading {} to {}".format(tar, model_api.connection.remote_addr))
 
     metadata = UploadMetadata(
         model_name=model_metadata.model_name,

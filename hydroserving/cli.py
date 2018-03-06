@@ -9,6 +9,7 @@ from hydroserving.helpers.package import read_contract_cwd, build_model
 from hydroserving.helpers.upload import upload_model
 from hydroserving.httpclient.api import ModelAPI
 from hydroserving.constants.help import *
+from hydroserving.httpclient.remote_connection import RemoteConnection
 from hydroserving.models import FolderMetadata
 from hydroserving.models.context_object import ContextObject
 from hydroserving.models.kafka_params import KafkaParams
@@ -76,9 +77,10 @@ def contract(obj):
 @click.pass_obj
 def upload(obj, host, port, source):
     metadata = ensure_metadata(obj)
-    model_api = ModelAPI("http://{}:{}".format(host, port))
+    remote = RemoteConnection("http://{}:{}".format(host, port))
+    model_api = ModelAPI(remote)
     result = upload_model(model_api, source, metadata.model)
-    click.echo(result.text)
+    click.echo(result)
 
 
 # LOCAL DEPLOYMENT COMMANDS

@@ -62,8 +62,7 @@ class RemoteConnection:
                 data=data,
                 files=files
             )
-            response = json.loads(result)
-            return response
+            return result.text
         except JSONDecodeError as ex:
             raise ResponseIsNotJson(ex)
         except Exception as ex:
