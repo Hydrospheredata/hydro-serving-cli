@@ -3,19 +3,14 @@ from kafka.structs import OffsetRequestPayload, TopicPartition
 
 
 class KafkaException(Exception):
-    def __init__(self, message, errors):
+    def __init__(self, message):
         super(KafkaException, self).__init__(message)
 
-        self.errors = errors
 
 
 def insure_is_array(bootstrap_servers):
-    if isinstance(bootstrap_servers, str):
-        bootstrap_servers = bootstrap_servers.replace(" ", "").split(",")
-    if not isinstance(bootstrap_servers, list):
-        raise KafkaException("kafka_brokers should be str or list[str]")
+    return bootstrap_servers.replace(" ", "").split(",")
 
-    return bootstrap_servers
 
 
 def kafka_send(kafka_brokers, topic, message):
@@ -28,7 +23,7 @@ def kafka_send(kafka_brokers, topic, message):
 def topic_offsets(kafka_brokers, topic):
     client = SimpleClient(insure_is_array(kafka_brokers))
     topic_partitions = client.topic_partitions
-    if not topic in topic_partitions:
+    if topic not in topic_partitions:
         raise KafkaException("topic {} doesn't exists".format(topic))
     partitions = topic_partitions[topic]
     offset_requests = [OffsetRequestPayload(topic, p, -1, 1) for p in partitions.keys()]
