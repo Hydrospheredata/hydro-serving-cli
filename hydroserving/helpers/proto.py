@@ -5,20 +5,20 @@ from hydro_serving_grpc.kafka.kafka_messages_pb2 import KafkaServingMessage
 import json
 
 def messages_from_file(path):
-        p = os.path.abspath(os.path.expanduser(path))
-        f = open(p)
-        json_message = f.read()
-        f.close()
-        messages = json.loads(json_message)
-        if not isinstance(messages, list):
-            messages = [messages]
+    p = os.path.abspath(os.path.expanduser(path))
+    f = open(p)
+    json_message = f.read()
+    f.close()
+    messages = json.loads(json_message)
+    if not isinstance(messages, list):
+        messages = [messages]
 
-        array = []
+    array = []
 
-        for m in messages:
-            array.append(parse_proto(json.dumps(m)))
+    for m in messages:
+        array.append(parse_proto(json.dumps(m)))
 
-        return array
+    return array
 
 def to_json_string(bytes):
     message = KafkaServingMessage()
