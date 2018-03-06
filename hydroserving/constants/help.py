@@ -1,4 +1,4 @@
-from hydroserving.settings import CONTEXT_SETTINGS, AUTO_ENVVAR_PREFIX
+from hydroserving.constants.click import CONTEXT_SETTINGS, AUTO_ENVVAR_PREFIX
 
 CONTRACT_HELP = """
 Show validated model contract.
