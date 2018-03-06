@@ -1,9 +1,10 @@
 import docker
 
+from hydroserving.httpclient.api import ModelAPI
 from hydroserving.constants.help import *
 from hydroserving.helpers.assembly import assemble_model
 from hydroserving.helpers.deployment import *
-from hydroserving.helpers.package import read_contract
+from hydroserving.helpers.package import read_contract_cwd, build_model
 from hydroserving.helpers.upload import upload_model
 from hydroserving.models import FolderMetadata
 from hydroserving.models.context_object import ContextObject
@@ -50,7 +51,7 @@ def assemble(obj):
 def contract(obj):
     metadata = ensure_metadata(obj)
     click.echo("Reading contract...")
-    contract_obj = read_contract(metadata.model)
+    contract_obj = read_contract_cwd(metadata.model)
     click.echo(contract_obj)
 
 
@@ -71,8 +72,9 @@ def contract(obj):
 @click.pass_obj
 def upload(obj, host, port, source):
     metadata = ensure_metadata(obj)
-    result = upload_model(host, port, source, metadata.model)
-    click.echo(result.json())
+    model_api = ModelAPI("http://{}:{}".format(host, port))
+    result = upload_model(model_api, source, metadata.model)
+    click.echo(result.text)
 
 
 # LOCAL DEPLOYMENT COMMANDS
@@ -89,6 +91,7 @@ def start(obj):
     metadata = ensure_metadata(obj)
     click.echo("Deploying model in runtime...")
     docker_client = obj.docker_client
+    build_model(metadata)
     start_runtime(metadata, docker_client)
 
 
