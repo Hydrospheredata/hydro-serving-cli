@@ -39,8 +39,8 @@ def status(obj):
 @click.pass_obj
 def pack(obj):
     metadata = ensure_metadata(obj)
-    payload = pack_model(metadata.model)
-    click.echo("Done. Packed: {}".format(payload))
+    pack_model(metadata.model)
+    click.echo("Done")
 
 
 @hs_cli.command()
@@ -72,6 +72,7 @@ def contract(obj):
               help=UPLOAD_PORT_HELP,
               required=False)
 @click.option('--source',
+              default=None,
               help=UPLOAD_SOURCE_HELP,
               required=False)
 @click.pass_obj
@@ -80,20 +81,21 @@ def upload(obj, host, port, source):
     remote = RemoteConnection("http://{}:{}".format(host, port))
     model_api = ModelAPI(remote)
     result = upload_model(model_api, source, metadata.model)
+    click.echo()
     click.echo(result)
 
 
 # LOCAL DEPLOYMENT COMMANDS
 
-@hs_cli.group(help=LOCAL_HELP)
+@hs_cli.group(help=DEV_HELP)
 @click.pass_context
-def local(ctx):
+def dev(ctx):
     ctx.obj.docker_client = docker.from_env()
 
 
-@local.command(help=START_HELP)
+@dev.command(help=DEV_UP_HELP)
 @click.pass_obj
-def start(obj):
+def up(obj):
     metadata = ensure_metadata(obj)
     click.echo("Deploying model in runtime...")
     docker_client = obj.docker_client
@@ -101,9 +103,9 @@ def start(obj):
     start_runtime(metadata, docker_client)
 
 
-@local.command(help=STOP_HELP)
+@dev.command(help=DEV_DOWN_HELP)
 @click.pass_obj
-def stop(obj):
+def down(obj):
     metadata = ensure_metadata(obj)
     docker_client = obj.docker_client
     stop_runtime(metadata, docker_client)

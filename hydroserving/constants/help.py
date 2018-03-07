@@ -18,15 +18,15 @@ Return the status of current folder.
 
 # LOCAL DEPLOYMENT HELP
 
-LOCAL_HELP = """
+DEV_HELP = """
 This command works with local deployment of a model with specified runtime.
 """
 
-START_HELP = """
+DEV_UP_HELP = """
 Creates the runtime with current model.
 """
 
-STOP_HELP = """
+DEV_DOWN_HELP = """
 Deletes the runtime with current model.
 """
 

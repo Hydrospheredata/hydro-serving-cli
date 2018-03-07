@@ -3,6 +3,7 @@ import urllib.request
 from json import JSONDecodeError
 
 import requests
+from requests_toolbelt.multipart.encoder import MultipartEncoder, MultipartEncoderMonitor
 
 from hydroserving.httpclient.errors import *
 
@@ -55,13 +56,23 @@ class RemoteConnection:
         req = urllib.request.Request(self.compose_url(url))
         return RemoteConnection.send_request(req)
 
-    def multipart_post(self, url, data, files):
+    def multipart_post(self, url, data, files, create_encoder_callback=None):
         try:
-            result = requests.post(
-                self.compose_url(url),
-                data=data,
-                files=files
+            encoder = MultipartEncoder(
+                fields={**data, **files}
             )
+
+            callback = None
+            if create_encoder_callback is not None:
+                callback = create_encoder_callback(encoder)
+
+            monitor = MultipartEncoderMonitor(encoder, callback)
+            result = requests.post(
+                url=self.compose_url(url),
+                data=monitor,
+                headers={'Content-Type': monitor.content_type}
+            )
+
             return result.text
         except JSONDecodeError as ex:
             raise ResponseIsNotJson(ex)

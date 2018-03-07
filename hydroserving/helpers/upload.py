@@ -8,7 +8,7 @@ def upload_model(model_api, source, model):
     tar = assemble_model(model)
     model_metadata = ModelMetadata.from_folder_metadata(model)
 
-    click.echo("Uploading {} to {}".format(tar, model_api.connection.remote_addr))
+    click.echo("Uploading to {}".format(model_api.connection.remote_addr))
 
     metadata = UploadMetadata(
         model_name=model_metadata.model_name,
@@ -18,4 +18,19 @@ def upload_model(model_api, source, model):
         description=model_metadata.description
     )
 
-    return model_api.upload(tar, metadata)
+    with click.progressbar(length=1, label='Uploading model assembly')as bar:
+        create_encoder_callback = create_bar_callback_factory(bar)
+        result = model_api.upload(tar, metadata, create_encoder_callback)
+    return result
+
+
+def create_bar_callback_factory(bar):
+    def create_click_callback(multipart_encoder):
+        bar.length = multipart_encoder.len
+
+        def callback(monitor):
+            bar.update(monitor.bytes_read)
+
+        return callback
+
+    return create_click_callback

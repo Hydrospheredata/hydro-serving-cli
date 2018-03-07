@@ -23,14 +23,15 @@ class ModelAPI:
     def list(self):
         return self.connection.get("/api/v1/model")
 
-    def upload(self, assembly_path, metadata):
+    def upload(self, assembly_path, metadata, create_encoder_callback=None):
         if not isinstance(metadata, UploadMetadata):
             raise HSApiError("{} is not UploadMetadata".format(metadata))
 
         return self.connection.multipart_post(
-            "/api/v1/model",
-            metadata.__dict__,
-            {"payload": open(assembly_path, "rb")}
+            url="/api/v1/model",
+            data=metadata.__dict__,
+            files={"payload": ("filename", open(assembly_path, "rb"))},
+            create_encoder_callback=create_encoder_callback
         )
 
     def list_versions(self):

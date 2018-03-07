@@ -7,27 +7,55 @@ from hydroserving.constants.package import PACKAGE_FILES_PATH, PACKAGE_CONTRACT_
 from hydroserving.helpers.contract import read_contract_cwd
 
 
-def pack_path(entry):
-    model_dirs = os.path.dirname(entry)
+def get_subfiles(path):
+    all_files = []
+
+    def _get_subfiles(path, files):
+        if os.path.isdir(path):
+            for sub_entry in os.listdir(path):
+                _get_subfiles(os.path.join(path, sub_entry), files)
+        else:
+            files.append(path)
+
+    _get_subfiles(path, all_files)
+    return all_files
+
+
+def get_payload_files(payload):
+    files = []
+    for x in payload:
+        sub_files = get_subfiles(x)
+        for sub_file in sub_files:
+            files.append(sub_file)
+
+    return files
+
+
+def copy_to_target(src_path):
+    model_dirs = os.path.dirname(src_path)
     packed_dirs = os.path.join(PACKAGE_FILES_PATH, model_dirs)
     if not os.path.exists(packed_dirs):
         os.makedirs(packed_dirs)
-
-    if os.path.isdir(entry):
-        for sub_entry in os.listdir(entry):
-            pack_path(os.path.join(entry, sub_entry))
-    else:
-        click.echo("Copy: {}".format(entry))
-        packed_path = os.path.join(PACKAGE_FILES_PATH, entry)
-        shutil.copy(entry, packed_path)
+    packed_path = os.path.join(PACKAGE_FILES_PATH, src_path)
+    shutil.copy(src_path, packed_path)
+    return packed_path
 
 
 def pack_payload(model):
     if not os.path.exists(PACKAGE_FILES_PATH):
         os.makedirs(PACKAGE_FILES_PATH)
-    for entry in model.payload:
-        pack_path(entry)
-    return PACKAGE_FILES_PATH
+
+    files = get_payload_files(model.payload)
+
+    copied_files = []
+    with click.progressbar(iterable=files,
+                           item_show_func=lambda x: x,
+                           label='Packing the model') as bar:
+        for entry in bar:
+            copied_file = copy_to_target(entry)
+            copied_files.append(copied_file)
+
+    return copied_files
 
 
 def pack_contract(model):
@@ -41,10 +69,9 @@ def pack_contract(model):
 
 
 def pack_model(model):
-    click.echo("Packing model snapshot...")
-    payload_path = pack_payload(model)
-    contract_path = pack_contract(model)
-    return [payload_path, contract_path]
+    payload_files = pack_payload(model)
+    pack_contract(model)
+    return payload_files
 
 
 def execute_build_steps(build_steps):
