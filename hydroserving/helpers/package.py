@@ -85,8 +85,9 @@ def execute_build_steps(build_steps):
 def with_cwd(new_cwd, func, *args):
     old_cwd = os.getcwd()
     os.chdir(new_cwd)
-    func(args)
+    result = func(*args)
     os.chdir(old_cwd)
+    return result
 
 
 def build_model(metadata):

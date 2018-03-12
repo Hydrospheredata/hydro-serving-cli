@@ -12,8 +12,14 @@ class RemoteConnection:
     def __init__(self, remote_addr):
         self.remote_addr = remote_addr
 
-    @staticmethod
-    def send_request(request):
+    def send_multipart(self, url, multipart_monitor):
+        return requests.post(
+            url=self.compose_url(url),
+            data=multipart_monitor,
+            headers={'Content-Type': multipart_monitor.content_type}
+        ).json()
+
+    def send_request(self, request):
         """
         Sends a request
         :param request: urllib.request.Request
@@ -47,14 +53,14 @@ class RemoteConnection:
             json_data.encode('utf-8'),
             {'Content-Type': 'application/json'}
         )
-        return RemoteConnection.send_request(request)
+        return self.send_request(request)
 
     def get(self, url):
         """
         Sends GET request with to the given `url` and returns data as JSON dictionary.
         """
         req = urllib.request.Request(self.compose_url(url))
-        return RemoteConnection.send_request(req)
+        return self.send_request(req)
 
     def multipart_post(self, url, data, files, create_encoder_callback=None):
         try:
@@ -67,13 +73,10 @@ class RemoteConnection:
                 callback = create_encoder_callback(encoder)
 
             monitor = MultipartEncoderMonitor(encoder, callback)
-            result = requests.post(
-                url=self.compose_url(url),
-                data=monitor,
-                headers={'Content-Type': monitor.content_type}
-            )
 
-            return result.text
+            result = self.send_multipart(url, monitor)
+
+            return result
         except JSONDecodeError as ex:
             raise ResponseIsNotJson(ex)
         except Exception as ex:

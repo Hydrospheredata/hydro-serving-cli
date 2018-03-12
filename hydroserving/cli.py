@@ -26,13 +26,10 @@ def hs_cli(ctx):
 @hs_cli.command(help=STATUS_HELP)
 @click.pass_obj
 def status(obj):
-    metadata = obj.metadata
-    if metadata is None:
-        click.echo("Directory doesn't have a serving metadata")
-    else:
-        click.echo("Detected a model: {}".format(metadata.model.name))
-        click.echo("Model type: {}".format(metadata.model.model_type))
-        click.echo("Files to upload:\n{}".format(metadata.model.payload))
+    metadata = ensure_metadata(obj)
+    click.echo("Detected a model: {}".format(metadata.model.name))
+    click.echo("Model type: {}".format(metadata.model.model_type))
+    click.echo("Files to upload:\n{}".format(metadata.model.payload))
 
 
 @hs_cli.command()
