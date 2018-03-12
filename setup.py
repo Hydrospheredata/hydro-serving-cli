@@ -22,5 +22,6 @@ setup(
     entry_points='''
         [console_scripts]
         hs=hydroserving.cli:hs_cli
-    '''
+    ''',
+    test_suite='tests'
 )

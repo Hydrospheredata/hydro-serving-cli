@@ -3,10 +3,6 @@ import unittest
 import os
 import shutil
 
-import sys
-
-sys.path.append("hydroserving")
-
 from click.testing import CliRunner
 
 from hydroserving.cli import hs_cli

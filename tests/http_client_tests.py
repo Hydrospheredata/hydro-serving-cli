@@ -1,9 +1,6 @@
 import os
 import unittest
 
-import sys
-
-sys.path.append("hydroserving")
 
 from hydroserving.helpers.package import with_cwd
 from hydroserving.helpers.upload import upload_model
