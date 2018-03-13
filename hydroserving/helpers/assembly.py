@@ -8,14 +8,19 @@ from hydroserving.helpers.package import pack_model
 
 
 def assemble_model(model):
-    pack_model(model)
+    files = pack_model(model)
     package_name = "{}.tar.gz".format(model.name)
     package_path = os.path.join("target", package_name)
-    click.echo("Assembling {} ...".format(package_path))
     model_root = os.path.join("target", "model")
     files_root = os.path.join(model_root, "files")
-    with tarfile.open(package_path, "w:gz") as tar:
-        tar_name = tar.name
-        relative_name = os.path.relpath(PACKAGE_FILES_PATH, files_root)
-        tar.add(PACKAGE_FILES_PATH, arcname=relative_name)
+    with click.progressbar(iterable=files,
+                           item_show_func=lambda x: x,
+                           label='Assembling the model') as bar:
+
+        with tarfile.open(package_path, "w:gz") as tar:
+            tar_name = tar.name
+            for entry in bar:
+                relative_name = os.path.relpath(entry, files_root)
+                tar.add(entry, arcname=relative_name)
+
     return tar_name
