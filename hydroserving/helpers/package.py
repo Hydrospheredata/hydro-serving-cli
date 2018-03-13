@@ -8,17 +8,7 @@ from hydroserving.helpers.contract import read_contract_cwd
 
 
 def get_subfiles(path):
-    all_files = []
-
-    def _get_subfiles(path, files):
-        if os.path.isdir(path):
-            for sub_entry in os.listdir(path):
-                _get_subfiles(os.path.join(path, sub_entry), files)
-        else:
-            files.append(path)
-
-    _get_subfiles(path, all_files)
-    return all_files
+    return [os.path.join(dir_name, file) for dir_name, _, files in os.walk(path) for file in files]
 
 
 def get_payload_files(payload):
