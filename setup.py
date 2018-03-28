@@ -16,12 +16,11 @@ setup(
         'docker==3.0.1',
         'pyyaml',
         'kafka-python==1.4.1',
-        "hydro-serving-grpc==0.0.14",
+        "hydro-serving-grpc==0.1.1",
         "requests-toolbelt==0.8.0"
     ],
     entry_points='''
         [console_scripts]
         hs=hydroserving.cli:hs_cli
-    ''',
-    test_suite='tests'
+    '''
 )

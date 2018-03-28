@@ -7,10 +7,8 @@ class KafkaException(Exception):
         super(KafkaException, self).__init__(message)
 
 
-
 def insure_is_array(bootstrap_servers):
     return bootstrap_servers.replace(" ", "").split(",")
-
 
 
 def kafka_send(kafka_brokers, topic, message):

@@ -4,6 +4,7 @@ from google.protobuf.json_format import Parse, MessageToJson
 from hydro_serving_grpc.kafka.kafka_messages_pb2 import KafkaServingMessage
 import json
 
+
 def messages_from_file(path):
     p = os.path.abspath(os.path.expanduser(path))
     f = open(p)
@@ -20,11 +21,13 @@ def messages_from_file(path):
 
     return array
 
+
 def to_json_string(bytes):
     message = KafkaServingMessage()
     message.ParseFromString(bytes)
     json = MessageToJson(message)
     return json
+
 
 def parse_proto(json_message):
     message = KafkaServingMessage()
