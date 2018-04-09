@@ -77,3 +77,7 @@ Hydroserving model source.
 Define if you want to specify where to put model.
 If you update an existing model, this parameter is ignored.
 """
+
+APPLICATION_HELP = """
+Application API.
+"""
