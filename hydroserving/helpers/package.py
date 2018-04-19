@@ -14,10 +14,12 @@ def get_subfiles(path):
 def get_payload_files(payload):
     files = []
     for x in payload:
-        sub_files = get_subfiles(x)
-        for sub_file in sub_files:
-            files.append(sub_file)
-
+        if os.path.isfile(x):
+            files.append(x)
+        else:
+            sub_files = get_subfiles(x)
+            for sub_file in sub_files:
+                files.append(sub_file)
     return files
 
 
