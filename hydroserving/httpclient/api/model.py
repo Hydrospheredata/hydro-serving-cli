@@ -28,7 +28,7 @@ class ModelAPI:
             raise HSApiError("{} is not UploadMetadata".format(metadata))
 
         return self.connection.multipart_post(
-            url="/api/v1/model",
+            url="/api/v1/model/upload",
             data=metadata.__dict__,
             files={"payload": ("filename", open(assembly_path, "rb"))},
             create_encoder_callback=create_encoder_callback
