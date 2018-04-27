@@ -9,6 +9,14 @@ class UploadMetadata:
         self.model_type = model_type
         self.model_name = model_name
 
+    def to_dict(self):
+        res = {}
+        for k,v in self.__dict__.items():
+            if v is None:
+                continue
+            res[k] = v
+        return res
+
 
 class ModelAPI:
     def __init__(self, connection):
@@ -29,7 +37,7 @@ class ModelAPI:
 
         return self.connection.multipart_post(
             url="/api/v1/model/upload",
-            data=metadata.__dict__,
+            data=metadata.to_dict(),
             files={"payload": ("filename", open(assembly_path, "rb"))},
             create_encoder_callback=create_encoder_callback
         )
