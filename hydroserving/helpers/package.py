@@ -62,7 +62,8 @@ def pack_contract(model):
 
 def pack_model(model):
     payload_files = pack_payload(model)
-    pack_contract(model)
+    if model.contract_path is not None:
+        pack_contract(model)
     return payload_files
 
 

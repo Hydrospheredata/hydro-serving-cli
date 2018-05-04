@@ -10,11 +10,15 @@ def upload_model(model_api, source, model):
 
     click.echo("Uploading to {}".format(model_api.connection.remote_addr))
 
+    contract = None
+    if model_metadata.model_contract is not None:
+        contract = model_metadata.model_contract.SerializeToString()
+
     metadata = UploadMetadata(
         model_name=model_metadata.model_name,
         model_type=model_metadata.model_type,
         target_source=source,
-        model_contract=model_metadata.model_contract.SerializeToString(),
+        model_contract=contract,
         description=model_metadata.description
     )
 
