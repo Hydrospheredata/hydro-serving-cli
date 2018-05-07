@@ -64,7 +64,7 @@ def contract(obj):
               help=UPLOAD_HOST_HELP,
               required=False)
 @click.option('--port',
-              default=9090,
+              default=80,
               show_default=True,
               help=UPLOAD_PORT_HELP,
               required=False)
