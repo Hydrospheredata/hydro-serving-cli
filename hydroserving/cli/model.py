@@ -17,15 +17,6 @@ def status(obj):
     click.echo("Model type: {}".format(metadata.model.model_type))
     click.echo("Files to upload:\n{}".format(metadata.model.payload))
 
-
-@hs_cli.command()
-@click.pass_obj
-def pack(obj):
-    metadata = ensure_metadata(obj)
-    pack_model(metadata.model)
-    click.echo("Done")
-
-
 @hs_cli.command()
 @click.pass_obj
 def assemble(obj):
