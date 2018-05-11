@@ -26,7 +26,7 @@ Sends assembled tarball to the specified host.
 
 - hs dev up
 
-Creates a docker runtime with a model. 
+Creates a docker runtime with a model.
 
 - hs dev down
 
@@ -40,12 +40,12 @@ You can find more information about development deployment of a model [here](/do
 
 - hs kafka --brokers ... --topic ... publish --file ...
 
-Reads a message from specified file and sends it to the specific topic. 
+Reads a message from specified file and sends it to the specific topic.
 
 - hs kafka --brokers ... --topic ... read --tail N
 
 Reads and displays N (10 by default) messages from the topic. [More](/docs/working_with_messages.md).
 
---- 
+---
 
 You can find more information about work with Apache Kafka [here](/docs/working_with_messages.md).
