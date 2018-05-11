@@ -1,7 +1,8 @@
+import click
+import os
 from hydroserving.cli.hs import hs_cli
 from hydroserving.cli.utils import ensure_app_data
-from hydroserving.constants.help import *
-from hydroserving.helpers.deployment import *
+from hydroserving.constants.help import APPLICATION_HELP, UPLOAD_HOST_HELP, UPLOAD_PORT_HELP
 from hydroserving.httpclient.api import ApplicationAPI
 from hydroserving.httpclient.remote_connection import RemoteConnection
 from hydroserving.models.application import Application
