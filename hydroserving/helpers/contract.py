@@ -5,7 +5,9 @@ from google.protobuf import text_format
 
 
 def read_contract_cwd(model):
-    return read_contract_file(model.contract_path)
+    if model.contract_path is not None:
+        return read_contract_file(model.contract_path)
+    return None
 
 
 def read_contract_file(contract_path):
