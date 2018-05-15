@@ -37,10 +37,6 @@ def contract(obj):
               show_default=True,
               help=UPLOAD_PORT_HELP,
               required=False)
-@click.option('--source',
-              default=None,
-              help=UPLOAD_SOURCE_HELP,
-              required=False)
 @click.pass_obj
 def upload(obj, host, port, source):
     metadata = ensure_metadata(obj)
