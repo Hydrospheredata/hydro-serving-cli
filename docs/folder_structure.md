@@ -1,33 +1,15 @@
-# hydro-serving-cli
+# Model structure
 
-CLI tool for [hydro-serving](https://github.com/Hydrospheredata/hydro-serving).
+To successfully deploy a model we need some metadata.
+Depending on the model, it may or may not contain it.
 
-## Installation
+Manager will try to infer a metadata, if its not present, but may be not as accurate.
 
-```bash
-pip install hs
-```
+Metadata is described if following formats:
 
-## Usage
+## serving.yaml
 
-1. Show metadata: `hs status`
-2. Show human-readable contract: `hs contract`
-3. Upload a model to the server: `hs upload --host $HOST --port $PORT`
-4. CLI help: `hs --help`
-
-## Model
-
-The tool operates on folders with `serving.yaml` file in it. If there is no `serving.yaml` file, you can fill required fields with arguments, for instance:
-
-```bash
-hs --name demo_model --contract model_contract.prototxt upload
-```
-
-### serving.yaml
-
-It defines various metadata and a contract for a model.
-
-`serving.yaml` example:
+`serving.yaml` file:
 
 ```yaml
 model:
@@ -39,13 +21,20 @@ model:
     - "variables/"
 ```
 
-### Contract
+The `model` key indicates that you are describing current model.
+
+1. `name` field specifies a unique name of a model.
+2. `type` field indicates which runtimes it should be served with. e.g. `spark:2.2`, `tensorflow`, `python:3.6`.
+3. `contract` field specifies path, where CLI can find a contract file.
+4. `payload` field contains list of paths, which would be sent to the manager as model itself.
+
+## Contract file
 
 `contract` field contains path to the ASCII serialized [ModelContract](https://github.com/Hydrospheredata/hydro-serving-protos/blob/master/src/hydro_serving_grpc/contract/model_contract.proto) message.
 
 `contract.prototxt` example:
 
-```proto
+```protobuf
 signatures {
   signature_name: "detect"
   inputs {
@@ -78,5 +67,3 @@ signatures {
   }
 }
 ```
-
-Developer documentation is available [here](/docs/index.md).
