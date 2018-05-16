@@ -1,6 +1,7 @@
 from kafka.errors import NoBrokersAvailable, IllegalStateError
 
 from hydroserving.cli.hs import hs_cli
+from hydroserving.cli.dev.dev_group import dev
 from hydroserving.cli.utils import ensure_kafka_params
 from hydroserving.constants.help import *
 from hydroserving.helpers.deployment import *
@@ -9,7 +10,7 @@ from hydroserving.helpers.proto import messages_from_file, to_json_string
 from hydroserving.models.kafka_params import KafkaParams
 
 
-@hs_cli.group(help=KAFKA_HELP)
+@dev.group(help=KAFKA_HELP)
 @click.option('--brokers',
               help=KAFKA_ADVERTISED_ADDR_HELP,
               type=str,

@@ -2,10 +2,9 @@ from hydroserving.httpclient.errors import HSApiError
 
 
 class UploadMetadata:
-    def __init__(self, model_name, model_type, target_source, model_contract, description):
+    def __init__(self, model_name, model_type, model_contract, description):
         self.model_description = description
         self.model_contract = model_contract
-        self.target_source = target_source
         self.model_type = model_type
         self.model_name = model_name
 

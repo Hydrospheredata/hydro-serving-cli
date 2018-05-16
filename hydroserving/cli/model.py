@@ -38,10 +38,10 @@ def contract(obj):
               help=UPLOAD_PORT_HELP,
               required=False)
 @click.pass_obj
-def upload(obj, host, port, source):
+def upload(obj, host, port):
     metadata = ensure_metadata(obj)
     remote = RemoteConnection("http://{}:{}".format(host, port))
     model_api = ModelAPI(remote)
-    result = upload_model(model_api, source, metadata.model)
+    result = upload_model(model_api, metadata.model)
     click.echo()
     click.echo(result)
