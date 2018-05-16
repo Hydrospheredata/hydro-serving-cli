@@ -1,0 +1,8 @@
+application:
+  name: "example_script"
+  dependencies:
+    - "../local_dev"
+
+  model:
+    name: "calculator"
+    version: 1

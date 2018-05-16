@@ -7,6 +7,9 @@ class ApplicationAPI:
 
     def serve(self, app_name, signature, data):
         return self.connection.post(
-            '/api/v1/applications/serve/{0}/{1}'.format(app_name, signature),
+            "/api/v1/applications/serve/{0}/{1}".format(app_name, signature),
             data
         )
+
+    def list(self):
+        return self.connection.get("/api/v1/applications")

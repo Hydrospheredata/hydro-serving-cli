@@ -13,11 +13,15 @@ class RemoteConnection:
         self.remote_addr = remote_addr
 
     def send_multipart(self, url, multipart_monitor):
-        return requests.post(
-            url=self.compose_url(url),
-            data=multipart_monitor,
-            headers={'Content-Type': multipart_monitor.content_type}
-        ).json()
+        try:
+            result = requests.post(
+                url=self.compose_url(url),
+                data=multipart_monitor,
+                headers={'Content-Type': multipart_monitor.content_type}
+            )
+            return result.json()
+        except ValueError:
+            return ResponseIsNotJson(str(result.status_code) + ': ' + result.content.decode('utf-8'))
 
     def send_request(self, request):
         """

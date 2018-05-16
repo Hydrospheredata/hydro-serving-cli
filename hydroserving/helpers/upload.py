@@ -4,7 +4,7 @@ from hydroserving.models.model_metadata import ModelMetadata
 import click
 
 
-def upload_model(model_api, source, model):
+def upload_model(model_api, model):
     tar = assemble_model(model)
     model_metadata = ModelMetadata.from_folder_metadata(model)
 
@@ -17,7 +17,6 @@ def upload_model(model_api, source, model):
     metadata = UploadMetadata(
         model_name=model_metadata.model_name,
         model_type=model_metadata.model_type,
-        target_source=source,
         model_contract=contract,
         description=model_metadata.description
     )
