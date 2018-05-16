@@ -27,7 +27,7 @@ In addition to that, there is a `local_deploy` field that defines parameters for
 - The `name` field specifies unique name for a docker container. Please note that if there is already a container with such name, deploy could fail.
 - `port` field defines outside port mapping to access the container.
 
-Basically, when you type `hs dev up`, CLI:
+Basically, when you type `hs dev deploy up`, CLI:
 
 1. Packs a model
 2. Pulls an image defined in `runtime`.

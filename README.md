@@ -1,11 +1,34 @@
 # hydro-serving-cli
+
 CLI tool for [hydro-serving](https://github.com/Hydrospheredata/hydro-serving).
 
-## serving.yaml
-The tool operates on folders with `serving.yaml` file in it.
+## Installation
+
+```bash
+pip install hs
+```
+
+## Usage
+
+1. Show metadata: `hs status`
+2. Show human-readable contract: `hs contract`
+3. Upload a model to the server: `hs upload --host $HOST --port $PORT`
+4. CLI help: `hs --help`
+
+## Model
+
+The tool operates on folders with `serving.yaml` file in it. If there is no `serving.yaml` file, you can fill required fields with arguments, for instance:
+
+```bash
+hs --name demo_model --contract model_contract.prototxt upload
+```
+
+### serving.yaml
+
 It defines various metadata and a contract for a model.
 
 `serving.yaml` example:
+
 ```yaml
 model:
   name: "example_model"
@@ -16,10 +39,13 @@ model:
     - "variables/"
 ```
 
+### Contract
+
 `contract` field contains path to the ASCII serialized [ModelContract](https://github.com/Hydrospheredata/hydro-serving-protos/blob/master/src/hydro_serving_grpc/contract/model_contract.proto) message.
 
 `contract.prototxt` example:
-```
+
+```proto
 signatures {
   signature_name: "detect"
   inputs {
