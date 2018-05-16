@@ -39,7 +39,7 @@ class MockConnection(RemoteConnection):
 
 def build_example(hs_api):
     meta = FolderMetadata.from_directory(os.getcwd())
-    return upload_model(hs_api.models, None, meta.model)
+    return upload_model(hs_api.models, meta.model)
 
 
 class HttpClientCase(unittest.TestCase):
