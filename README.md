@@ -78,3 +78,5 @@ signatures {
   }
 }
 ```
+
+Developer documentation is available [here](/docs/index.md).
