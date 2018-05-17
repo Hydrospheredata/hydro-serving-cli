@@ -45,7 +45,7 @@ model:
 
 `contract.prototxt` example:
 
-```proto
+```hocon
 signatures {
   signature_name: "detect"
   inputs {
