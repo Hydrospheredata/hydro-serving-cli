@@ -77,10 +77,14 @@ def execute_build_steps(build_steps):
 
 def with_cwd(new_cwd, func, *args):
     old_cwd = os.getcwd()
-    os.chdir(new_cwd)
-    result = func(*args)
-    os.chdir(old_cwd)
-    return result
+    try:
+        os.chdir(new_cwd)
+        result = func(*args)
+        os.chdir(old_cwd)
+        return result
+    except RuntimeError as err:
+        os.chdir(old_cwd)
+        raise err
 
 
 def build_model(metadata):
