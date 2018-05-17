@@ -19,7 +19,13 @@ setup(
         "hydro-serving-grpc==0.1.1",
         "requests-toolbelt==0.8.0"
     ],
+    setup_requires=[
+        'pytest-runner'
+    ],
     test_suite='tests',
+    tests_require=[
+        'pytest', 'pylint', 'requests-mock', 'mock>=2.0.0'
+    ],
     entry_points='''
         [console_scripts]
         hs=hydroserving.cli:hs_cli

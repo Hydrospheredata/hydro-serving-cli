@@ -1,7 +1,6 @@
 import os
 import unittest
 
-
 from hydroserving.helpers.package import with_cwd
 from hydroserving.helpers.upload import upload_model
 from hydroserving.httpclient import HydroservingClient
@@ -70,7 +69,3 @@ class HttpClientCase(unittest.TestCase):
         assert "example_script" in result["model_name"]
         assert "python:3.6" in result["model_type"]
         assert result["payload"] is not None
-
-
-if __name__ == "__main__":
-    unittest.main()
