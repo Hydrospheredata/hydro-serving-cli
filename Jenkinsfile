@@ -91,6 +91,7 @@ node("JenkinsOnDemand") {
 
     stage('Build') {
         sh "sudo pip3 install --upgrade pip"
+        sh "sudo pip3 install setuptools==39.0.1"
         sh "sudo pip3 install -r ${env.WORKSPACE}/requirements.txt"
         sh "make PYTHON=python3 wheel"
     }
