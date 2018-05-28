@@ -1,6 +1,6 @@
 import click
 from hydroserving.helpers.deployment import *
-from hydroserving.models import FolderMetadata, ModelDefinition, LocalDeployment
+from hydroserving.models import FolderMetadata, ModelDefinition
 from hydroserving.models.context_object import ContextObject
 
 

@@ -4,8 +4,10 @@ import click
 def ensure_metadata(obj):
     return ensure(obj, "metadata", "Directory doesn't have a serving metadata")
 
+
 def get_metadata(obj):
     return try_get(obj, "metadata")
+
 
 def ensure_app_data(obj):
     return ensure(obj, "app_data", "Directory doesn't have an application data")
@@ -25,5 +27,6 @@ def ensure(obj, obj_field, error_msg=None):
         raise SystemExit(-1)
     return maybe_result
 
-def try_get(obj, obj_field): 
+
+def try_get(obj, obj_field):
     return obj.__dict__[obj_field]
