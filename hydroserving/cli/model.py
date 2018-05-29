@@ -1,4 +1,5 @@
 import click
+import requests
 from hydroserving.cli.hs import hs_cli
 from hydroserving.cli.utils import ensure_metadata
 from hydroserving.helpers.package import read_contract_cwd
@@ -42,6 +43,12 @@ def upload(obj, host, port):
     metadata = ensure_metadata(obj)
     remote = RemoteConnection("http://{}:{}".format(host, port))
     model_api = ModelAPI(remote)
-    result = upload_model(model_api, metadata.model)
-    click.echo()
-    click.echo(result)
+    try:
+        result = upload_model(model_api, metadata.model)
+        click.echo()
+        click.echo(result)
+    except requests.RequestException as err:
+        click.echo()
+        click.echo("Upload failed. Reason:")
+        click.echo(err)
+        raise SystemExit(-1)

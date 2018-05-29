@@ -14,7 +14,6 @@ class RemoteConnection:
 
     def compose_url(self, url):
         full_url = self.remote_addr + url
-        print(full_url)
         return full_url
 
     def post(self, url, data):

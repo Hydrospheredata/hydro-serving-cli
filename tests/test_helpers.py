@@ -1,18 +1,64 @@
-import unittest
+import os
+
+from hydroserving.constants.package import TARGET_PATH, PACKAGE_FILES_PATH
+from hydroserving.helpers.package import with_cwd, assemble_model, get_visible_files, get_files
+from hydroserving.models import FolderMetadata, ModelDefinition
+from tests.utils import with_target_cwd
+
+MODEL_FOLDER = "./examples/local_dev"
 
 
-class HelperCase(unittest.TestCase):
-    def test_pack(self):
-        pass
+def test_get_all_files():
+    hidden_path = os.path.join(MODEL_FOLDER, ".ninja.file")
+    print(hidden_path)
+    with open(hidden_path, "w"):
+        files = get_files(MODEL_FOLDER)
+        print(files)
+        assert hidden_path in files
+        assert "./examples/local_dev/calculator/src/func_main.py" in files
+        assert "./examples/local_dev/calculator/requirements.txt" in files
+    os.remove(hidden_path)
 
-    def test_assembly(self):
-        pass
 
-    def test_deploy(self):
-        pass
+def test_get_all_visible_files():
+    hidden_path = os.path.join(MODEL_FOLDER, ".ninja.file")
+    print(hidden_path)
+    with open(hidden_path, "w"):
+        files = get_visible_files(MODEL_FOLDER)
+        print(files)
+        assert hidden_path not in files
+        assert "./examples/local_dev/calculator/src/func_main.py" in files
+        assert "./examples/local_dev/calculator/requirements.txt" in files
+    os.remove(hidden_path)
 
-    def test_kafka_read(self):
-        pass
 
-    def kafka_send(self):
-        pass
+def test_assembly_with_metadata():
+    def _test_assembly_with_metadata():
+        folder_metadata = FolderMetadata.from_directory(".")
+        print(folder_metadata)
+        result = assemble_model(folder_metadata.model)
+
+        print(result)
+        assert os.path.exists(os.path.join(".", TARGET_PATH, "example_script.tar.gz"))
+        assert os.listdir(os.path.join(".", PACKAGE_FILES_PATH))
+
+    with_target_cwd(MODEL_FOLDER, _test_assembly_with_metadata)
+
+
+def test_assemble_without_metadata():
+    path = os.path.join(MODEL_FOLDER, "calculator")
+
+    def _test_assemble_without_metadata():
+        model = ModelDefinition(
+            "model",
+            "test:test",
+            None,
+            ['.'],
+            "Description"
+        )
+        result = assemble_model(model)
+        print(result)
+        assert os.path.exists(os.path.join(".", TARGET_PATH, "model.tar.gz"))
+        assert os.listdir(os.path.join(".", PACKAGE_FILES_PATH))
+
+    with_target_cwd(path, _test_assemble_without_metadata)
