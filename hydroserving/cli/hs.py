@@ -1,5 +1,8 @@
+import click
+
+from hydroserving.constants.package import TARGET_PATH
 from hydroserving.helpers.deployment import *
-from hydroserving.models import FolderMetadata, ModelDefinition, LocalDeployment
+from hydroserving.models import FolderMetadata, ModelDefinition
 from hydroserving.models.context_object import ContextObject
 
 
@@ -12,6 +15,7 @@ from hydroserving.models.context_object import ContextObject
               default=None,
               required=False)
 @click.option('--contract',
+              type=click.Path(exists=True),
               default=None,
               required=False)
 @click.option('--description',
@@ -27,6 +31,6 @@ def hs_cli(ctx, name, model_type, contract, description):
             model_type=model_type,
             contract_path=contract,
             description=description,
-            payload=[os.path.join(dir_name, file) for dir_name, _, files in os.walk('.') for file in files if not dir_name.startswith("./target")]
+            payload=[os.path.join(dir_name, file) for dir_name, _, files in os.walk('.') for file in files if not dir_name.startswith(TARGET_PATH)]
         ), None)
     ctx.obj.metadata = metadata
