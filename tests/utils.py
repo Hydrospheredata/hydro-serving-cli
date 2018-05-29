@@ -9,7 +9,7 @@ def with_target_cwd(cwd, func, *args):
     """
     Wrapper util to run some function in new Current Working Directory.
     Removes TARGET_PATH directory after execution
-    :param new_cwd: path to the new CWD
+    :param cwd: path to the new CWD
     :param func: callback
     :param args: args to the `func`
     :return: result of `func`

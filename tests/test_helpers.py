@@ -1,10 +1,9 @@
 import os
-import shutil
 
 from hydroserving.constants.package import TARGET_PATH, PACKAGE_FILES_PATH
 from hydroserving.helpers.package import with_cwd, assemble_model, get_visible_files, get_files
 from hydroserving.models import FolderMetadata, ModelDefinition
-from utils import with_target_cwd
+from tests.utils import with_target_cwd
 
 MODEL_FOLDER = "./examples/local_dev"
 

@@ -10,7 +10,7 @@ from hydroserving.helpers.package import with_cwd
 from hydroserving.helpers.upload import upload_model
 from hydroserving.httpclient import HydroservingClient
 from hydroserving.models import FolderMetadata
-from utils import with_target_cwd
+from tests.utils import with_target_cwd
 
 MODEL_FOLDER = "./examples/local_dev"
 
