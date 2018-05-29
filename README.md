@@ -45,34 +45,28 @@ model:
 
 `contract.prototxt` example:
 
-```proto
+```hocon
 signatures {
   signature_name: "detect"
   inputs {
-    field_name: "image_b64"
-    info {
-      dtype: DT_STRING
-    }
+    name: "image_b64"
+    dtype: DT_STRING
   }
   outputs {
-    field_name: "scores"
-    info {
-      dtype: DT_DOUBLE
-      tensor_shape: {
-        dim: {
-            size: -1
-        }
+    name: "scores"
+    dtype: DT_DOUBLE
+    shape {
+      dim: {
+        size: -1
       }
     }
   }
   outputs {
-    field_name: "classes"
-    info {
-      dtype: DT_STRING
-      tensor_shape: {
-        dim: {
-            size: -1
-        }
+    name: "classes"
+    dtype: DT_STRING
+    shape {
+      dim: {
+        size: -1
       }
     }
   }

@@ -14,10 +14,10 @@ def read_contract_file(contract_path):
     _, file_ext = os.path.splitext(contract_path)
     contract = hs.ModelContract()
 
-    if file_ext == ".protobin":
+    if file_ext == ".protobin" or file_ext == ".pb":
         with open(contract_path, "rb") as contract_file:
             contract.ParseFromString(contract_file.read())
-    elif file_ext == ".prototxt":
+    elif file_ext:
         with open(contract_path, "r") as contract_file:
             text_format.Parse(contract_file.read(), contract)
     else:
