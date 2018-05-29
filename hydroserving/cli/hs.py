@@ -1,5 +1,8 @@
+import click
+
 from hydroserving.helpers.deployment import *
-from hydroserving.models import FolderMetadata, ModelDefinition, LocalDeployment
+from hydroserving.helpers.package import get_visible_files
+from hydroserving.models import FolderMetadata, ModelDefinition
 from hydroserving.models.context_object import ContextObject
 
 
@@ -27,6 +30,6 @@ def hs_cli(ctx, name, model_type, contract, description):
             model_type=model_type,
             contract_path=contract,
             description=description,
-            payload=[os.path.join(dir_name, file) for dir_name, _, files in os.walk('.') for file in files if not dir_name.startswith("./target")]
+            payload=get_visible_files('.')
         ), None)
     ctx.obj.metadata = metadata

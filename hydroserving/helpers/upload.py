@@ -1,5 +1,5 @@
 from hydroserving.httpclient.api import UploadMetadata
-from hydroserving.helpers.assembly import assemble_model
+from hydroserving.helpers.package import assemble_model
 from hydroserving.models.model_metadata import ModelMetadata
 import click
 
