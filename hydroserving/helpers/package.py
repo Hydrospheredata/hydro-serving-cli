@@ -61,6 +61,9 @@ def pack_contract(model):
 
 
 def pack_model(model):
+    if os.path.exists(TARGET_PATH):
+        shutil.rmtree(TARGET_PATH)
+    os.mkdir(TARGET_PATH)
     payload_files = pack_payload(model)
     if model.contract_path is not None:
         pack_contract(model)
