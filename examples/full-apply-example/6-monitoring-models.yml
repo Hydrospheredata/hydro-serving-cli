@@ -1,0 +1,41 @@
+---
+version: v2-alpha
+kind: Model
+name: claims-gan
+model_type: python:3.6
+payload:
+  - /user/models/claims-demo/gan-model
+contract:
+  claim:
+    inputs:
+      client_profile:
+        shape: [112]
+        dtype: float32 # using tf type names instead of proto ones
+        profile: text # data profiling
+    outputs:
+      amount:
+        shape: scalar
+        dtype: int64
+        profile: real
+...
+
+---
+version: v2-alpha
+kind: Model
+name: claims-autoencoder
+model_type: python:3.6
+payload:
+  - /user/models/claims-demo/autoencoder-model
+contract:
+  claim:
+    inputs:
+      client_profile:
+        shape: [112]
+        dtype: float32 # using tf type names instead of proto ones
+        profile: text # data profiling
+    outputs:
+      amount:
+        shape: scalar
+        dtype: int64
+        profile: real
+...

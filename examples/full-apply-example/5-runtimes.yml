@@ -1,0 +1,23 @@
+version: v2-alpha
+kind: Runtime
+name: hydrosphere/serving-runtime-python
+version: 3.6-latest
+model_type: python:3.6
+params:
+  param1: value1
+  param2: value2
+labels:
+  label1: B
+
+---
+
+version: v2-alpha
+kind: Runtime
+name: hydrosphere/serving-runtime-tensorflow
+version: 1.7.0-latest
+model_type: tensorflow:1.7.0
+params:
+  param1: value1
+  param2: value2
+labels:
+  label1: B

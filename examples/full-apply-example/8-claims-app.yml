@@ -1,0 +1,31 @@
+# -- PIPELINE APP CONFIG --
+version: v2-alpha
+kind: Application
+name: claims-pipeline-app
+streaming:
+  in-topic: claims-input
+  out-topic: claims-output
+shadowing: true
+
+singular:
+  monitoring:
+    ks:
+      input: feature_42
+      type: Kolmogorov-Smirnov
+      is_healthcheck: true
+    gan:
+      input: feature
+      type: GAN
+      app: claims-autoencoder-app
+      is_healthcheck: true
+    autoencoder:
+      input: feature
+      type: Autoencoder
+      app: claims-autoencoder-app
+      is_healthcheck: true
+  model: 
+    name: claims-model
+    # version: 1 # version is not specified - use the latest one
+  runtime:
+    name: hydrosphere/serving-runtime-python
+    version: 3.6-latest
