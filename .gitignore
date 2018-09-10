@@ -1,5 +1,6 @@
 *.iml
 .hs
+test-report.xml
 .pypirc
 # Created by .ignore support plugin (hsz.mobi)
 ### Python template

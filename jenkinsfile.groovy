@@ -23,6 +23,10 @@ def buildFunction={
     sh "make PYTHON=python3 test"
 }
 
+def collectTestResults = {
+    junit testResults: 'test-report.xml', allowEmptyResults: true
+}
+
 pipelineCommon(
         repository,
         false, //needSonarQualityGate,
