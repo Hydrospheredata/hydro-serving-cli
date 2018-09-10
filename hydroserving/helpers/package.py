@@ -6,33 +6,7 @@ import tarfile
 from hydroserving.constants.package import PACKAGE_CONTRACT_PATH
 from hydroserving.constants.package import TARGET_PATH, PACKAGE_FILES_PATH
 from hydroserving.helpers.contract import read_contract_cwd
-
-
-def get_files(path):
-    """
-    Recursively lists files
-    :param path: Path to look for
-    :return: flat list of files
-    """
-    return [
-        os.path.join(dir_name, file)
-        for dir_name, _, files in os.walk(path)
-        for file in files
-    ]
-
-
-def get_visible_files(path):
-    """
-    Recursively lists visible files
-    :param path: Path to look for
-    :return: flat list of visible files
-    """
-    return [
-        os.path.join(dir_name, file)
-        for dir_name, _, files in os.walk(path)
-        for file in files
-        if not file.startswith('.')
-    ]
+from hydroserving.helpers.file import get_visible_files
 
 
 def get_payload_files(payload):

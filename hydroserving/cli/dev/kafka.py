@@ -1,10 +1,10 @@
+import click
+
 from kafka.errors import NoBrokersAvailable, IllegalStateError
 
-from hydroserving.cli.hs import hs_cli
 from hydroserving.cli.dev.dev_group import dev
 from hydroserving.cli.utils import ensure_kafka_params
 from hydroserving.constants.help import *
-from hydroserving.helpers.deployment import *
 from hydroserving.helpers.kafka_helper import kafka_send, topic_offsets, consumer_with_offsets
 from hydroserving.helpers.proto import messages_from_file, to_json_string
 from hydroserving.models.kafka_params import KafkaParams

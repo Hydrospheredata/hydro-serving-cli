@@ -13,10 +13,9 @@ setup(
     include_package_data=True,
     install_requires=[
         "click==6.7",
-        "docker==3.0.1",
         "pyyaml",
         "kafka-python==1.4.1",
-        "hydro-serving-grpc==0.1.1",
+        "hydro-serving-grpc==0.1.20",
         "requests==2.18.4",
         "requests-toolbelt==0.8.0",
     ],
@@ -29,6 +28,6 @@ setup(
     ],
     entry_points='''
         [console_scripts]
-        hs=hydroserving.cli:hs_cli
+        hs=hydroserving.cli.hs:hs_cli
     '''
 )

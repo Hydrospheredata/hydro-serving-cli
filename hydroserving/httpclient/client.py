@@ -7,7 +7,7 @@ class HydroservingClient:
         if isinstance(addr, str):
             self.connection = RemoteConnection(addr)
         else:
-            raise TypeError("{} is  ot a string".format(addr))
+            raise TypeError("{} is not a string".format(addr))
 
         self.models = ModelAPI(self.connection)
         self.runtimes = RuntimeAPI(self.connection)

@@ -13,9 +13,11 @@ from hydroserving.httpclient.remote_connection import RemoteConnection
 @click.pass_obj
 def status(obj):
     metadata = ensure_metadata(obj)
-    click.echo("Detected a model: {}".format(metadata.model.name))
-    click.echo("Model type: {}".format(metadata.model.model_type))
-    click.echo("Files to upload:\n{}".format(metadata.model.payload))
+    click.echo(metadata.name)
+    click.echo("Model type: {}".format(metadata.model_type))
+    click.echo("Description: {}".format(metadata.description))
+    click.echo("Fields:\n{}".format(metadata.fields))
+    click.echo("Files to upload:\n{}".format(metadata.payload))
 
 
 @hs_cli.command()
