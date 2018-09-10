@@ -94,6 +94,8 @@ def read_contract_file(contract_path):
 def shape_to_proto(user_shape):
     if user_shape == "scalar":
         shape = TensorShapeProto()
+    elif user_shape is None:
+        shape = None
     elif isinstance(user_shape, list):
         dims = []
         for dim in user_shape:

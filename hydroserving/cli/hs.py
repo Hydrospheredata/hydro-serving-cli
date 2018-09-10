@@ -47,7 +47,7 @@ def hs_cli(ctx, name, model_type, contract, description):
         metadata = Model(
             name=name,
             model_type=model_type,
-            contract={},
+            contract=None,
             description=description,
             payload=get_visible_files('.')
         )

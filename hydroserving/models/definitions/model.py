@@ -11,7 +11,7 @@ class Model:
         if model_type is not None and not isinstance(model_type, str):
             raise TypeError("model_type is not a string", type(model_type))
 
-        if not isinstance(contract, ModelContract):
+        if contract is not None and not isinstance(contract, ModelContract):
             raise TypeError("contract is not a ModelContract", type(contract))
 
         if not isinstance(payload, list):

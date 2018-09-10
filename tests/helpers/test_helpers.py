@@ -5,7 +5,7 @@ from hydroserving.helpers.package import with_cwd, assemble_model
 from hydroserving.helpers.file import get_visible_files, get_files, get_yamls
 from tests.utils import with_target_cwd
 
-MODEL_FOLDER = "../examples/local_dev"
+MODEL_FOLDER = "./examples/local_dev"
 
 
 def test_get_all_files():

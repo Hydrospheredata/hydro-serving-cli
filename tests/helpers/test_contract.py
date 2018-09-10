@@ -30,5 +30,5 @@ class ContractHelperTests(unittest.TestCase):
         assert result == expected
 
     def test_incorrect_shape_to_proto(self):
-        shape = {}
-        self.assertRaises(TypeError, shape_to_proto, shape)
+        with self.assertRaises(ValueError) as ex:
+            shape_to_proto({})
