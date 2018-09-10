@@ -91,17 +91,17 @@ def read_contract_file(contract_path):
     return contract
 
 
-def shape_to_proto(shape_list):
-    if shape_list is None:
-        return None
-    if not isinstance(shape_list, list):
-        raise TypeError("shape_list is not a list", shape_list)
-
-    dims = []
-    for dim in shape_list:
-        if not isinstance(dim, Number):
-            raise TypeError("shape_list contains incorrect dim", shape_list, dim)
-        converted = TensorShapeProto.Dim(size=dim)
-        dims.append(converted)
-    shape = TensorShapeProto(dim=dims)
+def shape_to_proto(user_shape):
+    if user_shape == "scalar":
+        shape = TensorShapeProto()
+    elif isinstance(user_shape, list):
+        dims = []
+        for dim in user_shape:
+            if not isinstance(dim, Number):
+                raise TypeError("shape_list contains incorrect dim", user_shape, dim)
+            converted = TensorShapeProto.Dim(size=dim)
+            dims.append(converted)
+        shape = TensorShapeProto(dim=dims)
+    else:
+        raise ValueError("Invalid shape value", user_shape)
     return shape

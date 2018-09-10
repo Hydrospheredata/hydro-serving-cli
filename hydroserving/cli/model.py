@@ -16,7 +16,7 @@ def status(obj):
     click.echo(metadata.name)
     click.echo("Model type: {}".format(metadata.model_type))
     click.echo("Description: {}".format(metadata.description))
-    click.echo("Fields:\n{}".format(metadata.fields))
+    click.echo("Fields:\n{}".format(metadata.contract))
     click.echo("Files to upload:\n{}".format(metadata.payload))
 
 

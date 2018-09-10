@@ -13,5 +13,6 @@ contract:
         profile: text # data profiling
     outputs:
       amount:
+        shape: scalar
         type: int64
         profile: real
