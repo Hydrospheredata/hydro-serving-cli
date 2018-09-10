@@ -1,0 +1,17 @@
+version: v2-alpha
+kind: Model
+name: claims-model
+model_type: python:3.6
+payload:
+  - /user/models/claims-demo/claims-model
+contract:
+  claim: # signature name
+    inputs:
+      client_profile:
+        shape: [112] # list of ints instead of scary structures
+        dtype: float32 # using tf type names instead of proto ones
+        profile: text # data profiling
+    outputs:
+      amount:
+        dtype: int64
+        profile: real

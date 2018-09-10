@@ -1,23 +1,27 @@
 import os
 import json
+import yaml
 
 import requests
 import requests_mock
 from click.testing import CliRunner
 
+from hydroserving.models.definitions.model import Model
 from hydroserving.cli import hs_cli
 from hydroserving.helpers.package import with_cwd
 from hydroserving.helpers.upload import upload_model
 from hydroserving.httpclient import HydroservingClient
-from hydroserving.models import FolderMetadata
 from tests.utils import with_target_cwd
 
-MODEL_FOLDER = "./examples/local_dev"
+MODEL_FOLDER = "./examples/new_metadata"
 
 
 def build_example(hs_api):
-    meta = FolderMetadata.from_directory(os.getcwd())
-    return upload_model(hs_api.models, meta.model)
+    yaml_path = os.path.join(os.getcwd(), "serving.yml")
+    with open(yaml_path, "r") as f:
+        yaml_dict = yaml.safe_load(f)
+    meta = Model.from_dict(yaml_dict)
+    return upload_model(hs_api.models, meta)
 
 
 def test_incorrect_status():
@@ -33,7 +37,7 @@ def test_correct_status():
         runner = CliRunner()
         result = runner.invoke(hs_cli, ["status"])
         assert result.exit_code == 0
-        assert "Detected a model: example_script" in result.output
+        assert "claims-model" in result.output
 
     with_cwd(MODEL_FOLDER, _test_correct_status)
 
@@ -46,7 +50,7 @@ def test_model_upload():
                 assert 'model_contract' in fields
                 assert 'payload' in fields
                 assert fields['model_type'] == "python:3.6"
-                assert fields["model_name"] == "example_script"
+                assert fields["model_name"] == "claims-model"
                 resp = requests.Response()
                 resp.status_code = 200
                 resp._content = json.dumps(
