@@ -24,7 +24,7 @@ setup(
     ],
     test_suite='tests',
     tests_require=[
-        'pytest', 'pylint', 'requests-mock', 'mock>=2.0.0'
+        'pytest', 'pylint', 'requests_mock', 'mock>=2.0.0'
     ],
     entry_points='''
         [console_scripts]
