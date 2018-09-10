@@ -31,7 +31,7 @@ pipelineCommon(
         repository,
         false, //needSonarQualityGate,
         [],
-        {},//collectTestResults, do nothing
+        collectTestResults,
         buildAndPublishReleaseFunction,
         buildFunction,
         buildFunction
