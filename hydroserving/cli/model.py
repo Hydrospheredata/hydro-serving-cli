@@ -46,7 +46,7 @@ def upload(obj, host, port):
     remote = RemoteConnection("http://{}:{}".format(host, port))
     model_api = ModelAPI(remote)
     try:
-        result = upload_model(model_api, metadata.model)
+        result = upload_model(model_api, metadata)
         click.echo()
         click.echo(result)
     except requests.RequestException as err:

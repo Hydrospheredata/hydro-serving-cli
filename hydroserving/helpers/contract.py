@@ -4,15 +4,70 @@ from numbers import Number
 
 from hydro_serving_grpc import ModelContract, TensorShapeProto
 from google.protobuf import text_format
-from hydroserving.models.definitions.model import Model
+from hydro_serving_grpc import DT_INVALID, DT_STRING, DT_BOOL, \
+    DT_HALF, DT_FLOAT, DT_DOUBLE, DT_INT8, DT_INT16, \
+    DT_INT32, DT_INT64, DT_UINT8, DT_UINT16, DT_UINT32, \
+    DT_UINT64, DT_QINT8, DT_QINT16, DT_QINT32, DT_QUINT8, DT_QUINT16, DT_VARIANT
 
 log = logging.getLogger('helpers.contract')
 
-def model_to_contract(model):
-    if not isinstance(model, Model):
-        raise TypeError("{} is not a Model".format(type(model)))
-    log.debug(model)
-    None
+NAME_TO_DTYPES = {
+    "invalid": DT_INVALID,
+    "string": DT_STRING,
+    "bool": DT_BOOL,
+    "variant": DT_VARIANT,
+
+    "float16": DT_HALF,
+    "half": DT_HALF,
+    "float32": DT_FLOAT,
+    "float64": DT_DOUBLE,
+    "double": DT_DOUBLE,
+
+    "int8": DT_INT8,
+    "int16": DT_INT16,
+    "int32": DT_INT32,
+    "int64": DT_INT64,
+
+    "uint8": DT_UINT8,
+    "uint16": DT_UINT16,
+    "uint32": DT_UINT32,
+    "uint64": DT_UINT64,
+
+    "qint8": DT_QINT8,
+    "qint16": DT_QINT16,
+    "qint32": DT_QINT32,
+
+    "quint8": DT_QUINT8,
+    "quint16": DT_QUINT16
+}
+
+DTYPE_TO_NAMES = {
+    DT_INVALID: "invalid",
+    DT_STRING: "string",
+    DT_BOOL: "bool",
+    DT_VARIANT: "variant",
+
+    DT_HALF: "float16",
+    DT_FLOAT: "float32",
+    DT_DOUBLE: "float64",
+
+    DT_INT8: "int8",
+    DT_INT16: "int16",
+    DT_INT32: "int32",
+    DT_INT64: "int64",
+
+    DT_UINT8: "uint8",
+    DT_UINT16: "uint16",
+    DT_UINT32: "uint32",
+    DT_UINT64: "uint64",
+
+    DT_QINT8: "qint8",
+    DT_QINT16: "qint16",
+    DT_QINT32: "qint32",
+
+    DT_QUINT8: "quint8",
+    DT_QUINT16: "quint16"
+}
 
 
 def read_contract_cwd(model):

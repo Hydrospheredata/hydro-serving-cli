@@ -69,11 +69,10 @@ def pack_contract(model):
     :param model: ModelDefinition
     :return: path to written contract
     """
-    contract = read_contract_cwd(model)
     contract_destination = os.path.join(PACKAGE_CONTRACT_PATH)
 
     with open(contract_destination, "wb") as contract_file:
-        contract_file.write(contract.SerializeToString())
+        contract_file.write(model.contract.SerializeToString())
 
     return contract_destination
 
@@ -88,7 +87,7 @@ def pack_model(model):
         shutil.rmtree(TARGET_PATH)
     os.mkdir(TARGET_PATH)
     payload_files = pack_payload(model)
-    if model.contract_path is not None:
+    if model.contract is not None:
         pack_contract(model)
     return payload_files
 

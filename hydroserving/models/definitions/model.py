@@ -1,6 +1,6 @@
-from hydro_serving_grpc import ModelContract, ModelSignature, ModelField
+from hydro_serving_grpc import ModelContract, ModelSignature, ModelField, DT_INVALID
 
-from hydroserving.models.definitions.field import Field
+from hydroserving.helpers.contract import shape_to_proto, NAME_TO_DTYPES
 
 
 class Model:
@@ -22,7 +22,7 @@ class Model:
 
         self.name = name
         self.model_type = model_type
-        self.fields = contract
+        self.contract = contract
         self.payload = payload
         self.description = description
 
@@ -32,7 +32,7 @@ class Model:
             return None
         return Model(
             name=data_dict.get("name"),
-            model_type=data_dict.get("type"),
+            model_type=data_dict.get("model-type"),
             contract=Model.contract_from_dict(data_dict.get("contract")),
             payload=data_dict.get("payload"),
             description=data_dict.get("description")
@@ -45,13 +45,29 @@ class Model:
         signatures = []
         print(data_dict)
         for sig_name, value in data_dict.items():
-            cur_sig = ModelSignature()
             inputs = []
             outputs = []
-            # for in_key, in_value in value["inputs"]:
-            #     inputs = ModelField(
-            #         name=in_key,
-            #         shape=
-            #     )
-
-        return signatures
+            for in_key, in_value in value["inputs"].items():
+                input = ModelField(
+                    name=in_key,
+                    shape=shape_to_proto(in_value.get("shape")),
+                    dtype=NAME_TO_DTYPES.get(in_value.get("type"), DT_INVALID)
+                )
+                inputs.append(input)
+            for out_key, out_value in value["outputs"].items():
+                output = ModelField(
+                    name=out_key,
+                    shape=shape_to_proto(out_value.get("shape")),
+                    dtype=NAME_TO_DTYPES.get(out_value.get("type"), DT_INVALID)
+                )
+                outputs.append(output)
+            cur_sig = ModelSignature(
+                signature_name=sig_name,
+                inputs=inputs,
+                outputs=outputs
+            )
+            signatures.append(cur_sig)
+        contract = ModelContract(
+            signatures=signatures
+        )
+        return contract

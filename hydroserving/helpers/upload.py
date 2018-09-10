@@ -2,7 +2,6 @@ import click
 
 from hydroserving.httpclient.api import UploadMetadata
 from hydroserving.helpers.package import assemble_model
-from hydroserving.helpers.contract import model_to_contract
 
 
 def upload_model(model_api, model):
@@ -11,8 +10,8 @@ def upload_model(model_api, model):
     click.echo("Uploading to {}".format(model_api.connection.remote_addr))
 
     contract = None
-    if model.fields is not None:
-        contract = model_to_contract(model)
+    if model.contract is not None:
+        contract = model.contract.SerializeToString()
 
     metadata = UploadMetadata(
         model_name=model.name,
