@@ -1,6 +1,8 @@
 import click
 import os
 import yaml
+
+from build.lib.hydroserving.helpers.contract import read_contract_file
 from hydroserving.helpers.file import get_visible_files, get_yamls
 from hydroserving.models.definitions.model import Model
 from hydroserving.models.context_object import ContextObject
@@ -44,10 +46,14 @@ def hs_cli(ctx, name, model_type, contract, description):
             metadata = Model.from_dict(serving_content)
 
     if metadata is None:
+        external_contract = None
+        if contract is not None:
+            external_contract = read_contract_file(contract)
+
         metadata = Model(
             name=name,
             model_type=model_type,
-            contract=None,
+            contract=external_contract,
             description=description,
             payload=get_visible_files('.')
         )
