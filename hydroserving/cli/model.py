@@ -1,53 +1,42 @@
 import click
 import requests
+import os
+
 from hydroserving.cli.hs import hs_cli
-from hydroserving.cli.utils import ensure_metadata
-from hydroserving.helpers.package import read_contract_cwd
+from hydroserving.cli.utils import ensure_cluster, ensure_model
+from hydroserving.constants.help import CONTEXT_SETTINGS, UPLOAD_HELP
 from hydroserving.helpers.upload import upload_model
 from hydroserving.httpclient.api import ModelAPI
-from hydroserving.constants.help import STATUS_HELP, CONTEXT_SETTINGS, UPLOAD_HELP, UPLOAD_HOST_HELP, UPLOAD_PORT_HELP
 from hydroserving.httpclient.remote_connection import RemoteConnection
 
 
-@hs_cli.command(help=STATUS_HELP)
-@click.pass_obj
-def status(obj):
-    metadata = ensure_metadata(obj)
-    click.echo(metadata.name)
-    click.echo("Model type: {}".format(metadata.model_type))
-    click.echo("Description: {}".format(metadata.description))
-    click.echo("Fields:\n{}".format(metadata.contract))
-    click.echo("Files to upload:\n{}".format(metadata.payload))
-
-
-@hs_cli.command()
-@click.pass_obj
-def contract(obj):
-    metadata = ensure_metadata(obj)
-    click.echo("Reading contract...")
-    contract_obj = read_contract_cwd(metadata.model)
-    click.echo(contract_obj)
-
-
 @hs_cli.command(help=UPLOAD_HELP, context_settings=CONTEXT_SETTINGS)
-@click.option('--host',
-              default="localhost",
+@click.option('--name',
+              default=os.path.basename(os.getcwd()),
               show_default=True,
-              help=UPLOAD_HOST_HELP,
               required=False)
-@click.option('--port',
-              default=80,
-              show_default=True,
-              help=UPLOAD_PORT_HELP,
+@click.option('--model_type',
+              default="unknown",
+              required=False)
+@click.option('--contract',
+              type=click.Path(exists=True),
+              default=None,
+              required=False)
+@click.option('--description',
+              default=None,
               required=False)
 @click.pass_obj
-def upload(obj, host, port):
-    metadata = ensure_metadata(obj)
-    remote = RemoteConnection("http://{}:{}".format(host, port))
+def upload(obj, name, model_type, contract, description):
+    current_cluster = ensure_cluster(obj)
+    click.echo("Using '{}' cluster".format(current_cluster['name']))
+    remote = RemoteConnection(current_cluster['cluster']['server'])
     model_api = ModelAPI(remote)
+
+    model = ensure_model(obj, os.getcwd(), name, model_type, description, contract)
+
     try:
-        result = upload_model(model_api, metadata)
-        click.echo()
+        result = upload_model(model_api, model)
+        click.echo("Success response:")
         click.echo(result)
     except requests.RequestException as err:
         click.echo()

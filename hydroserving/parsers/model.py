@@ -8,6 +8,9 @@ class ModelParser(AbstractParser):
     Parses Model config.
     """
 
+    def to_dict(self, obj):
+        pass
+
     def parse_dict(self, in_dict):
         if in_dict is None:
             return None

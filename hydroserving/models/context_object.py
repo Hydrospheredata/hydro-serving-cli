@@ -1,6 +1,11 @@
 class ContextObject:
-    def __init__(self, metadata=None, docker_client=None, kafka_params=None, app_data=None):
+    def __init__(self, config=None, metadata=None, kafka_params=None, services=None):
         self.metadata = metadata
-        self.docker_client = docker_client
         self.kafka_params = kafka_params
-        self.app_data = app_data
+        self.config = config
+        self.services = services
+
+
+class ContextServices:
+    def __init__(self, config):
+        self.config = config
