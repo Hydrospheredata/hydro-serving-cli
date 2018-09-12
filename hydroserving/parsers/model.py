@@ -9,7 +9,7 @@ class ModelParser(AbstractParser):
     """
 
     def to_dict(self, obj):
-        pass
+        raise NotImplementedError()
 
     def parse_dict(self, in_dict):
         if in_dict is None:

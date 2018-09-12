@@ -1,5 +1,12 @@
 class Config:
     def __init__(self, current_cluster=None, clusters_list=None):
+        """
+
+        :param current_cluster: currect cluster to use
+        :type current_cluster: str
+        :param clusters_list: all clusters
+        :type clusters_list: list[dict]
+        """
         if clusters_list is None:
             clusters_list = []
         if not isinstance(clusters_list, list):

@@ -8,6 +8,9 @@ class GenericParser(AbstractParser):
     Reads kind and version and chooses appropriate parser
     """
 
+    def to_dict(self, obj):
+        raise NotImplementedError()
+
     KIND_TO_PARSER = {
         "Config": ConfigParser(),
         "Model": ModelParser()
