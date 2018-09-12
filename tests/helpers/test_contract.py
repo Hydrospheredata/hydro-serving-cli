@@ -87,4 +87,6 @@ class ContractHelperTests(unittest.TestCase):
                 )
             ])
         )
-        self.assertEqual(result, expected)
+        self.assertEqual(result.name, expected.name)
+        self.assertEqual(result.shape, expected.shape)
+        self.assertListEqual(list(result.subfields.data), list(expected.subfields.data))
