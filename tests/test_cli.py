@@ -1,16 +1,12 @@
-import os
 import json
-import yaml
+import os
 
 import requests
 import requests_mock
-from click.testing import CliRunner
 
-from hydroserving.models.definitions.model import Model
-from hydroserving.cli import hs_cli
-from hydroserving.helpers.package import with_cwd
 from hydroserving.helpers.upload import upload_model
 from hydroserving.httpclient import HydroservingClient
+from hydroserving.parsers.model import ModelParser
 from tests.utils import with_target_cwd
 
 MODEL_FOLDER = "./examples/new_metadata"
@@ -18,29 +14,8 @@ MODEL_FOLDER = "./examples/new_metadata"
 
 def build_example(hs_api):
     yaml_path = os.path.join(os.getcwd(), "serving.yml")
-    with open(yaml_path, "r") as f:
-        yaml_dict = yaml.safe_load(f)
-    meta = Model.from_dict(yaml_dict)
+    meta = ModelParser().parse_yaml(yaml_path)
     return upload_model(hs_api.models, meta)
-
-
-def test_incorrect_status():
-    runner = CliRunner()
-    with runner.isolated_filesystem():
-        result = runner.invoke(hs_cli, ["status"])
-        print(result)
-        assert result.exit_code == 0
-
-
-def test_correct_status():
-    def _test_correct_status():
-        runner = CliRunner()
-        result = runner.invoke(hs_cli, ["status"])
-        assert result.exit_code == 0
-        assert "claims-model" in result.output
-
-    with_cwd(MODEL_FOLDER, _test_correct_status)
-
 
 def test_model_upload():
     def _test_model_upload():
