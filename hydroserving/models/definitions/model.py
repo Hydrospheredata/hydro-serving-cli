@@ -1,7 +1,5 @@
 from hydro_serving_grpc import ModelContract
 
-from hydroserving.helpers.contract import contract_from_dict
-
 
 class Model:
     def __init__(self, name, model_type, contract, payload, description):
@@ -25,15 +23,3 @@ class Model:
         self.contract = contract
         self.payload = payload
         self.description = description
-
-    @staticmethod
-    def from_dict(data_dict):
-        if data_dict is None:
-            return None
-        return Model(
-            name=data_dict.get("name"),
-            model_type=data_dict.get("model-type"),
-            contract=contract_from_dict(data_dict.get("contract")),
-            payload=data_dict.get("payload"),
-            description=data_dict.get("description")
-        )
