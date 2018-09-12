@@ -21,7 +21,6 @@ def buildFunction={
     sh "sudo pip3 install setuptools==39.0.1"
     sh "make PYTHON=python3 wheel"
     sh "make PYTHON=python3 test"
-    sh "make PYTHON=python3 lint"
 }
 
 def collectTestResults = {
