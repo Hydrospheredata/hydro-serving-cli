@@ -1,4 +1,5 @@
 from hydroserving.parsers.abstract import AbstractParser, UnknownResource
+from hydroserving.parsers.application import ApplicationParser
 from hydroserving.parsers.config import ConfigParser
 from hydroserving.parsers.environment import EnvironmentParser
 from hydroserving.parsers.model import ModelParser
@@ -17,7 +18,8 @@ class GenericParser(AbstractParser):
         "Config": ConfigParser(),
         "Model": ModelParser(),
         "Environment": EnvironmentParser(),
-        "Runtime": RuntimeParser()
+        "Runtime": RuntimeParser(),
+        "Application": ApplicationParser()
     }
 
     def parse_dict(self, in_dict):

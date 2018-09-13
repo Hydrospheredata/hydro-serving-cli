@@ -1,5 +1,4 @@
 from json import JSONDecodeError
-import json
 import requests
 from requests_toolbelt.multipart.encoder import MultipartEncoder, MultipartEncoderMonitor
 
@@ -19,14 +18,14 @@ class RemoteConnection:
         Sends POST request with `data` to the given `url` and returns data as JSON dictionary.
         """
         result = requests.post(self.compose_url(url), json=data)
-        return self._to_json(result)
+        return self.postprocess_response(result)
 
     def get(self, url):
         """
         Sends GET request with to the given `url` and returns data as JSON dictionary.
         """
         result = requests.get(self.compose_url(url))
-        return self._to_json(result)
+        return self.postprocess_response(result)
 
     def multipart_post(self, url, data, files, create_encoder_callback=None):
         encoder = MultipartEncoder(
@@ -44,8 +43,25 @@ class RemoteConnection:
             data=monitor,
             headers={'Content-Type': monitor.content_type}
         )
-        
-        return self._to_json(result)
+
+        return self.postprocess_response(result)
+
+    @staticmethod
+    def postprocess_response(response):
+        """
+
+            Args:
+                response (requests.Response):
+
+            Returns:
+
+            """
+        json = RemoteConnection._to_json(response)
+        try:
+            response.raise_for_status()
+            return json
+        except requests.HTTPError as err:
+            raise HSApiError("Error response from server", json)
 
     @staticmethod
     def _to_json(result):

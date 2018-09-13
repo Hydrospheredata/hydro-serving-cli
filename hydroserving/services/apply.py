@@ -41,7 +41,7 @@ class ApplyService:
                 click.echo("Looking for resources in {} ...".format(os.path.basename(abs_file)))
                 for yaml_file in sorted(get_yamls(abs_file)):
                     yaml_res = self.apply_yaml(yaml_file)
-                    results[file] = yaml_res
+                    results[yaml_file] = yaml_res
             elif is_yaml(file):
                 yaml_res = self.apply_yaml(abs_file)
                 results[file] = yaml_res
@@ -112,11 +112,12 @@ class ApplyService:
         if is_failed:
             raise RuntimeApplyError(path, pull_status)
 
-
     def apply_environment(self, env):
+        click.echo("Ignoring environmnent")
         pass
 
     def apply_application(self, app):
+        click.echo("Ignoring application")
         pass
 
 
