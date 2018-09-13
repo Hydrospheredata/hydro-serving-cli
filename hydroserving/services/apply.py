@@ -7,6 +7,7 @@ from hydroserving.constants.package import TARGET_FOLDER
 from hydroserving.helpers.file import is_yaml, get_yamls
 from hydroserving.helpers.upload import upload_model
 from hydroserving.httpclient.api import ModelAPI, RuntimeAPI
+from hydroserving.httpclient.api.environment import EnvironmentAPI
 from hydroserving.services.client import HttpService
 from hydroserving.models.definitions.environment import Environment
 from hydroserving.models.definitions.application import Application
@@ -58,9 +59,9 @@ class ApplyService:
             elif isinstance(doc_obj, Runtime):
                 responses.append(self.apply_runtime(doc_obj, path))
             elif isinstance(doc_obj, Application):
-                responses.append(self.apply_application(doc_obj))
+                responses.append(self.apply_application(doc_obj, path))
             elif isinstance(doc_obj, Environment):
-                responses.append(self.apply_environment(doc_obj))
+                responses.append(self.apply_environment(doc_obj, path))
             else:
                 raise UnknownResource(doc_obj, path)
         return responses
@@ -112,11 +113,15 @@ class ApplyService:
         if is_failed:
             raise RuntimeApplyError(path, pull_status)
 
-    def apply_environment(self, env):
-        click.echo("Ignoring environmnent")
-        pass
+    def apply_environment(self, env, path):
+        env_api = EnvironmentAPI(self.http.connection())
+        found_env = env_api.get(env.name)
+        if found_env is not None:
+            click.echo(env.name + " environment already exists")
+            return None
+        return env_api.create(env.name, env.selector)
 
-    def apply_application(self, app):
+    def apply_application(self, app, path):
         click.echo("Ignoring application")
         pass
 
