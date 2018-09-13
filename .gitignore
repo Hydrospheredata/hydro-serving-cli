@@ -1,4 +1,7 @@
 *.iml
+.hs
+test-report.xml
+.pypirc
 # Created by .ignore support plugin (hsz.mobi)
 ### Python template
 # Byte-compiled / optimized / DLL files

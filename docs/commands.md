@@ -1,32 +1,38 @@
 # CLI commands
 
-## Basic commands
+## Configure CLI
 
-- hs status
+CLI looks for configs in `~/.hs-home/config.yaml` file.
 
-Shows parsed metadata.
+You can manage clusters via `hs cluster` commands:
 
-- hs contract
+- `hs cluster`
 
-Shows ASCII encoded model contract.
+Shows current selected cluster.
 
-- hs upload --host ... --port ...
+- `hs cluster list`
+
+Shows all available cluster.
+
+- `hs cluster add --name NAME --server SERVER`
+
+Adds a new cluster.
+
+- `hs cluster rm NAME`
+
+Removes specified cluster.
+
+## Upload model
+
+- hs upload
 
 Sends assembled tarball to the specified host.
 
-## Dev deploy
+## Profiler
 
-- hs dev deploy up
+CLI can send your training data to data profiler in the cluster.
 
-Creates a docker runtime with a model.
-
-- hs dev deploy down
-
-Removes previously started docker runtime.
-
- ---
-
-You can find more information about development deployment of a model [here](/docs/dev_deploy.md).
+- hs profiler --model-version MODELNAME:VERSION PATH_TO_FILE
 
 ## Work with Apache Kafka
 

@@ -1,11 +1,9 @@
-import json
-import requests
 from json import JSONDecodeError
 
 import requests
 from requests_toolbelt.multipart.encoder import MultipartEncoder, MultipartEncoderMonitor
 
-from hydroserving.httpclient.errors import *
+from hydroserving.httpclient.errors import ResponseIsNotJson, HSApiError
 
 
 class RemoteConnection:
@@ -49,10 +47,11 @@ class RemoteConnection:
         
         return self._to_json(result)
 
-    def _to_json(self, result):
+    @staticmethod
+    def _to_json(result):
         """
         Tries to parse json from response
-        :param request: response
+        :param result: response
         :return: json dict
         """
         try:

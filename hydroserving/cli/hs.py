@@ -1,36 +1,21 @@
+import os
+
 import click
 
-from hydroserving.helpers.deployment import *
-from hydroserving.helpers.package import get_visible_files
-from hydroserving.models import FolderMetadata, ModelDefinition
-from hydroserving.models.context_object import ContextObject
+from hydroserving.constants.click import CONTEXT_SETTINGS
+from hydroserving.constants.config import HOME_PATH_EXPANDED
+from hydroserving.models.context_object import ContextObject, ContextServices
+from hydroserving.services.config import ConfigService
 
 
-@click.group()
-@click.option('--name',
-              default=os.path.basename(os.getcwd()),
-              show_default=True,
-              required=False)
-@click.option('--model_type',
-              default=None,
-              required=False)
-@click.option('--contract',
-              type=click.Path(exists=True),
-              default=None,
-              required=False)
-@click.option('--description',
-              default=None,
-              required=False)
+@click.group(context_settings=CONTEXT_SETTINGS)
+@click.version_option(message="%(prog)s version %(version)s")
 @click.pass_context
-def hs_cli(ctx, name, model_type, contract, description):
+def hs_cli(ctx):
+    if not os.path.isdir(HOME_PATH_EXPANDED):
+        os.mkdir(HOME_PATH_EXPANDED)
     ctx.obj = ContextObject()
-    metadata = FolderMetadata.from_directory(os.getcwd())
-    if metadata is None:
-        metadata = FolderMetadata(ModelDefinition(
-            name=name,
-            model_type=model_type,
-            contract_path=contract,
-            description=description,
-            payload=get_visible_files('.')
-        ), None)
-    ctx.obj.metadata = metadata
+
+    ctx.obj.services = ContextServices(
+        config=ConfigService(HOME_PATH_EXPANDED)
+    )

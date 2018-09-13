@@ -13,10 +13,9 @@ setup(
     include_package_data=True,
     install_requires=[
         "click==6.7",
-        "docker==3.0.1",
         "pyyaml",
         "kafka-python==1.4.1",
-        "hydro-serving-grpc==0.1.1",
+        "hydro-serving-grpc==0.1.20",
         "requests==2.18.4",
         "requests-toolbelt==0.8.0",
     ],
@@ -25,10 +24,10 @@ setup(
     ],
     test_suite='tests',
     tests_require=[
-        'pytest', 'pylint', 'requests-mock', 'mock>=2.0.0'
+        'pytest>=3.8.0', 'requests_mock>=1.5.0', 'mock>=2.0.0'
     ],
     entry_points='''
         [console_scripts]
-        hs=hydroserving.cli:hs_cli
+        hs=hydroserving.cli.hs:hs_cli
     '''
 )

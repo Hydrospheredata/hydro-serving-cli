@@ -16,20 +16,6 @@ STATUS_HELP = """
 Return the status of current folder.
 """
 
-# LOCAL DEPLOYMENT HELP
-
-DEV_HELP = """
-This command works with local deployment of a model with specified runtime.
-"""
-
-DEV_UP_HELP = """
-Creates the runtime with current model.
-"""
-
-DEV_DOWN_HELP = """
-Deletes the runtime with current model.
-"""
-
 # KAFKA HELP
 KAFKA_HELP = """
 kafka read/write utils
@@ -80,4 +66,22 @@ If you update an existing model, this parameter is ignored.
 
 APPLICATION_HELP = """
 Application API.
+"""
+
+# PROFILER HELP
+PROFILE_HELP = """
+Working with data profiles
+"""
+
+PROFILE_PUSH_HELP = """
+Upload training dataset to compute its profiles
+"""
+
+PROFILE_MODEL_VERSION_HELP ="""
+Model version in "model:version" format
+"""
+
+# CONFIG HELP
+CONFIG_HELP = """
+Utilities to manage hs configs
 """
