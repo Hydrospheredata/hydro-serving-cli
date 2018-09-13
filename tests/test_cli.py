@@ -4,6 +4,7 @@ import os
 import requests
 import requests_mock
 
+from hydroserving.constants.package import TARGET_FOLDER
 from hydroserving.helpers.upload import upload_model
 from hydroserving.httpclient import HydroservingClient
 from hydroserving.parsers.model import ModelParser
@@ -15,7 +16,8 @@ MODEL_FOLDER = "./examples/new_metadata"
 def build_example(hs_api):
     yaml_path = os.path.join(os.getcwd(), "serving.yml")
     meta = ModelParser().parse_yaml(yaml_path)
-    return upload_model(hs_api.models, meta)
+    return upload_model(hs_api.models, meta, TARGET_FOLDER)
+
 
 def test_model_upload():
     def _test_model_upload():
