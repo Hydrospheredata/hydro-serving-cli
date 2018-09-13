@@ -1,58 +1,20 @@
 import os
 import yaml
+from abc import ABC, abstractmethod
 
 
-class ExecutionGraphLike:
+class ExecutionGraphLike(ABC):
+    @abstractmethod
     def to_graph(self):
         """
-        Returns execution graph representation as dict
-        :return: dict
+        Return representation of graph as dict
+        Returns:
+            dict:
         """
-        raise NotImplementedError()
-
-    @staticmethod
-    def from_dict(data_dict):
-        if data_dict is None:
-            return None
-
-        model_dict = data_dict.get("model")
-        graph = data_dict.get("graph")
-
-        if model_dict is not None and graph is not None:
-            raise ValueError("Both model and graph are defined")
-
-        if model_dict is not None:
-            return Model(
-                name=model_dict.get("name"),
-                version=model_dict.get("version"),
-                environment=model_dict.get("environment"),
-                runtime=model_dict.get("runtime")
-            )
-
-        if graph is not None:
-            pipeline_steps = []
-            for stage in graph:
-                new_stage = []
-                for service in stage:
-                    new_service = PipelineService(
-                        name=service.get("name"),
-                        version=service.get("version"),
-                        runtime=service.get("runtime"),
-                        weight=service.get("weight"),
-                        signature=service.get("signature"),
-                        environment=service.get("environment")
-                    )
-                    new_stage.append(new_service)
-                pipeline_steps.append(new_stage)
-
-            return Pipeline(
-                steps=pipeline_steps
-            )
-
-        raise ValueError("Neither model nor graph are defined")
+        pass
 
 
-class Model(ExecutionGraphLike):
+class SingularApplication(ExecutionGraphLike):
     def __init__(self, name, version, runtime, environment):
         self.name = name
         self.version = version
@@ -72,8 +34,18 @@ class Model(ExecutionGraphLike):
         }
 
 
-class PipelineService:
+class ModelService:
     def __init__(self, name, version, runtime, weight, signature, environment):
+        """
+
+        Args:
+            environment (int or None): 
+            signature (str): 
+            weight (int): 
+            runtime (str): 
+            version (int): 
+            name (str): 
+        """
         self.signature = signature
         self.weight = weight
         self.version = version
@@ -82,26 +54,48 @@ class PipelineService:
         self.environment = environment
 
 
+class PipelineStage:
+    def __init__(self, name, services, monitoring, signature):
+        """
+
+        Args:
+            signature (str): 
+            monitoring (dict): 
+            services (list of ModelService): 
+            name (str): 
+        """
+        self.signature = signature
+        self.monitoring = monitoring
+        self.services = services
+        self.name = name
+
+
 class Pipeline(ExecutionGraphLike):
-    def __init__(self, steps):
-        self.steps = steps
+    def __init__(self, stages):
+        """
+
+        Args:
+            stages (list of PipelineStage): 
+        """
+        self.stages = stages
 
     def to_graph(self):
-        new_stages = []
-        for step in self.steps:
-            new_services = []
-            for service in step:
-                service_def = {
-                    "runtime": service.runtime,
-                    "modelVersion": "{}:{}".format(service.name, service.version),
-                    "weight": service.weight,
-                    "environment": service.environment,
-                    "signatureName": service.signature
-                }
-                new_services.append(service_def)
-            new_stages.append({"services": new_services})
-
-        return {"stages": new_stages}
+        raise NotImplementedError()
+        # new_stages = []
+        # for step in self.stages:
+        #     new_services = []
+        #     for service in step:
+        #         service_def = {
+        #             "runtime": service.runtime,
+        #             "modelVersion": "{}:{}".format(service.name, service.version),
+        #             "weight": service.weight,
+        #             "environment": service.environment,
+        #             "signatureName": service.signature
+        #         }
+        #         new_services.append(service_def)
+        #     new_stages.append({"services": new_services})
+        #
+        # return {"stages": new_stages}
 
 
 class KafkaStreamingParams:
@@ -126,41 +120,20 @@ class KafkaStreamingParams:
 
 
 class Application:
-    def __init__(self, name, dependencies=None, graph_like=None, kafka_streaming=None):
+    def __init__(self, name, graph_like=None, kafka_streaming=None):
+        """
+
+        Args:
+            kafka_streaming (KafkaStreamingParams):
+            graph_like (ExecutionGraphLike): 
+            name (str): 
+        """
         self.kafka_streaming = kafka_streaming
         self.name = name
         self.graph_like = graph_like
-        self.dependencies = dependencies
 
     def to_http_payload(self):
         return {
             "name": self.name,
             "executionGraph": self.graph_like.to_graph()
         }
-
-    @staticmethod
-    def from_dict(data_dict):
-        if data_dict is None:
-            return None
-
-        app_dict = data_dict.get("application")
-        return Application(
-            name=app_dict.get("name"),
-            dependencies=app_dict.get("dependencies"),
-            graph_like=ExecutionGraphLike.from_dict(app_dict),
-            kafka_streaming=KafkaStreamingParams.from_dict(app_dict)
-        )
-
-    @staticmethod
-    def from_directory(directory_path):
-        if not os.path.exists(directory_path):
-            raise FileNotFoundError("{} doesn't exist".format(directory_path))
-        if not os.path.isdir(directory_path):
-            raise NotADirectoryError("{} is not a directory".format(directory_path))
-
-        metafile = os.path.join(directory_path, "serving.yaml")
-        if not os.path.exists(metafile):
-            return None
-
-        with open(metafile, "r") as serving_file:
-            return Application.from_dict(yaml.load(serving_file.read()))

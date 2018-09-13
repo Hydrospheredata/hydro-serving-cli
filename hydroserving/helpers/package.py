@@ -162,10 +162,11 @@ def assemble_model(model, target_path):
         model (Model):
         target_path (str):
     """
-    if os.path.exists(target_path):
-        shutil.rmtree(target_path)
-    os.mkdir(target_path)
-    package_path = os.path.join(target_path, model.name, PACKAGE_FILES_DIR)
+    hs_model_dir = os.path.join(target_path, model.name)
+    if os.path.exists(hs_model_dir):
+        shutil.rmtree(hs_model_dir)
+    os.mkdir(hs_model_dir)
+    package_path = os.path.join(hs_model_dir, PACKAGE_FILES_DIR)
     files = pack_model(model, package_path)
 
     tar_name = "{}.tar.gz".format(model.name)
