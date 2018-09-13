@@ -1,6 +1,8 @@
-from hydroserving.parsers.abstract import AbstractParser
+from hydroserving.parsers.abstract import AbstractParser, UnknownResource
 from hydroserving.parsers.config import ConfigParser
+from hydroserving.parsers.environment import EnvironmentParser
 from hydroserving.parsers.model import ModelParser
+from hydroserving.parsers.runtime import RuntimeParser
 
 
 class GenericParser(AbstractParser):
@@ -13,13 +15,15 @@ class GenericParser(AbstractParser):
 
     KIND_TO_PARSER = {
         "Config": ConfigParser(),
-        "Model": ModelParser()
+        "Model": ModelParser(),
+        "Environment": EnvironmentParser(),
+        "Runtime": RuntimeParser()
     }
 
     def parse_dict(self, in_dict):
         kind = in_dict.get("kind")
         parser = GenericParser.KIND_TO_PARSER.get(kind)
         if parser is None:
-            return None
+            raise UnknownResource(None, kind)
         else:
             return parser.parse_dict(in_dict)

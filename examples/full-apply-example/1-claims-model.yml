@@ -1,18 +1,18 @@
 version: v2-alpha
 kind: Model
-name: claims-model
-model_type: python:3.6
+name: claims-model-new
+model-type: python:3.6
 payload:
-  - /user/models/claims-demo/claims-model
+  - /Users/bulat/Documents/Dev/Provectus/hydro-serving-example/models/apply-claims-model/src
 contract:
   claim:
     inputs:
       client_profile:
         shape: [112]
-        dtype: float32 # using tf type names instead of proto ones
+        type: float32 # using tf type names instead of proto ones
         profile: text # data profiling
     outputs:
       amount:
         shape: scalar
-        dtype: int64
+        type: int64
         profile: real

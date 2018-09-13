@@ -85,3 +85,7 @@ Model version in "model:version" format
 CONFIG_HELP = """
 Utilities to manage hs configs
 """
+
+APPLY_HELP = """
+Apply resources from files or directory.
+"""

@@ -1,5 +1,6 @@
 from hydroserving.models.definitions.config import Config
 from hydroserving.services.config import ConfigService
+from hydroserving.services.client import HttpService
 from hydroserving.models.kafka_params import KafkaParams
 
 
@@ -20,10 +21,29 @@ class ContextObject:
 
 
 class ContextServices:
-    def __init__(self, config):
+    def __init__(self, config, http):
         """
 
-        :param config:
-        :type config: ConfigService
+        Args:
+            config (ConfigService):
+            http (HttpService):
         """
         self.config = config
+        self.http = http
+
+    @staticmethod
+    def with_config_path(path):
+        """
+        Instantiates base services.
+        Args:
+            path (str): path to home folder
+
+        Returns:
+            ContextServices
+        """
+        config_service = ConfigService(path)
+        http_service = HttpService(config_service)
+        return ContextServices(
+            config=config_service,
+            http=http_service
+        )

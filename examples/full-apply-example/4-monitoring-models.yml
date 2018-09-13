@@ -2,7 +2,7 @@
 version: v2-alpha
 kind: Model
 name: claims-gan
-model_type: python:3.6
+model-type: python:3.6
 payload:
   - /user/models/claims-demo/gan-model
 contract:
@@ -23,7 +23,7 @@ contract:
 version: v2-alpha
 kind: Model
 name: claims-autoencoder
-model_type: python:3.6
+model-type: python:3.6
 payload:
   - /user/models/claims-demo/autoencoder-model
 contract:
