@@ -113,7 +113,6 @@ def contract_from_dict(data_dict):
     if data_dict is None:
         return None
     signatures = []
-    print(data_dict)
     for sig_name, value in data_dict.items():
         inputs = []
         outputs = []

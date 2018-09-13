@@ -1,5 +1,12 @@
 class Runtime:
     def __init__(self, repository, tag):
+        """
+
+        :param repository:
+        :type repository: str
+        :param tag:
+        :type tag: str
+        """
         self.repository = repository
         self.tag = "latest" if tag is None else tag
 
