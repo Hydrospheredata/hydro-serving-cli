@@ -1,11 +1,12 @@
 import os
+import time
 
 import click
 
 from hydroserving.constants.package import TARGET_FOLDER
 from hydroserving.helpers.file import is_yaml, get_yamls
 from hydroserving.helpers.upload import upload_model
-from hydroserving.httpclient.api import ModelAPI
+from hydroserving.httpclient.api import ModelAPI, RuntimeAPI
 from hydroserving.services.client import HttpService
 from hydroserving.models.definitions.environment import Environment
 from hydroserving.models.definitions.application import Application
@@ -55,7 +56,7 @@ class ApplyService:
             if isinstance(doc_obj, Model):
                 responses.append(self.apply_model(doc_obj, path))
             elif isinstance(doc_obj, Runtime):
-                responses.append(self.apply_runtime(doc_obj))
+                responses.append(self.apply_runtime(doc_obj, path))
             elif isinstance(doc_obj, Application):
                 responses.append(self.apply_application(doc_obj))
             elif isinstance(doc_obj, Environment):
@@ -65,13 +66,52 @@ class ApplyService:
         return responses
 
     def apply_model(self, model, path):
+        """
+
+        Args:
+            model (Model):
+            path (str): where to build
+
+        Returns:
+
+        """
         model_api = ModelAPI(self.http.connection())
         folder = os.path.abspath(os.path.dirname(path))
         target_path = os.path.join(folder, TARGET_FOLDER)
         return upload_model(model_api, model, target_path)
 
-    def apply_runtime(self, runtime):
-        pass
+    def apply_runtime(self, runtime, path):
+        """
+
+        Args:
+            runtime (Runtime):
+
+        Returns:
+
+        """
+        runtime_api = RuntimeAPI(self.http.connection())
+        found_runtime = runtime_api.find(runtime.name, runtime.version)
+        if found_runtime is not None:
+            full_runtime_name = runtime.name + ':' + runtime.version
+            click.echo(full_runtime_name + " already exists")
+            return None
+        resp = runtime_api.create(
+            name=runtime.name,
+            version=runtime.version,
+            rtypes=[runtime.model_type]
+        )
+        is_finished = False
+        is_failed = False
+        pull_status = None
+        while not (is_finished or is_failed):
+            pull_status = runtime_api.get_status(resp['id'])
+            is_finished = pull_status['status'] == 'Finished'
+            is_failed = pull_status['status'] == 'Failed'
+            time.sleep(5)  # wait until it's finished
+
+        if is_failed:
+            raise RuntimeApplyError(path, pull_status)
+
 
     def apply_environment(self, env):
         pass
@@ -95,3 +135,8 @@ class UnknownResource(ApplyError):
 class UnknownFile(ApplyError):
     def __init__(self, path):
         super().__init__(path, "File is not supported: {}".format(path))
+
+
+class RuntimeApplyError(ApplyError):
+    def __init__(self, path, err):
+        super().__init__(path, "Can't create a runtime: {}".format(err))

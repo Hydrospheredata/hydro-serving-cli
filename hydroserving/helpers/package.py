@@ -167,12 +167,13 @@ def assemble_model(model, target_path):
     os.mkdir(target_path)
     package_path = os.path.join(target_path, model.name, PACKAGE_FILES_DIR)
     files = pack_model(model, package_path)
-    package_name = "{}.tar.gz".format(model.name)
-    package_path = os.path.join(TARGET_FOLDER, package_name)
+
+    tar_name = "{}.tar.gz".format(model.name)
+    tar_path = os.path.join(target_path, model.name, tar_name)
     with click.progressbar(iterable=files,
                            item_show_func=lambda x: x,
                            label='Assembling the model') as bar:
-        with tarfile.open(package_path, "w:gz") as tar:
+        with tarfile.open(tar_path, "w:gz") as tar:
             tar_name = tar.name
             for entry in bar:
                 relative_name = os.path.relpath(entry, package_path)

@@ -1,5 +1,5 @@
 from json import JSONDecodeError
-
+import json
 import requests
 from requests_toolbelt.multipart.encoder import MultipartEncoder, MultipartEncoderMonitor
 
@@ -18,7 +18,7 @@ class RemoteConnection:
         """
         Sends POST request with `data` to the given `url` and returns data as JSON dictionary.
         """
-        result = requests.post(self.compose_url(url), data=data)
+        result = requests.post(self.compose_url(url), json=data)
         return self._to_json(result)
 
     def get(self, url):

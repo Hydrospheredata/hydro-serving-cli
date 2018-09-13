@@ -1,6 +1,3 @@
-from hydroserving.httpclient.errors import HSApiError
-
-
 class ProfilesAPI:
     def __init__(self, connection):
         self.connection = connection

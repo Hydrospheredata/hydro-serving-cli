@@ -12,4 +12,6 @@ class RuntimeParser(AbstractParser):
         return Runtime(
             name=in_dict.get("name"),
             version=in_dict.get("version"),
-            model_type=in_dict.get("model-type"))
+            model_type=in_dict.get("model-type"),
+            tags=[],
+            config_params={})
