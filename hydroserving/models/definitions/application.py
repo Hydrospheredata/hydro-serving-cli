@@ -181,11 +181,11 @@ class MonitoringParams:
 
 
 class Application:
-    def __init__(self, name, execution_graph, streaming_params=None):
+    def __init__(self, name, execution_graph, streaming_params):
         """
 
         Args:
-            streaming_params (KafkaStreamingParams):
+            streaming_params (list of KafkaStreamingParams):
             execution_graph (SingularModel or Pipeline):
             name (str): 
         """

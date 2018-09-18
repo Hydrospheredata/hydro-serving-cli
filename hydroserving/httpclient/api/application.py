@@ -53,7 +53,7 @@ class CreateApplicationRequest:
         """
 
         Args:
-            kafka_streaming (KafkaStreamingParams):
+            kafka_streaming (list of KafkaStreamingParams):
             execution_graph (ApplicationExecutionGraphRequest): 
             name (str): 
         """

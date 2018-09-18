@@ -6,19 +6,22 @@ from hydroserving.parsers.abstract import AbstractParser
 
 class ApplicationParser(AbstractParser):
     @staticmethod
-    def parse_streaming_params(in_dict):
+    def parse_streaming_params(in_list):
         """
 
         Args:
-            in_dict (dict):
+            in_list (list of dict):
 
         Returns:
             StreamingParams:
         """
-        return KafkaStreamingParams(
-            source_topic=in_dict["in-topic"],
-            destination_topic=in_dict["out-topic"]
-        )
+        params = []
+        for item in in_list:
+            params.append(KafkaStreamingParams(
+                source_topic=item["in-topic"],
+                destination_topic=item["out-topic"]
+            ))
+        return params
 
     @staticmethod
     def streaming_to_dict(streaming_params):

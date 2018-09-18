@@ -1,0 +1,40 @@
+---
+
+kind: Application
+name: claims-pipeline-app
+
+pipeline:
+  - signature: claims
+    model: claims-preprocessing:1
+    runtime: hydrosphere/serving-runtime-python:3.6-latest
+    environment: cpu
+  - signature: claims
+    monitoring:
+      - name: ks
+        input: feature_42
+        type: Kolmogorov-Smirnov
+        healthcheck:
+          enabled: true
+          treshold: 69
+      - name: gan
+        input: feature
+        type: GAN
+        app: claims-autoencoder-app
+        healthcheck:
+          enabled: true
+          treshold: 69
+      - name: autoencoder
+        input: feature
+        type: Autoencoder
+        app: claims-autoencoder-app
+        healthcheck:
+          enabled: true
+          treshold: 69
+    modelservices:
+      - model: claims-model:1
+        runtime: hydrosphere/serving-runtime-python:3.6-latest
+        environment: xeon
+        weight: 80
+      - model: claims-model-old:2
+        runtime: hydrosphere/serving-runtime-python:3.6-latest
+        weight: 20

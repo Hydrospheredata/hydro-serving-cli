@@ -2,25 +2,28 @@ version: v2-alpha
 kind: Application
 name: claims-simple-app
 
+streaming:
+  - in-topic: i1
+    out-topic: o1
+  - in-topic: i2
+    out-topic: o2
+
 singular:
   monitoring:
-    -
-      name: ks
+    - name: ks
       input: feature_42
       type: Kolmogorov-Smirnov
       healthcheck:
         enabled: true
         treshold: 69
-    -
-      name: gan
+    - name: gan
       input: feature
       type: GAN
       app: claims-autoencoder-app
       healthcheck:
         enabled: true
         treshold: 69
-    -
-      name: autoencoder
+    - name: autoencoder
       input: feature
       type: Autoencoder
       app: claims-autoencoder-app
@@ -29,54 +32,3 @@ singular:
         treshold: 69
   model: claims-model-new:2
   runtime: hydrosphere/serving-runtime-python:3.6-latest
-
-#---
-#
-#kind: Application
-#name: claims-pipeline-app
-#streaming:
-#  in-topic: claims-input
-#  out-topic: claims-output
-#
-#pipeline:
-#  -
-#    signature: claims
-#    model: claims-preprocessing:1
-#    runtime: hydrosphere/serving-runtime-python:3.6-latest
-#    environment: cpu
-#  -
-#    signature: claims
-#    monitoring:
-#      -
-#        name: ks
-#        input: feature_42
-#        type: Kolmogorov-Smirnov
-#        healthcheck:
-#          enabled: true
-#          treshold: 69
-#      -
-#        name: gan
-#        input: feature
-#        type: GAN
-#        app: claims-autoencoder-app
-#        healthcheck:
-#          enabled: true
-#          treshold: 69
-#      -
-#        name: autoencoder
-#        input: feature
-#        type: Autoencoder
-#        app: claims-autoencoder-app
-#        healthcheck:
-#          enabled: true
-#          treshold: 69
-#    modelservices:
-#      -
-#        model: claims-model:1
-#        runtime: hydrosphere/serving-runtime-python:3.6-latest
-#        environment: xeon
-#        weight: 80
-#      -
-#        model: claims-model-old:2
-#        runtime: hydrosphere/serving-runtime-python:3.6-latest
-#        weight: 20
