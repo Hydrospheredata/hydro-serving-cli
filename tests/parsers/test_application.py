@@ -3,7 +3,7 @@ import os
 
 from hydroserving.parsers.application import ApplicationParser
 
-FILES_PATH = os.path.abspath('../../examples/full-apply-example')
+FILES_PATH = os.path.abspath('./examples/full-apply-example')
 
 
 class TestApplicationFile(unittest.TestCase):

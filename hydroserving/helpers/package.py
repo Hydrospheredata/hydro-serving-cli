@@ -165,7 +165,7 @@ def assemble_model(model, target_path):
     hs_model_dir = os.path.join(target_path, model.name)
     if os.path.exists(hs_model_dir):
         shutil.rmtree(hs_model_dir)
-    os.mkdir(hs_model_dir)
+    os.makedirs(hs_model_dir)
     package_path = os.path.join(hs_model_dir, PACKAGE_FILES_DIR)
     files = pack_model(model, package_path)
 
