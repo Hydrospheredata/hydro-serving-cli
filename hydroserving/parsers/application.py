@@ -1,5 +1,6 @@
+from hydroserving.httpclient.api import KafkaStreamingParams
 from hydroserving.models.definitions.application import Application, SingularModel, ModelService, Pipeline, \
-    PipelineStage, StreamingParams, MonitoringParams
+    PipelineStage, MonitoringParams
 from hydroserving.parsers.abstract import AbstractParser
 
 
@@ -14,7 +15,7 @@ class ApplicationParser(AbstractParser):
         Returns:
             StreamingParams:
         """
-        return StreamingParams(
+        return KafkaStreamingParams(
             source_topic=in_dict["in-topic"],
             destination_topic=in_dict["out-topic"]
         )
@@ -83,42 +84,39 @@ class ApplicationParser(AbstractParser):
         )
 
     @staticmethod
-    def parse_model_service_list(in_list, signature):
+    def parse_model_service_list(in_list):
         services = [
-            ApplicationParser.parse_model_service(x, signature)
+            ApplicationParser.parse_model_service(x)
             for x in in_list
         ]
         return services
 
     @staticmethod
-    def parse_model_service(in_dict, signature):
+    def parse_model_service(in_dict):
         return ModelService(
             model_version=in_dict['model'],
             runtime=in_dict['runtime'],
             weight=in_dict['weight'],
-            signature=signature,
             environment=in_dict.get("environment")
         )
 
     @staticmethod
-    def parse_pipeline_stage(name, stage_dict):
+    def parse_pipeline_stage(stage_dict):
         monitoring = ApplicationParser.parse_monitoring_param_list(stage_dict.get("monitoring", []))
         signature = stage_dict['signature']
         multi_services = stage_dict.get('modelservices')
         if multi_services is not None:
-            services = ApplicationParser.parse_model_service_list(multi_services, signature)
+            services = ApplicationParser.parse_model_service_list(multi_services)
         else:
             services = [
                 ModelService(
                     model_version=stage_dict['model'],
                     runtime=stage_dict['runtime'],
                     weight=100,
-                    signature=signature,
                     environment=stage_dict.get('environment')
                 )
             ]
         return PipelineStage(
-            name=name,
             services=services,
             monitoring=monitoring,
             signature=signature
@@ -128,7 +126,7 @@ class ApplicationParser(AbstractParser):
     def parse_pipeline(in_list):
         pipeline_stages = []
         for i, stage in enumerate(in_list):
-            pipeline_stages.append(ApplicationParser.parse_pipeline_stage(str(i), stage))
+            pipeline_stages.append(ApplicationParser.parse_pipeline_stage(stage))
         return Pipeline(pipeline_stages)
 
     def parse_dict(self, in_dict):

@@ -62,10 +62,10 @@ def apply(obj, f):
         result = apply_service.apply(f)
         click.echo(pprint.pformat(result))
     except ApplyError as ex:
-        click.echo("Error while applying {}".format(ex.file))
+        click.echo("Error while applying {}".format(f))
         click.echo(ex)
         raise SystemExit(-1)
     except ParserError as ex:
-        click.echo("Error while applying: {}".format(ex.file))
+        click.echo("Error while applying: {}".format(f))
         click.echo(ex)
         raise SystemExit(-1)

@@ -1,5 +1,8 @@
 from abc import ABC, abstractmethod
 
+from hydroserving.httpclient.api import CreateApplicationRequest, KafkaStreamingParams, ModelServiceRequest, \
+    ApplicationExecutionGraphRequest, ApplicationStageRequest
+
 
 class ExecutionGraphLike(ABC):
     @abstractmethod
@@ -11,19 +14,26 @@ class ExecutionGraphLike(ABC):
         """
         pass
 
-
-class ModelService(ExecutionGraphLike):
-    def __init__(self, model_version, runtime, weight, signature, environment):
+    @abstractmethod
+    def to_create_request(self, id_mapper):
         """
 
         Args:
-            environment (int or None):
-            signature (str or None):
+            id_mapper (dict):
+        """
+        pass
+
+
+class ModelService(ExecutionGraphLike):
+    def __init__(self, model_version, runtime, weight, environment):
+        """
+
+        Args:
+            environment (str or None):
             weight (int):
             runtime (str):
             model_version (str):
         """
-        self.signature = signature
         self.weight = weight
         self.model_version = model_version
         self.runtime = runtime
@@ -37,10 +47,22 @@ class ModelService(ExecutionGraphLike):
         }
         if self.environment is not None:
             fields["environment"] = self.environment
-        if self.signature is not None:
-            fields["signatureName"] = self.signature
-
         return fields
+
+    def to_create_request(self, id_mapper):
+        request = ModelServiceRequest(
+            model_version_id=id_mapper[self.model_version],
+            runtime_id=id_mapper[self.runtime],
+            environment_id=None,
+            signature_name=None,
+            weight=None
+        )
+        if self.environment is not None:
+            request.environmentId = id_mapper[self.environment]
+        if self.weight is not None:
+            request.weight = self.weight
+
+        return request
 
 
 class SingularModel(ExecutionGraphLike):
@@ -57,7 +79,6 @@ class SingularModel(ExecutionGraphLike):
             model_version=model_version,
             runtime=runtime,
             weight=100,
-            signature=None,
             environment=environment
         )
         self.monitoring_params = monitoring_params
@@ -71,13 +92,24 @@ class SingularModel(ExecutionGraphLike):
             }]
         }
 
+    def to_create_request(self, id_mapper):
+        fict_pipeline = Pipeline([
+            PipelineStage(
+                services=[self.model_service],
+                monitoring=self.monitoring_params,
+                signature="signature-to-be-ignored"
+            )
+        ])
+
+        return fict_pipeline.to_create_request(id_mapper)
+
 
 class PipelineStage(ExecutionGraphLike):
-    def __init__(self, name, services, monitoring, signature):
+    def __init__(self, services, monitoring, signature):
         """
 
         Args:
-            signature (str): 
+            signature (str):
             monitoring (list of MonitoringParams):
             services (list of ModelService): 
             name (str): 
@@ -85,17 +117,24 @@ class PipelineStage(ExecutionGraphLike):
         self.signature = signature
         self.monitoring = monitoring
         self.services = services
-        self.name = name
 
     def to_graph_repr(self):
         dict_services = []
         for service in self.services:
             service_repr = service.to_graph_repr()
-            service_repr['signature'] = self.signature
+            service_repr['signatureName'] = self.signature  # override with pipeline signature
             dict_services.append(service_repr)
         return {
             'services': dict_services
         }
+
+    def to_create_request(self, id_mapper):
+        stage_services = []
+        for service in self.services:
+            service_repr = service.to_create_request(id_mapper)
+            service_repr.signatureName = self.signature
+            stage_services.append(service_repr)
+        return ApplicationStageRequest(stage_services)
 
 
 class Pipeline(ExecutionGraphLike):
@@ -113,17 +152,12 @@ class Pipeline(ExecutionGraphLike):
             'stages': list(stages)
         }
 
+    def to_create_request(self, id_mapper):
+        stages = [x.to_create_request(id_mapper) for x in self.stages]
 
-class StreamingParams:
-    def __init__(self, source_topic, destination_topic):
-        """
-
-        Args:
-            destination_topic (str):
-            source_topic (str):
-        """
-        self.source_topic = source_topic
-        self.destination_topic = destination_topic
+        return ApplicationExecutionGraphRequest(
+            stages=stages
+        )
 
 
 class MonitoringParams:
@@ -151,10 +185,19 @@ class Application:
         """
 
         Args:
-            streaming_params (StreamingParams):
+            streaming_params (KafkaStreamingParams):
             execution_graph (SingularModel or Pipeline):
             name (str): 
         """
+        if streaming_params is None:
+            streaming_params = []
         self.streaming_params = streaming_params
         self.name = name
         self.execution_graph = execution_graph
+
+    def to_create_request(self, id_mapper):
+        return CreateApplicationRequest(
+            name=self.name,
+            kafka_streaming=self.streaming_params,
+            execution_graph=self.execution_graph.to_create_request(id_mapper)
+        )
