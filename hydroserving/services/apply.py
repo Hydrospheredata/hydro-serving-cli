@@ -1,7 +1,9 @@
 import os
 import time
+import json
 
 import click
+import pprint
 
 from hydroserving.constants.package import TARGET_FOLDER
 from hydroserving.helpers.file import is_yaml, get_yamls
@@ -122,7 +124,34 @@ class ApplyService:
         return env_api.create(env.name, env.selector)
 
     def apply_application(self, app, path):
-        click.echo("Ignoring application")
+        """
+
+        {
+          "filter": {
+            "sourceName": "client_profile",
+            "stageId": "app1stage0"
+          },
+          "name": "auto2",
+          "metricProviderSpecification": {
+            "metricProviderClass": "io.hydrosphere.sonar.core.metrics.providers.Autoencoder",
+            "config": {
+              "applicationId": 1
+            },
+            "withHealth": true,
+            "healthConfig": {
+              "threshold": "17"
+            }
+          }
+        }
+        Args:
+            app:
+            path:
+
+        Returns:
+
+        """
+        click.echo("Parsed app:")
+        print(json.dumps(self.parser.to_dict(app)))
         pass
 
 

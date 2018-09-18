@@ -1,76 +1,86 @@
-# -- PIPELINE APP CONFIG --
 version: v2-alpha
 kind: Application
-name: claims-pipeline-app
+name: claims-simple-app
 streaming:
   in-topic: claims-input
   out-topic: claims-output
-shadowing: true
 
 singular:
   monitoring:
-    ks:
+    -
+      name: ks
       input: feature_42
       type: Kolmogorov-Smirnov
-      is_healthcheck: true
-    gan:
+      healthcheck:
+        enabled: true
+        treshold: 69
+    -
+      name: gan
       input: feature
       type: GAN
       app: claims-autoencoder-app
-      is_healthcheck: true
-    autoencoder:
+      healthcheck:
+        enabled: true
+        treshold: 69
+    -
+      name: autoencoder
       input: feature
       type: Autoencoder
       app: claims-autoencoder-app
-      is_healthcheck: true
-  model: 
-    name: claims-model
-    # version: 1 # version is not specified - use the latest one
-  runtime:
-    name: hydrosphere/serving-runtime-python
-    version: 3.6-latest
+      healthcheck:
+        enabled: true
+        treshold: 69
+  model: claims-model:1
+  runtime: hydrosphere/serving-runtime-python:3.6-latest
+  environment: intel-xeon
 
 ---
 
-version: v2-alpha
 kind: Application
 name: claims-pipeline-app
 streaming:
   in-topic: claims-input
   out-topic: claims-output
-shadowing: true
 
 pipeline:
-  1:
+  -
+    signature: claims
+    model: claims-preprocessing:1
+    runtime: hydrosphere/serving-runtime-python:3.6-latest
+    environment: cpu
+  -
     signature: claims
     monitoring:
-      ks:
+      -
+        name: ks
         input: feature_42
         type: Kolmogorov-Smirnov
-        is_healthcheck: true
-      gan:
+        healthcheck:
+          enabled: true
+          treshold: 69
+      -
+        name: gan
         input: feature
         type: GAN
         app: claims-autoencoder-app
-        is_healthcheck: true
-      autoencoder:
+        healthcheck:
+          enabled: true
+          treshold: 69
+      -
+        name: autoencoder
         input: feature
         type: Autoencoder
         app: claims-autoencoder-app
-        is_healthcheck: true
-    definition:
+        healthcheck:
+          enabled: true
+          treshold: 69
+    modelservices:
       -
-        model:
-          name: claims-model
-          # version: 1 # version is not specified - use the latest one
-        runtime:
-          name: hydrosphere/serving-runtime-python
-          version: 3.6-latest
+        model: claims-model:1
+        runtime: hydrosphere/serving-runtime-python:3.6-latest
+        environment: xeon
         weight: 80
       -
-        model:
-          name: claims-model-old
-        runtime:
-          name: hydrosphere/serving-runtime-python
-          version: 3.6-latest
+        model: claims-model-old:2
+        runtime: hydrosphere/serving-runtime-python:3.6-latest
         weight: 20

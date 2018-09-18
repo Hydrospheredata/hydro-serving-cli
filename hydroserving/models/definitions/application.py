@@ -1,11 +1,9 @@
-import os
-import yaml
 from abc import ABC, abstractmethod
 
 
 class ExecutionGraphLike(ABC):
     @abstractmethod
-    def to_graph(self):
+    def to_graph_repr(self):
         """
         Return representation of graph as dict
         Returns:
@@ -14,53 +12,73 @@ class ExecutionGraphLike(ABC):
         pass
 
 
-class SingularApplication(ExecutionGraphLike):
-    def __init__(self, name, version, runtime, environment):
-        self.name = name
-        self.version = version
+class ModelService(ExecutionGraphLike):
+    def __init__(self, model_version, runtime, weight, signature, environment):
+        """
+
+        Args:
+            environment (int or None):
+            signature (str or None):
+            weight (int):
+            runtime (str):
+            model_version (str):
+        """
+        self.signature = signature
+        self.weight = weight
+        self.model_version = model_version
         self.runtime = runtime
         self.environment = environment
 
-    def to_graph(self):
+    def to_graph_repr(self):
+        fields = {
+            "runtime": self.runtime,
+            "modelVersion": self.model_version,
+            "weight": self.weight,
+        }
+        if self.environment is not None:
+            fields["environment"] = self.environment
+        if self.signature is not None:
+            fields["signatureName"] = self.signature
+
+        return fields
+
+
+class SingularModel(ExecutionGraphLike):
+    def __init__(self, model_version, runtime, environment, monitoring_params):
+        """
+
+        Args:
+            model_version (str):
+            runtime (str):
+            environment (str or None):
+            monitoring_params (list of MonitoringParams):
+        """
+        self.model_service = ModelService(
+            model_version=model_version,
+            runtime=runtime,
+            weight=100,
+            signature=None,
+            environment=environment
+        )
+        self.monitoring_params = monitoring_params
+
+    def to_graph_repr(self):
         return {
             "stages": [{
-                "services": [{
-                    "runtime": self.runtime,
-                    "modelVersion": "{}:{}".format(self.name, self.version),
-                    "weight": 100,
-                    "environment": self.environment
-                }]
+                "services": [
+                    self.model_service.to_graph_repr()
+                ]
             }]
         }
 
 
-class ModelService:
-    def __init__(self, name, version, runtime, weight, signature, environment):
-        """
-
-        Args:
-            environment (int or None): 
-            signature (str): 
-            weight (int): 
-            runtime (str): 
-            version (int): 
-            name (str): 
-        """
-        self.signature = signature
-        self.weight = weight
-        self.version = version
-        self.runtime = runtime
-        self.name = name
-        self.environment = environment
-
-
-class PipelineStage:
+class PipelineStage(ExecutionGraphLike):
     def __init__(self, name, services, monitoring, signature):
         """
 
         Args:
             signature (str): 
-            monitoring (dict): 
+            monitoring (list of MonitoringParams):
             services (list of ModelService): 
             name (str): 
         """
@@ -68,6 +86,16 @@ class PipelineStage:
         self.monitoring = monitoring
         self.services = services
         self.name = name
+
+    def to_graph_repr(self):
+        dict_services = []
+        for service in self.services:
+            service_repr = service.to_graph_repr()
+            service_repr['signature'] = self.signature
+            dict_services.append(service_repr)
+        return {
+            'services': dict_services
+        }
 
 
 class Pipeline(ExecutionGraphLike):
@@ -79,61 +107,54 @@ class Pipeline(ExecutionGraphLike):
         """
         self.stages = stages
 
-    def to_graph(self):
-        raise NotImplementedError()
-        # new_stages = []
-        # for step in self.stages:
-        #     new_services = []
-        #     for service in step:
-        #         service_def = {
-        #             "runtime": service.runtime,
-        #             "modelVersion": "{}:{}".format(service.name, service.version),
-        #             "weight": service.weight,
-        #             "environment": service.environment,
-        #             "signatureName": service.signature
-        #         }
-        #         new_services.append(service_def)
-        #     new_stages.append({"services": new_services})
-        #
-        # return {"stages": new_stages}
+    def to_graph_repr(self):
+        stages = [x.to_graph_repr() for x in self.stages]
+        return {
+            'stages': list(stages)
+        }
 
 
-class KafkaStreamingParams:
-    def __init__(self, source_topic, destination_topic, error_topic, consumer_id):
-        self.source_topic = source_topic
-        self.destination_topic = destination_topic
-        self.error_topic = error_topic
-        self.consumer_id = consumer_id
-
-    @staticmethod
-    def from_dict(data_dict):
-        if data_dict is None:
-            return None
-
-        kafka_dict = data_dict.get("kafka")
-        return KafkaStreamingParams(
-            source_topic=kafka_dict.get("source_topic"),
-            destination_topic=kafka_dict.get("destination_topic"),
-            error_topic=kafka_dict.get("error_topic"),
-            consumer_id=kafka_dict.get("consumer_id")
-        )
-
-
-class Application:
-    def __init__(self, name, graph_like=None, kafka_streaming=None):
+class StreamingParams:
+    def __init__(self, source_topic, destination_topic):
         """
 
         Args:
-            kafka_streaming (KafkaStreamingParams):
-            graph_like (ExecutionGraphLike): 
+            destination_topic (str):
+            source_topic (str):
+        """
+        self.source_topic = source_topic
+        self.destination_topic = destination_topic
+
+
+class MonitoringParams:
+    def __init__(self, name, input, type, app, healthcheck_on, threshold):
+        """
+
+        Args:
+            threshold (float or None):
+            healthcheck_on (bool):
+            app (str):
+            type (str):
+            input (str):
+            name (str):
+        """
+        self.threshold = threshold
+        self.healthcheck_on = healthcheck_on
+        self.app = app
+        self.type = type
+        self.input = input
+        self.name = name
+
+
+class Application:
+    def __init__(self, name, execution_graph, streaming_params=None):
+        """
+
+        Args:
+            streaming_params (StreamingParams):
+            execution_graph (SingularModel or Pipeline):
             name (str): 
         """
-        self.kafka_streaming = kafka_streaming
+        self.streaming_params = streaming_params
         self.name = name
-        self.graph_like = graph_like
-
-    def to_http_payload(self):
-        return {
-            "name": self.name,
-            "executionGraph": self.graph_like.to_graph()
-        }
+        self.execution_graph = execution_graph
