@@ -14,7 +14,7 @@ setup(
     install_requires=[
         "click==6.7",
         "pyyaml",
-        "kafka-python==1.4.1",
+        "kafka-python==1.4.3",
         "hydro-serving-grpc==0.1.20",
         "requests==2.18.4",
         "requests-toolbelt==0.8.0",

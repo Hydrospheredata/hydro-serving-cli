@@ -1,25 +1,5 @@
 from hydroserving.httpclient.remote_connection import RemoteConnection
 
-"""
-        {
-          "filter": {
-            "sourceName": "client_profile",
-            "stageId": "app1stage0"
-          },
-          "name": "auto2",
-          "metricProviderSpecification": {
-            "metricProviderClass": "io.hydrosphere.sonar.core.metrics.providers.Autoencoder",
-            "config": {
-              "applicationId": 1
-            },
-            "withHealth": true,
-            "healthConfig": {
-              "threshold": "17"
-            }
-          }
-        }
-"""
-
 METRIC_PROVIDERS = {
     "Autoencoder": "io.hydrosphere.sonar.core.metrics.providers.Autoencoder",
     "Kolmogorov-Smirnov": "io.hydrosphere.sonar.core.metrics.providers.KolmogorovSmirnov",
@@ -120,3 +100,6 @@ class MonitoringAPI:
             aggregation_id (str):
         """
         return self.connection.delete("/monitoring/aggregations/" + aggregation_id)
+
+    def list_aggregations(self):
+        return self.connection.get("/monitoring/aggregations")
