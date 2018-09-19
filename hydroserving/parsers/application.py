@@ -45,6 +45,8 @@ class ApplicationParser(AbstractParser):
         Returns:
             list of MonitoringParams: 
         """
+        if in_list is None:
+            return []
         result = [
             ApplicationParser.parse_monitoring_params(x)
             for x in in_list
@@ -68,7 +70,7 @@ class ApplicationParser(AbstractParser):
             name=in_dict['name'],
             input=in_dict['input'],
             type=in_dict['type'],
-            app=in_dict.get('application'),
+            app=in_dict.get('app'),
             healthcheck_on=False,
             threshold=None
         )

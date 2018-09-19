@@ -80,7 +80,19 @@ class ApplyService:
         model_api = self.http.model_api()
         folder = os.path.abspath(os.path.dirname(path))
         target_path = os.path.join(folder, TARGET_FOLDER)
-        return upload_model(model_api, model, target_path)
+        build_status = upload_model(model_api, model, target_path)
+
+        is_finished = False
+        is_failed = False
+        while not (is_finished or is_failed):
+            build_status = model_api.build_status(str(build_status['id']))
+            is_finished = build_status['status'] == 'Finished'
+            is_failed = build_status['status'] == 'Failed'
+            time.sleep(5)  # wait until it's finished
+
+        if is_failed:
+            raise ModelApplyError(build_status)
+        print(build_status)
 
     def apply_runtime(self, runtime):
         """
@@ -165,7 +177,7 @@ class ApplyService:
                 if mon_type_res is None:
                     raise ValueError("Can't find metric provider for : {}".format(mon.__dict__))
                 if mon.app is None:
-                    if mon_type_res not in PARAMETRIC_PROVIDERS:
+                    if mon_type_res in PARAMETRIC_PROVIDERS:
                         raise ValueError("Application (app) is required for metric {}".format(mon.__dict__))
                 else:
                     if mon.app not in id_mapper_mon:  # check for appName -> appId
@@ -176,7 +188,6 @@ class ApplyService:
                         if mon_app_result is None:
                             raise ValueError("Can't find metric application for {}".format(mon.__dict__))
                         id_mapper_mon[mon.app] = mon_app_result['id']
-
 
         return id_mapper_mon
 
@@ -241,14 +252,20 @@ class ApplyService:
         results = []
         for idx, stage in enumerate(pipeline.stages):
             for mon in stage.monitoring:
+                spec = MetricProviderSpecification(
+                    metric_provider_class=METRIC_PROVIDERS[mon.type],
+                    config=None,
+                    with_health=mon.healthcheck_on,
+                    health_config=None
+                )
+                if mon.app is not None:
+                    spec.config = MetricConfigSpecification(id_mapper_mon[mon.app])
+                if mon.threshold is not None:
+                    spec.healthConfig = HealthConfigSpecification(mon.threshold)
+
                 aggregation = EntryAggregationSpecification(
                     name=mon.name,
-                    metric_provider_specification=MetricProviderSpecification(
-                        metric_provider_class=METRIC_PROVIDERS[mon.type],
-                        config=MetricConfigSpecification(id_mapper_mon[mon.app]),
-                        with_health=mon.healthcheck_on,
-                        health_config=HealthConfigSpecification(mon.threshold)
-                    ),
+                    metric_provider_specification=spec,
                     filter=FilterSpecification(
                         source_name=mon.input,
                         stage_id="app{}stage{}".format(app_id, idx)
@@ -271,6 +288,11 @@ class UnknownResource(ApplyError):
 class UnknownFile(ApplyError):
     def __init__(self, path):
         super().__init__(path, "File is not supported: {}".format(path))
+
+
+class ModelApplyError(ApplyError):
+    def __init__(self, err):
+        super().__init__("Can't apply a model: {}".format(err))
 
 
 class RuntimeApplyError(ApplyError):

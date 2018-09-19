@@ -23,11 +23,17 @@ def get_payload_files(payload):
     files = {}
     for x in payload:
         if os.path.isfile(x):
-            files[os.path.dirname(x)] = x
-        else:
+            parent_dir = os.path.dirname(x)
+            files[parent_dir] = [os.path.relpath(x, parent_dir)]
+        elif os.path.isdir(x):
             sub_files = get_visible_files(x, recursive=True)
+            rel_file_list = []
             for sub_file in sub_files:
-                files[x] = os.path.relpath(sub_file, x)
+                rel_file_list.append(os.path.relpath(sub_file, x))
+            files[x] = rel_file_list
+        else:
+            raise ValueError("Path {} doesn't exist".format(x))
+    print(files)
     return files
 
 
@@ -72,10 +78,11 @@ def pack_payload(model, package_path):
     with click.progressbar(length=len(all_files),
                            item_show_func=lambda x: x,
                            label='Packing the model') as bar:
-        for parent, file in files.items():
-            copied_file = copy_to_target(parent, file, package_path)
-            copied_files.append(copied_file)
-            bar.update(1)
+        for parent, sub_files in files.items():
+            for file in sub_files:
+                copied_file = copy_to_target(parent, file, package_path)
+                copied_files.append(copied_file)
+                bar.update(1)
 
     return copied_files
 
@@ -98,9 +105,8 @@ def pack_model(model, package_path):
     """
     Copies payload and contract to TARGET_PATH
     Args:
-        package_path:
+        package_path (str):
         model (Model):
-        target_path (str):
 
     Returns:
 

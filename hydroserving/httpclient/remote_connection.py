@@ -47,7 +47,7 @@ class RemoteConnection:
 
     def multipart_post(self, url, data, files, create_encoder_callback=None):
         encoder = MultipartEncoder(
-            fields={**self._remove_none(data), **files}
+            fields={**self.preprocess_request(data), **files}
         )
 
         callback = None

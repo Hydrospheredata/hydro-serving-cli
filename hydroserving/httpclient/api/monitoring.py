@@ -21,16 +21,16 @@ from hydroserving.httpclient.remote_connection import RemoteConnection
 """
 
 METRIC_PROVIDERS = {
-    "autoencoder": "io.hydrosphere.sonar.core.metrics.providers.Autoencoder",
-    "kolmogorov-smirnov": "io.hydrosphere.sonar.core.metrics.providers.KolmogorovSmirnov",
-    "random-forest": "io.hydrosphere.sonar.core.metrics.providers.RandomForest",
-    "gan": "io.hydrosphere.sonar.core.metrics.providers.GAN"
+    "Autoencoder": "io.hydrosphere.sonar.core.metrics.providers.Autoencoder",
+    "Kolmogorov-Smirnov": "io.hydrosphere.sonar.core.metrics.providers.KolmogorovSmirnov",
+    "RandomForest": "io.hydrosphere.sonar.core.metrics.providers.RandomForest",
+    "GAN": "io.hydrosphere.sonar.core.metrics.providers.GAN"
 }
 
 PARAMETRIC_PROVIDERS = [
-    METRIC_PROVIDERS['autoencoder'],
-    METRIC_PROVIDERS['random-forest'],
-    METRIC_PROVIDERS['gan']
+    METRIC_PROVIDERS['Autoencoder'],
+    METRIC_PROVIDERS['RandomForest'],
+    METRIC_PROVIDERS['GAN']
 ]
 
 
