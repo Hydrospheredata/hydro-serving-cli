@@ -7,6 +7,8 @@ from hydroserving.constants.package import TARGET_FOLDER
 from hydroserving.helpers.file import is_yaml, get_yamls
 from hydroserving.helpers.upload import upload_model
 from hydroserving.httpclient.api.environment import EnvironmentAPI
+from hydroserving.httpclient.api.monitoring import EntryAggregationSpecification, MetricProviderSpecification, \
+    METRIC_PROVIDERS, MetricConfigSpecification, HealthConfigSpecification, FilterSpecification
 from hydroserving.models.definitions.application import Application, SingularModel, Pipeline, PipelineStage, \
     ModelService
 from hydroserving.models.definitions.environment import Environment
@@ -124,26 +126,8 @@ class ApplyService:
     def apply_application(self, app):
         """
 
-        {
-          "filter": {
-            "sourceName": "client_profile",
-            "stageId": "app1stage0"
-          },
-          "name": "auto2",
-          "metricProviderSpecification": {
-            "metricProviderClass": "io.hydrosphere.sonar.core.metrics.providers.Autoencoder",
-            "config": {
-              "applicationId": 1
-            },
-            "withHealth": true,
-            "healthConfig": {
-              "threshold": "17"
-            }
-          }
-        }
         Args:
-            app:
-            path:
+            app (Application):
 
         Returns:
 
@@ -178,7 +162,8 @@ class ApplyService:
         click.echo("Server app response")
         click.echo(result)
 
-        # TODO: configure monitoring
+        app_id = result['id']
+        self.configure_monitoring(app_id, app)
 
     def check_stage_deps(self, stage):
         """
@@ -218,6 +203,33 @@ class ApplyService:
         id_mapper[service.runtime] = runtime_res['id']
 
         return id_mapper
+
+    def configure_monitoring(self, app_id, app):
+        """
+
+        Args:
+            app (Application):
+            app_id (int):
+        """
+        monitoring_api = self.http.monitoring_api()
+        pipeline = app.execution_graph.as_pipeline()
+        for stage in pipeline.stages:
+            for monitoring_config in stage.monitoring:
+                aggregation = EntryAggregationSpecification(
+                    name=monitoring_config.name,
+                    metric_provider_specification=MetricProviderSpecification(
+                        metric_provider_class=METRIC_PROVIDERS[monitoring_config.type],
+                        config=MetricConfigSpecification(None),  # FIXME replace with app id
+                        with_health=monitoring_config.healthcheck_on,
+                        health_config=HealthConfigSpecification(monitoring_config.threshold)
+                    ),
+                    filter=FilterSpecification(
+                        source_name=None,  # FIXME replace with input?
+                        stage_id=None  # FIXME replace with stageid
+                    )
+                )
+                # monitoring_api.create_aggregation(aggregation)
+        raise NotImplementedError()
 
 
 class ApplyError(RuntimeError):

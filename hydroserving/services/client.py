@@ -1,5 +1,6 @@
 from hydroserving.httpclient.api import ApplicationAPI, ModelAPI, RuntimeAPI
 from hydroserving.httpclient.api.environment import EnvironmentAPI
+from hydroserving.httpclient.api.monitoring import MonitoringAPI
 from hydroserving.httpclient.client import RemoteConnection
 from hydroserving.services.config import ConfigService
 
@@ -12,29 +13,33 @@ class HttpService:
             config_service (ConfigService):
         """
         self.config_service = config_service
+        self.connection = self.get_connection()
 
     def get(self, url):
-        return self.connection().get(url)
+        return self.connection.get(url)
 
     def post(self, url, data):
-        return self.connection().post(url, data)
+        return self.connection.post(url, data)
 
     def multipart_post(self, url, data, files, create_encoder_callback=None):
-        return self.connection().multipart_post(url, data, files, create_encoder_callback)
+        return self.connection.multipart_post(url, data, files, create_encoder_callback)
 
     def app_api(self):
-        return ApplicationAPI(self.connection())
+        return ApplicationAPI(self.connection)
 
     def model_api(self):
-        return ModelAPI(self.connection())
+        return ModelAPI(self.connection)
 
     def env_api(self):
-        return EnvironmentAPI(self.connection())
+        return EnvironmentAPI(self.connection)
 
     def runtime_api(self):
-        return RuntimeAPI(self.connection())
+        return RuntimeAPI(self.connection)
 
-    def connection(self):
+    def monitoring_api(self):
+        return MonitoringAPI(self.connection)
+
+    def get_connection(self):
         """
 
         Returns :

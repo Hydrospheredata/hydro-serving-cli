@@ -6,15 +6,6 @@ from hydroserving.httpclient.api import CreateApplicationRequest, KafkaStreaming
 
 class ExecutionGraphLike(ABC):
     @abstractmethod
-    def to_graph_repr(self):
-        """
-        Return representation of graph as dict
-        Returns:
-            dict:
-        """
-        pass
-
-    @abstractmethod
     def to_create_request(self, id_mapper):
         """
 
@@ -38,16 +29,6 @@ class ModelService(ExecutionGraphLike):
         self.model_version = model_version
         self.runtime = runtime
         self.environment = environment
-
-    def to_graph_repr(self):
-        fields = {
-            "runtime": self.runtime,
-            "modelVersion": self.model_version,
-            "weight": self.weight,
-        }
-        if self.environment is not None:
-            fields["environment"] = self.environment
-        return fields
 
     def to_create_request(self, id_mapper):
         request = ModelServiceRequest(
@@ -83,16 +64,15 @@ class SingularModel(ExecutionGraphLike):
         )
         self.monitoring_params = monitoring_params
 
-    def to_graph_repr(self):
-        return {
-            "stages": [{
-                "services": [
-                    self.model_service.to_graph_repr()
-                ]
-            }]
-        }
-
     def to_create_request(self, id_mapper):
+        return self.as_pipeline().to_create_request(id_mapper)
+
+    def as_pipeline(self):
+        """
+        Wraps singular model as complete pipeline.
+        Returns:
+            Pipeline:
+        """
         fict_pipeline = Pipeline([
             PipelineStage(
                 services=[self.model_service],
@@ -100,8 +80,7 @@ class SingularModel(ExecutionGraphLike):
                 signature="signature-to-be-ignored"
             )
         ])
-
-        return fict_pipeline.to_create_request(id_mapper)
+        return fict_pipeline
 
 
 class PipelineStage(ExecutionGraphLike):
@@ -117,16 +96,6 @@ class PipelineStage(ExecutionGraphLike):
         self.signature = signature
         self.monitoring = monitoring
         self.services = services
-
-    def to_graph_repr(self):
-        dict_services = []
-        for service in self.services:
-            service_repr = service.to_graph_repr()
-            service_repr['signatureName'] = self.signature  # override with pipeline signature
-            dict_services.append(service_repr)
-        return {
-            'services': dict_services
-        }
 
     def to_create_request(self, id_mapper):
         stage_services = []
@@ -146,18 +115,20 @@ class Pipeline(ExecutionGraphLike):
         """
         self.stages = stages
 
-    def to_graph_repr(self):
-        stages = [x.to_graph_repr() for x in self.stages]
-        return {
-            'stages': list(stages)
-        }
-
     def to_create_request(self, id_mapper):
         stages = [x.to_create_request(id_mapper) for x in self.stages]
 
         return ApplicationExecutionGraphRequest(
             stages=stages
         )
+
+    def as_pipeline(self):
+        """
+
+        Returns:
+            Pipeline: returns self
+        """
+        return self
 
 
 class MonitoringParams:

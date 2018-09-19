@@ -38,6 +38,13 @@ class RemoteConnection:
         result = requests.get(self.compose_url(url))
         return self.postprocess_response(result)
 
+    def delete(self, url):
+        """
+        Sends DELETE request with to the given `url` and returns data as JSON dictionary.
+        """
+        result = requests.delete(self.compose_url(url))
+        return self.postprocess_response(result)
+
     def multipart_post(self, url, data, files, create_encoder_callback=None):
         encoder = MultipartEncoder(
             fields={**self._remove_none(data), **files}
