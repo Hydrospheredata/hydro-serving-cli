@@ -12,20 +12,20 @@ singular:
   monitoring:
     - name: ks
       input: feature_42
-      type: Kolmogorov-Smirnov
+      type: kolmogorov-smirnov
       healthcheck:
         enabled: true
         treshold: 69
     - name: gan
       input: feature
-      type: GAN
+      type: gan
       app: claims-autoencoder-app
       healthcheck:
         enabled: true
         treshold: 69
     - name: autoencoder
       input: feature
-      type: Autoencoder
+      type: autoencoder
       app: claims-autoencoder-app
       healthcheck:
         enabled: true

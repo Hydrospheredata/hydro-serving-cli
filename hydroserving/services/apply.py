@@ -8,9 +8,8 @@ from hydroserving.helpers.file import is_yaml, get_yamls
 from hydroserving.helpers.upload import upload_model
 from hydroserving.httpclient.api.environment import EnvironmentAPI
 from hydroserving.httpclient.api.monitoring import EntryAggregationSpecification, MetricProviderSpecification, \
-    METRIC_PROVIDERS, MetricConfigSpecification, HealthConfigSpecification, FilterSpecification
-from hydroserving.models.definitions.application import Application, SingularModel, Pipeline, PipelineStage, \
-    ModelService
+    METRIC_PROVIDERS, MetricConfigSpecification, HealthConfigSpecification, FilterSpecification, PARAMETRIC_PROVIDERS
+from hydroserving.models.definitions.application import Application, PipelineStage, ModelService
 from hydroserving.models.definitions.environment import Environment
 from hydroserving.models.definitions.model import Model
 from hydroserving.models.definitions.runtime import Runtime
@@ -134,24 +133,10 @@ class ApplyService:
         """
         application_api = self.http.app_api()
 
-        exec_graph = app.execution_graph
-        if isinstance(exec_graph, SingularModel):
-            stages = [PipelineStage(
-                services=[exec_graph.model_service],
-                monitoring=exec_graph.monitoring_params,
-                signature="ignore"
-            )]
-        elif isinstance(exec_graph, Pipeline):
-            stages = exec_graph.stages
-        else:
-            raise ValueError("Unknown app graph", app)
-
-        id_mapper_app = {}
-        for stage in stages:
-            id_mapper_stage = self.check_stage_deps(stage)
-            id_mapper_app.update(id_mapper_stage)
-
+        id_mapper_app = self.check_app_deps(app)
         app_request = app.to_create_request(id_mapper_app)
+
+        id_mapper_mon = self.check_monitoring_deps(app)
 
         found_app = application_api.find(app.name)
         if found_app is None:
@@ -163,7 +148,46 @@ class ApplyService:
         click.echo(result)
 
         app_id = result['id']
-        self.configure_monitoring(app_id, app)
+        return self.configure_monitoring(app_id, app, id_mapper_mon)
+
+    def check_monitoring_deps(self, app):
+        """
+
+        Args:
+            app (Application):
+        """
+        stages = app.execution_graph.as_pipeline().stages
+        app_api = self.http.app_api()
+        id_mapper_mon = {}
+        for stage in stages:
+            for mon in stage.monitoring:
+                mon_type_res = METRIC_PROVIDERS.get(mon.type)
+                if mon_type_res is None:
+                    raise ValueError("Can't find metric provider for : {}".format(mon.__dict__))
+                if mon.app is None:
+                    if mon_type_res not in PARAMETRIC_PROVIDERS:
+                        raise ValueError("Application (app) is required for metric {}".format(mon.__dict__))
+                else:
+                    if mon.app not in id_mapper_mon:  # check for appName -> appId
+                        mon_app_result = app_api.find(mon.app)
+                        print("MONAPPSEARCH")
+                        print(mon.__dict__)
+                        print(mon_app_result)
+                        if mon_app_result is None:
+                            raise ValueError("Can't find metric application for {}".format(mon.__dict__))
+                        id_mapper_mon[mon.app] = mon_app_result['id']
+
+
+        return id_mapper_mon
+
+    def check_app_deps(self, app):
+        stages = app.execution_graph.as_pipeline().stages
+
+        id_mapper_app = {}
+        for stage in stages:
+            id_mapper_stage = self.check_stage_deps(stage)
+            id_mapper_app.update(id_mapper_stage)
+        return id_mapper_app
 
     def check_stage_deps(self, stage):
         """
@@ -204,32 +228,34 @@ class ApplyService:
 
         return id_mapper
 
-    def configure_monitoring(self, app_id, app):
+    def configure_monitoring(self, app_id, app, id_mapper_mon):
         """
 
         Args:
+            id_mapper_mon (dict):
             app (Application):
             app_id (int):
         """
-        monitoring_api = self.http.monitoring_api()
+        mon_api = self.http.monitoring_api()
         pipeline = app.execution_graph.as_pipeline()
-        for stage in pipeline.stages:
-            for monitoring_config in stage.monitoring:
+        results = []
+        for idx, stage in enumerate(pipeline.stages):
+            for mon in stage.monitoring:
                 aggregation = EntryAggregationSpecification(
-                    name=monitoring_config.name,
+                    name=mon.name,
                     metric_provider_specification=MetricProviderSpecification(
-                        metric_provider_class=METRIC_PROVIDERS[monitoring_config.type],
-                        config=MetricConfigSpecification(None),  # FIXME replace with app id
-                        with_health=monitoring_config.healthcheck_on,
-                        health_config=HealthConfigSpecification(monitoring_config.threshold)
+                        metric_provider_class=METRIC_PROVIDERS[mon.type],
+                        config=MetricConfigSpecification(id_mapper_mon[mon.app]),
+                        with_health=mon.healthcheck_on,
+                        health_config=HealthConfigSpecification(mon.threshold)
                     ),
                     filter=FilterSpecification(
-                        source_name=None,  # FIXME replace with input?
-                        stage_id=None  # FIXME replace with stageid
+                        source_name=mon.input,
+                        stage_id="app{}stage{}".format(app_id, idx)
                     )
                 )
-                # monitoring_api.create_aggregation(aggregation)
-        raise NotImplementedError()
+                results.append(mon_api.create_aggregation(aggregation))
+        return results
 
 
 class ApplyError(RuntimeError):

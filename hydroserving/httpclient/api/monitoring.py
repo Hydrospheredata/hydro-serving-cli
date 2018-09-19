@@ -27,6 +27,12 @@ METRIC_PROVIDERS = {
     "gan": "io.hydrosphere.sonar.core.metrics.providers.GAN"
 }
 
+PARAMETRIC_PROVIDERS = [
+    METRIC_PROVIDERS['autoencoder'],
+    METRIC_PROVIDERS['random-forest'],
+    METRIC_PROVIDERS['gan']
+]
+
 
 class HealthConfigSpecification:
     def __init__(self, threshold):
