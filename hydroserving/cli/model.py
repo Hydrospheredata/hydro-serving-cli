@@ -55,13 +55,18 @@ def upload(obj, name, model_type, contract, description):
               type=click.Path(exists=True),
               multiple=True,
               required=True)
+@click.option('--ignore-monitoring',
+              type=bool,
+              required=False,
+              default=False,
+              is_flag=True)
 @click.pass_obj
-def apply(obj, f):
+def apply(obj, f, ignore_monitoring):
     http_service: HttpService = obj.services.http
     apply_service = ApplyService(http_service)
     try:
         click.echo("Using current cluster at {}".format(http_service.connection.remote_addr))
-        result = apply_service.apply(f)
+        result = apply_service.apply(f, ignore_monitoring=ignore_monitoring)
         click.echo(pprint.pformat(result))
     except ApplyError as ex:
         click.echo("Error while applying {}".format(f))

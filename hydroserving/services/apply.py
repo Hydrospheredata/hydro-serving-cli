@@ -2,6 +2,7 @@ import os
 import time
 
 import click
+from requests import HTTPError
 
 from hydroserving.constants.package import TARGET_FOLDER
 from hydroserving.helpers.file import is_yaml, get_yamls
@@ -9,6 +10,7 @@ from hydroserving.helpers.upload import upload_model
 from hydroserving.httpclient.api.environment import EnvironmentAPI
 from hydroserving.httpclient.api.monitoring import EntryAggregationSpecification, MetricProviderSpecification, \
     METRIC_PROVIDERS, MetricConfigSpecification, HealthConfigSpecification, FilterSpecification, PARAMETRIC_PROVIDERS
+from hydroserving.httpclient.errors import HSApiError
 from hydroserving.models.definitions.application import Application, PipelineStage, ModelService
 from hydroserving.models.definitions.environment import Environment
 from hydroserving.models.definitions.model import Model
@@ -27,7 +29,7 @@ class ApplyService:
         self.http = http_service
         self.parser = GenericParser()
 
-    def apply(self, paths):
+    def apply(self, paths, **kwargs):
         """
 
         Args:
@@ -42,16 +44,16 @@ class ApplyService:
             if os.path.isdir(file):
                 click.echo("Looking for resources in {} ...".format(os.path.basename(abs_file)))
                 for yaml_file in sorted(get_yamls(abs_file)):
-                    yaml_res = self.apply_yaml(yaml_file)
+                    yaml_res = self.apply_yaml(yaml_file, **kwargs)
                     results[yaml_file] = yaml_res
             elif is_yaml(file):
-                yaml_res = self.apply_yaml(abs_file)
+                yaml_res = self.apply_yaml(abs_file, **kwargs)
                 results[file] = yaml_res
             else:
                 raise UnknownFile(file)
         return results
 
-    def apply_yaml(self, path):
+    def apply_yaml(self, path, **kwargs):
         click.echo("Applying {} ...".format(os.path.basename(path)))
         responses = []
         for doc_obj in self.parser.parse_yaml_stream(path):
@@ -60,7 +62,7 @@ class ApplyService:
             elif isinstance(doc_obj, Runtime):
                 responses.append(self.apply_runtime(doc_obj))
             elif isinstance(doc_obj, Application):
-                responses.append(self.apply_application(doc_obj))
+                responses.append(self.apply_application(doc_obj, **kwargs))
             elif isinstance(doc_obj, Environment):
                 responses.append(self.apply_environment(doc_obj))
             else:
@@ -134,10 +136,11 @@ class ApplyService:
             return None
         return env_api.create(env.name, env.selector)
 
-    def apply_application(self, app):
+    def apply_application(self, app, ignore_monitoring):
         """
 
         Args:
+            ignore_monitoring (bool):
             app (Application):
 
         Returns:
@@ -148,7 +151,13 @@ class ApplyService:
         id_mapper_app = self.check_app_deps(app)
         app_request = app.to_create_request(id_mapper_app)
 
-        id_mapper_mon = self.check_monitoring_deps(app)
+        id_mapper_mon = {}
+        if not ignore_monitoring:
+            try:
+                self.http.monitoring_api().list_aggregations()
+            except HSApiError:
+                raise ApplicationApplyError("Monitoring service is unavailable. Consider --ignore-monitoring flag.")
+            id_mapper_mon = self.check_monitoring_deps(app)
 
         found_app = application_api.find(app.name)
         if found_app is None:
@@ -159,8 +168,10 @@ class ApplyService:
         click.echo("Server app response")
         click.echo(result)
 
-        app_id = result['id']
-        return self.configure_monitoring(app_id, app, id_mapper_mon)
+        if not ignore_monitoring:
+            app_id = result['id']
+            self.configure_monitoring(app_id, app, id_mapper_mon)
+        return result
 
     def check_monitoring_deps(self, app):
         """
