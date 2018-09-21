@@ -1,4 +1,4 @@
-version: v2-alpha
-kind: Environment
-name: xeon-cpu
-selector: "/* AWS INSTANCE SELECTOR */"
+#version: v2-alpha
+#kind: Environment
+#name: xeon-cpu
+#selector: "/* AWS INSTANCE SELECTOR */"

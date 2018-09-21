@@ -24,13 +24,15 @@ def get_payload_files(payload):
     for x in payload:
         if os.path.isfile(x):
             parent_dir = os.path.dirname(x)
-            files[parent_dir] = [os.path.relpath(x, parent_dir)]
+            if parent_dir not in files:
+                files[parent_dir] = []
+            files[parent_dir].append(os.path.relpath(x, parent_dir))
         elif os.path.isdir(x):
             sub_files = get_visible_files(x, recursive=True)
-            rel_file_list = []
+            if x not in files:
+                files[x] = []
             for sub_file in sub_files:
-                rel_file_list.append(os.path.relpath(sub_file, x))
-            files[x] = rel_file_list
+                files[x].append(os.path.relpath(sub_file, x))
         else:
             raise ValueError("Path {} doesn't exist".format(x))
     print(files)

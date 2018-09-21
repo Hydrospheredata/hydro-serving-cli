@@ -1,23 +1,6 @@
----
 version: v2-alpha
 kind: Application
-name: claims-gan-app
-
+name: deleteme-claims-autoencoder-app
 singular:
-  model: 
-    name: claims-gan
-    # version: 1
-  runtime: hydrosphere/serving-runtime-tensorflow:1.7.0
-...
-
----
-version: v2-alpha
-kind: Application
-name: claims-autoencoder-app
-
-singular:
-  model:
-    name: claims-autoencoder
-    # version: 1
-  runtime: hydrosphere/serving-runtime-tensorflow:1.7.0
-...
+  model: deleteme-claims-autoencoder:1
+  runtime: hydrosphere/serving-runtime-tensorflow:1.7.0-latest

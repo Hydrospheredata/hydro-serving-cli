@@ -1,34 +1,19 @@
 version: v2-alpha
 kind: Application
-name: claims-simple-app
-
-streaming:
-  - in-topic: i1
-    out-topic: o1
-  - in-topic: i2
-    out-topic: o2
-
+name: deleteme-claims-app
 singular:
   monitoring:
     - name: ks
-      input: feature_42
-      type: kolmogorov-smirnov
+      input: client_profile
+      type: Kolmogorov-Smirnov
       healthcheck:
         enabled: true
-        treshold: 69
-    - name: gan
-      input: feature
-      type: gan
-      app: claims-autoencoder-app
-      healthcheck:
-        enabled: true
-        treshold: 69
     - name: autoencoder
-      input: feature
-      type: autoencoder
-      app: claims-autoencoder-app
+      input: client_profile
+      type: Autoencoder
+      app: deleteme-claims-autoencoder-app
       healthcheck:
         enabled: true
-        treshold: 69
-  model: claims-model-new:2
+        threshold: 15
+  model: deleteme-claims-model:2
   runtime: hydrosphere/serving-runtime-python:3.6-latest
