@@ -13,7 +13,6 @@ def test_get_all_files():
         print(files)
         assert hidden_path in files
         assert os.path.join(MODEL_FOLDER, "serving.yaml") in files
-        assert os.path.join(MODEL_FOLDER, "contract.prototxt") in files
         assert os.path.join(MODEL_FOLDER, "calculator") in files
     os.remove(hidden_path)
 
@@ -38,7 +37,6 @@ def test_get_all_visible_files():
         print(files)
         assert hidden_path not in files
         assert os.path.join(MODEL_FOLDER, "serving.yaml") in files
-        assert os.path.join(MODEL_FOLDER, "contract.prototxt") in files
         assert os.path.join(MODEL_FOLDER, "calculator") in files
     os.remove(hidden_path)
 
