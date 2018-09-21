@@ -1,11 +1,22 @@
 import click
 
-from hydroserving.httpclient.api import UploadMetadata
+from hydroserving.httpclient.api import UploadMetadata, ModelAPI
 from hydroserving.helpers.package import assemble_model
+from hydroserving.models.definitions.model import Model
 
 
-def upload_model(model_api, model):
-    tar = assemble_model(model)
+def upload_model(model_api, model, target_path):
+    """
+
+    Args:
+        target_path (str):
+        model_api (ModelAPI):
+        model (Model):
+
+    Returns:
+        dict:
+    """
+    tar = assemble_model(model, target_path)
 
     click.echo("Uploading to {}".format(model_api.connection.remote_addr))
 

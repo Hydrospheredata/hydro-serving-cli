@@ -7,6 +7,9 @@ def get_files(path, recursive=False):
     :param recursive: recursive search?
     :param path: Path to look for
     :return: flat list of files
+
+    Args:
+        path (path):
     """
     if recursive:
         return [

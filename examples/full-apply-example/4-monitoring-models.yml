@@ -1,0 +1,6 @@
+version: v2-alpha
+kind: Model
+name: deleteme-claims-autoencoder
+model-type: tensorflow:1.7.0
+payload:
+  - /Users/bulat/Documents/Dev/Provectus/hydro-serving-example/models/autoencoder/

@@ -1,23 +1,16 @@
 class Runtime:
-    def __init__(self, repository, tag):
+    def __init__(self, name, version, model_type, tags, config_params):
         """
 
-        :param repository:
-        :type repository: str
-        :param tag:
-        :type tag: str
+        Args:
+            config_params (dict):
+            tags (list of str):
+            model_type (str):
+            name (str):
+            version (str):
         """
-        self.repository = repository
-        self.tag = "latest" if tag is None else tag
-
-    def __str__(self):
-        return "{}:{}".format(self.repository, self.tag)
-
-    @staticmethod
-    def from_dict(data_dict):
-        if data_dict is None:
-            return None
-        return Runtime(
-            repository=data_dict.get("repository"),
-            tag=data_dict.get("tag")
-        )
+        self.config_params = config_params
+        self.name = name
+        self.version = "latest" if version is None else version
+        self.model_type = model_type
+        self.tags = tags

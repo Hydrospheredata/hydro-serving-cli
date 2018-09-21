@@ -1,166 +1,174 @@
-import os
-import yaml
+from abc import ABC, abstractmethod
+
+from hydroserving.httpclient.api import CreateApplicationRequest, KafkaStreamingParams, ModelServiceRequest, \
+    ApplicationExecutionGraphRequest, ApplicationStageRequest
 
 
-class ExecutionGraphLike:
-    def to_graph(self):
+class ExecutionGraphLike(ABC):
+    @abstractmethod
+    def to_create_request(self, id_mapper):
         """
-        Returns execution graph representation as dict
-        :return: dict
+
+        Args:
+            id_mapper (dict):
         """
-        raise NotImplementedError()
-
-    @staticmethod
-    def from_dict(data_dict):
-        if data_dict is None:
-            return None
-
-        model_dict = data_dict.get("model")
-        graph = data_dict.get("graph")
-
-        if model_dict is not None and graph is not None:
-            raise ValueError("Both model and graph are defined")
-
-        if model_dict is not None:
-            return Model(
-                name=model_dict.get("name"),
-                version=model_dict.get("version"),
-                environment=model_dict.get("environment"),
-                runtime=model_dict.get("runtime")
-            )
-
-        if graph is not None:
-            pipeline_steps = []
-            for stage in graph:
-                new_stage = []
-                for service in stage:
-                    new_service = PipelineService(
-                        name=service.get("name"),
-                        version=service.get("version"),
-                        runtime=service.get("runtime"),
-                        weight=service.get("weight"),
-                        signature=service.get("signature"),
-                        environment=service.get("environment")
-                    )
-                    new_stage.append(new_service)
-                pipeline_steps.append(new_stage)
-
-            return Pipeline(
-                steps=pipeline_steps
-            )
-
-        raise ValueError("Neither model nor graph are defined")
+        pass
 
 
-class Model(ExecutionGraphLike):
-    def __init__(self, name, version, runtime, environment):
-        self.name = name
-        self.version = version
-        self.runtime = runtime
-        self.environment = environment
+class ModelService(ExecutionGraphLike):
+    def __init__(self, model_version, runtime, weight, environment):
+        """
 
-    def to_graph(self):
-        return {
-            "stages": [{
-                "services": [{
-                    "runtime": self.runtime,
-                    "modelVersion": "{}:{}".format(self.name, self.version),
-                    "weight": 100,
-                    "environment": self.environment
-                }]
-            }]
-        }
-
-
-class PipelineService:
-    def __init__(self, name, version, runtime, weight, signature, environment):
-        self.signature = signature
+        Args:
+            environment (str or None):
+            weight (int):
+            runtime (str):
+            model_version (str):
+        """
         self.weight = weight
-        self.version = version
+        self.model_version = model_version
         self.runtime = runtime
-        self.name = name
         self.environment = environment
+
+    def to_create_request(self, id_mapper):
+        request = ModelServiceRequest(
+            model_version_id=id_mapper[self.model_version],
+            runtime_id=id_mapper[self.runtime],
+            environment_id=None,
+            signature_name=None,
+            weight=None
+        )
+        if self.environment is not None:
+            request.environmentId = id_mapper[self.environment]
+        if self.weight is not None:
+            request.weight = self.weight
+
+        return request
+
+
+class SingularModel(ExecutionGraphLike):
+    def __init__(self, model_version, runtime, environment, monitoring_params):
+        """
+
+        Args:
+            model_version (str):
+            runtime (str):
+            environment (str or None):
+            monitoring_params (list of MonitoringParams):
+        """
+        self.model_service = ModelService(
+            model_version=model_version,
+            runtime=runtime,
+            weight=100,
+            environment=environment
+        )
+        self.monitoring_params = monitoring_params
+
+    def to_create_request(self, id_mapper):
+        return self.as_pipeline().to_create_request(id_mapper)
+
+    def as_pipeline(self):
+        """
+        Wraps singular model as complete pipeline.
+        Returns:
+            Pipeline:
+        """
+        fict_pipeline = Pipeline([
+            PipelineStage(
+                services=[self.model_service],
+                monitoring=self.monitoring_params,
+                signature="signature-to-be-ignored"
+            )
+        ])
+        return fict_pipeline
+
+
+class PipelineStage(ExecutionGraphLike):
+    def __init__(self, services, monitoring, signature):
+        """
+
+        Args:
+            signature (str):
+            monitoring (list of MonitoringParams):
+            services (list of ModelService): 
+            name (str): 
+        """
+        self.signature = signature
+        self.monitoring = monitoring
+        self.services = services
+
+    def to_create_request(self, id_mapper):
+        stage_services = []
+        for service in self.services:
+            service_repr = service.to_create_request(id_mapper)
+            service_repr.signatureName = self.signature
+            stage_services.append(service_repr)
+        return ApplicationStageRequest(stage_services)
 
 
 class Pipeline(ExecutionGraphLike):
-    def __init__(self, steps):
-        self.steps = steps
+    def __init__(self, stages):
+        """
 
-    def to_graph(self):
-        new_stages = []
-        for step in self.steps:
-            new_services = []
-            for service in step:
-                service_def = {
-                    "runtime": service.runtime,
-                    "modelVersion": "{}:{}".format(service.name, service.version),
-                    "weight": service.weight,
-                    "environment": service.environment,
-                    "signatureName": service.signature
-                }
-                new_services.append(service_def)
-            new_stages.append({"services": new_services})
+        Args:
+            stages (list of PipelineStage): 
+        """
+        self.stages = stages
 
-        return {"stages": new_stages}
+    def to_create_request(self, id_mapper):
+        stages = [x.to_create_request(id_mapper) for x in self.stages]
 
-
-class KafkaStreamingParams:
-    def __init__(self, source_topic, destination_topic, error_topic, consumer_id):
-        self.source_topic = source_topic
-        self.destination_topic = destination_topic
-        self.error_topic = error_topic
-        self.consumer_id = consumer_id
-
-    @staticmethod
-    def from_dict(data_dict):
-        if data_dict is None:
-            return None
-
-        kafka_dict = data_dict.get("kafka")
-        return KafkaStreamingParams(
-            source_topic=kafka_dict.get("source_topic"),
-            destination_topic=kafka_dict.get("destination_topic"),
-            error_topic=kafka_dict.get("error_topic"),
-            consumer_id=kafka_dict.get("consumer_id")
+        return ApplicationExecutionGraphRequest(
+            stages=stages
         )
+
+    def as_pipeline(self):
+        """
+
+        Returns:
+            Pipeline: returns self
+        """
+        return self
+
+
+class MonitoringParams:
+    def __init__(self, name, input, type, app, healthcheck_on, threshold):
+        """
+
+        Args:
+            threshold (float or None):
+            healthcheck_on (bool):
+            app (str):
+            type (str):
+            input (str):
+            name (str):
+        """
+        self.threshold = threshold
+        self.healthcheck_on = healthcheck_on
+        self.app = app
+        self.type = type
+        self.input = input
+        self.name = name
 
 
 class Application:
-    def __init__(self, name, dependencies=None, graph_like=None, kafka_streaming=None):
-        self.kafka_streaming = kafka_streaming
+    def __init__(self, name, execution_graph, streaming_params):
+        """
+
+        Args:
+            streaming_params (list of KafkaStreamingParams):
+            execution_graph (SingularModel or Pipeline):
+            name (str): 
+        """
+        if streaming_params is None:
+            streaming_params = []
+        self.streaming_params = streaming_params
         self.name = name
-        self.graph_like = graph_like
-        self.dependencies = dependencies
+        self.execution_graph = execution_graph
 
-    def to_http_payload(self):
-        return {
-            "name": self.name,
-            "executionGraph": self.graph_like.to_graph()
-        }
-
-    @staticmethod
-    def from_dict(data_dict):
-        if data_dict is None:
-            return None
-
-        app_dict = data_dict.get("application")
-        return Application(
-            name=app_dict.get("name"),
-            dependencies=app_dict.get("dependencies"),
-            graph_like=ExecutionGraphLike.from_dict(app_dict),
-            kafka_streaming=KafkaStreamingParams.from_dict(app_dict)
+    def to_create_request(self, id_mapper):
+        return CreateApplicationRequest(
+            name=self.name,
+            kafka_streaming=self.streaming_params,
+            execution_graph=self.execution_graph.to_create_request(id_mapper)
         )
-
-    @staticmethod
-    def from_directory(directory_path):
-        if not os.path.exists(directory_path):
-            raise FileNotFoundError("{} doesn't exist".format(directory_path))
-        if not os.path.isdir(directory_path):
-            raise NotADirectoryError("{} is not a directory".format(directory_path))
-
-        metafile = os.path.join(directory_path, "serving.yaml")
-        if not os.path.exists(metafile):
-            return None
-
-        with open(metafile, "r") as serving_file:
-            return Application.from_dict(yaml.load(serving_file.read()))

@@ -1,9 +1,6 @@
 import os
 
-from hydroserving.constants.package import TARGET_PATH, PACKAGE_FILES_PATH
-from hydroserving.helpers.package import with_cwd, assemble_model
 from hydroserving.helpers.file import get_visible_files, get_files, get_yamls
-from tests.utils import with_target_cwd
 
 MODEL_FOLDER = "./examples/local_dev"
 
@@ -16,7 +13,6 @@ def test_get_all_files():
         print(files)
         assert hidden_path in files
         assert os.path.join(MODEL_FOLDER, "serving.yaml") in files
-        assert os.path.join(MODEL_FOLDER, "contract.prototxt") in files
         assert os.path.join(MODEL_FOLDER, "calculator") in files
     os.remove(hidden_path)
 
@@ -41,7 +37,6 @@ def test_get_all_visible_files():
         print(files)
         assert hidden_path not in files
         assert os.path.join(MODEL_FOLDER, "serving.yaml") in files
-        assert os.path.join(MODEL_FOLDER, "contract.prototxt") in files
         assert os.path.join(MODEL_FOLDER, "calculator") in files
     os.remove(hidden_path)
 

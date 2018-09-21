@@ -22,6 +22,7 @@ class ConfigService:
         cluster = self.find_cluster(cluster_name)
         if cluster is not None:
             self.config.current_cluster = cluster['name']
+            self.confparser.write_yaml(self.config_path, self.config)
             return cluster
         else:
             return None

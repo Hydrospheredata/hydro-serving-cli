@@ -1,7 +1,7 @@
 import shutil
 import os
 
-from hydroserving.constants.package import TARGET_PATH
+from hydroserving.constants.package import TARGET_FOLDER
 from hydroserving.helpers.package import with_cwd
 
 
@@ -14,7 +14,7 @@ def with_target_cwd(cwd, func, *args):
     :param args: args to the `func`
     :return: result of `func`
     """
-    target_path = os.path.join(cwd, TARGET_PATH)
+    target_path = os.path.join(cwd, TARGET_FOLDER)
     try:
         with_cwd(cwd, func, *args)
     except Exception as ex:

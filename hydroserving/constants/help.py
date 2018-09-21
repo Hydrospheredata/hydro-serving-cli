@@ -81,7 +81,36 @@ PROFILE_MODEL_VERSION_HELP ="""
 Model version in "model:version" format
 """
 
-# CONFIG HELP
-CONFIG_HELP = """
-Utilities to manage hs configs
+# CLUSTER HELP
+CLUSTER_HELP = """
+Utilities to manage hs clusters
+"""
+
+CLUSTER_USE_HELP = """
+Set specified cluster as default
+"""
+
+CLUSTER_ADD_HELP = """
+Add cluster
+"""
+
+CLUSTER_RM_HELP = """
+Remove cluster
+"""
+
+CLUSTER_LIST_HELP = """
+Show all clusters
+"""
+
+CLUSTER_DEFAULT_HELP = """
+Show default cluster
+"""
+
+APPLY_HELP = """
+Apply resources from files or directory.
+"""
+
+# DEV HELP
+DEV_HELP = """
+Developer tools
 """

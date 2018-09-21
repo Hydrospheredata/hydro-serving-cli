@@ -1,0 +1,6 @@
+version: v2-alpha
+kind: Application
+name: deleteme-claims-autoencoder-app
+singular:
+  model: deleteme-claims-autoencoder:1
+  runtime: hydrosphere/serving-runtime-tensorflow:1.7.0-latest

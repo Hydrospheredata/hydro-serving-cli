@@ -8,14 +8,6 @@ class UploadMetadata:
         self.model_type = model_type
         self.model_name = model_name
 
-    def to_dict(self):
-        res = {}
-        for k,v in self.__dict__.items():
-            if v is None:
-                continue
-            res[k] = v
-        return res
-
 
 class ModelAPI:
     def __init__(self, connection):
@@ -27,16 +19,23 @@ class ModelAPI:
         }
         return self.connection.post("/api/v1/model/build", data)
 
+    def build_status(self, build_id):
+        """
+
+        Args:
+            build_id (str):
+        """
+        return self.connection.get("/api/v1/model/build/" + build_id)
+
     def list(self):
         return self.connection.get("/api/v1/model")
 
     def upload(self, assembly_path, metadata, create_encoder_callback=None):
         if not isinstance(metadata, UploadMetadata):
             raise HSApiError("{} is not UploadMetadata".format(metadata))
-
         return self.connection.multipart_post(
             url="/api/v1/model/upload",
-            data=metadata.to_dict(),
+            data=metadata,
             files={"payload": ("filename", open(assembly_path, "rb"))},
             create_encoder_callback=create_encoder_callback
         )
