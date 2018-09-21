@@ -35,7 +35,6 @@ def get_payload_files(payload):
                 files[x].append(os.path.relpath(sub_file, x))
         else:
             raise ValueError("Path {} doesn't exist".format(x))
-    print(files)
     return files
 
 

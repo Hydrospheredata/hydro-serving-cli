@@ -1,14 +1,6 @@
-model:
-  name: "example_script"
-  type: "python:3.6"
-  contract: "contract.prototxt"
-  payload:
-    - "calculator/src/"
-    - "calculator/requirements.txt"
-
-local_deploy:
-  name: "example_server"
-  runtime:
-    repository: "hydrosphere/serving-runtime-dummy"
-    tag: "latest"
-  port: 9091
+kind: Model
+name: "example_script"
+model-type: "python:3.6"
+payload:
+  - "calculator/src/"
+  - "calculator/requirements.txt"
