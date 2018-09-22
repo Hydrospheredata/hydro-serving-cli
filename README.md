@@ -10,67 +10,123 @@ pip install hs
 
 ## Usage
 
-1. Show metadata: `hs status`
-2. Show human-readable contract: `hs contract`
-3. Upload a model to the server: `hs upload --host $HOST --port $PORT`
-4. CLI help: `hs --help`
+### hs cluster
 
-## Model
+Since 0.1.0 the tool uses configurable endpoints called cluster:
+They can be managed with:
+- `hs cluster` - shows default cluster
+- `hs cluster add --name local --server http://localhost` - creates entry with name `local`
+and address `http://localhost`.
+- `hs cluster use local` - uses the previously created `local` cluster as default
+- `hs cluster rm local` - removes `local` cluster entry
 
-The tool operates on folders with `serving.yaml` file in it. If there is no `serving.yaml` file, you can fill required fields with arguments, for instance:
+The default cluster is used as endpoint for all API calls made from the CLI tool.
 
-```bash
-hs --name demo_model --contract model_contract.prototxt upload
-```
+### hs upload
 
-### serving.yaml
-
-It defines various metadata and a contract for a model.
-
-`serving.yaml` example:
+When you use `hs upload`, the tool looks for `serving.yaml` file in current dir.
+`serving.yaml` defines model metadata and contract
 
 ```yaml
-model:
-  name: "example_model"
-  type: "tensorflow"
-  contract: "contract.prototxt"
-  payload:
-    - "saved_model.pb"
-    - "variables/"
+kind: Model
+name: "example_model"
+model-type: "tensorflow:1.3.0"
+payload:
+  - "saved_model.pb"
+  - "variables/"
+  
+contract:
+  detect:  # the name of signature
+    inputs:  # signature input fields
+      image_b64:
+        type: string
+    outputs:  # signature output fields
+      scores:
+        shape: [-1]
+        type: double
+      classes:
+        shape: [-1]
+        type: string
 ```
 
-### Contract
+### hs apply
 
-`contract` field contains path to the ASCII serialized [ModelContract](https://github.com/Hydrospheredata/hydro-serving-protos/blob/master/src/hydro_serving_grpc/contract/model_contract.proto) message.
+The command takes `-f` path parameter to yaml file or directory containing yaml files.
+Then, it will read the yaml documents and apply them sequentially.
 
-`contract.prototxt` example:
+These files can contain definition of a resource defined below:
 
-```hocon
-signatures {
-  signature_name: "detect"
-  inputs {
-    name: "image_b64"
-    dtype: DT_STRING
-  }
-  outputs {
-    name: "scores"
-    dtype: DT_DOUBLE
-    shape {
-      dim: {
-        size: -1
-      }
-    }
-  }
-  outputs {
-    name: "classes"
-    dtype: DT_STRING
-    shape {
-      dim: {
-        size: -1
-      }
-    }
-  }
-}
+#### Model
+
+The model definition is the same as in `serving.yaml` file.
+
+#### Runtime
+
+Example of runtime definition:
+
+```yaml
+kind: Runtime
+name: hydrosphere/serving-runtime-tensorflow
+version: 1.7.0-latest
+model-type: tensorflow:1.7.0
 ```
 
-Developer documentation is available [here](/docs/index.md).
+#### Environment
+
+Example of environment definition:
+
+```yaml
+kind: Environment
+name: xeon-cpu
+selector: "/* INSTANCE SELECTOR */"
+```
+
+Note that selector is a string that defines platform specific filter on instances.
+
+#### Application
+
+For the sake of simplicity CLI provides simplified structures for major use cases:
+
+- Single model app:
+
+```yaml
+kind: Application
+name: demo-app
+singular:
+  monitoring:
+    - name: ks
+      input: user_profile
+      type: Kolmogorov-Smirnov
+      healthcheck:
+        enabled: true
+  model: demo_model:2
+  runtime: hydrosphere/serving-runtime-python:3.6-latest
+```
+
+- Pipeline app
+
+```yaml
+kind: Application
+name: demo-pipeline-app
+
+pipeline:
+  - signature: normalize
+    model: demo-preprocessing:1
+    runtime: hydrosphere/serving-runtime-python:3.6-latest
+    environment: cpu
+  - signature: predict
+    monitoring:
+      - name: ks
+        input: feature_42
+        type: Kolmogorov-Smirnov
+        healthcheck:
+          enabled: true
+    modelservices:
+      - model: demo-model:1
+        runtime: hydrosphere/serving-runtime-python:3.6-latest
+        environment: xeon
+        weight: 80
+      - model: demo-model:2
+        runtime: hydrosphere/serving-runtime-python:3.6-latest
+        weight: 20
+```
