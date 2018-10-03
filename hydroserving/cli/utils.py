@@ -67,7 +67,7 @@ def ensure_model(obj, path, name, model_type, description, contract):
             model_type=model_type,
             contract=external_contract,
             description=description,
-            payload=['.']
+            payload=['./*']
         )
 
     obj.model = metadata
