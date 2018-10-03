@@ -21,7 +21,7 @@ from hydroserving.services.client import HttpService
               show_default=True,
               required=False)
 @click.option('--model_type',
-              default="unknown",
+              default=None,
               required=False)
 @click.option('--contract',
               type=click.Path(exists=True),
