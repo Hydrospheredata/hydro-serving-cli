@@ -40,8 +40,9 @@ def copy_to_target(src_path, package_path):
         src_path (str):
         package_path (str):
     """
+    basename = os.path.basename(src_path)
 
-    packed_path = os.path.join(package_path, src_path)
+    packed_path = os.path.join(package_path, basename)
     if os.path.isfile(src_path):
         shutil.copy(src_path, packed_path)
     elif os.path.isdir(src_path):
