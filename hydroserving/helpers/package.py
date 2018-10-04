@@ -65,6 +65,7 @@ def pack_payload(model, package_path):
         os.makedirs(package_path)
 
     files = get_payload_files(model.payload)
+    print(files)
     result_paths = []
     with click.progressbar(iterable=files,
                            item_show_func=lambda x: x,
@@ -123,30 +124,6 @@ def with_cwd(new_cwd, func, *args):
         raise err
     finally:
         os.chdir(old_cwd)
-
-
-def build_model(metadata):
-    """
-    Model build for local development purposes
-    :param metadata: FolderMetadata
-    :return: nothing
-    """
-    build_steps = metadata.local_deployment.build
-
-    def _execute_build_steps():
-        idx = 1
-        for build_step in build_steps:
-            click.echo("[{}] {}".format(idx, build_step))
-            os.system(build_step)
-            idx += 1
-
-    if build_steps is None or not build_steps:
-        click.echo("No build steps. Skipping...")
-        return None
-
-    click.echo("Build steps detected. Executing...")
-    with_cwd(TARGET_FOLDER, _execute_build_steps)
-    click.echo("Done.")
 
 
 def assemble_model(model, target_path):

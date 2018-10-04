@@ -4,7 +4,7 @@ import click
 import requests
 
 from hydroserving.cli.hs import hs_cli
-from hydroserving.cli.utils import ensure_cluster, ensure_model
+from hydroserving.cli.utils import ensure_cluster, create_or_ensure_model
 from hydroserving.constants.help import CONTEXT_SETTINGS, UPLOAD_HELP, APPLY_HELP
 from hydroserving.constants.package import TARGET_FOLDER
 from hydroserving.helpers.upload import upload_model
@@ -37,7 +37,8 @@ def upload(obj, name, model_type, contract, description):
     remote = RemoteConnection(current_cluster['cluster']['server'])
     model_api = ModelAPI(remote)
 
-    model = ensure_model(obj, os.getcwd(), name, model_type, description, contract)
+    model = create_or_ensure_model(os.getcwd(), name, model_type, description, contract)
+    obj.model = model
 
     try:
         result = upload_model(model_api, model, TARGET_FOLDER)

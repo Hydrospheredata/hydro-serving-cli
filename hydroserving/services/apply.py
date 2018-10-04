@@ -4,6 +4,7 @@ import time
 import click
 from requests import HTTPError
 
+from hydroserving.cli.utils import ensure_model
 from hydroserving.constants.package import TARGET_FOLDER
 from hydroserving.helpers.file import is_yaml, get_yamls
 from hydroserving.helpers.upload import upload_model
@@ -82,6 +83,7 @@ class ApplyService:
         model_api = self.http.model_api()
         folder = os.path.abspath(os.path.dirname(path))
         target_path = os.path.join(folder, TARGET_FOLDER)
+        model = ensure_model(folder, model)
         build_status = upload_model(model_api, model, target_path)
 
         is_finished = False

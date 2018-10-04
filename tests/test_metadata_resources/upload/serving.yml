@@ -1,0 +1,6 @@
+kind: Model
+name: upload
+model-type: "python:3.6"
+payload:
+  - 'file1.txt'
+  - 'data_folder/'
