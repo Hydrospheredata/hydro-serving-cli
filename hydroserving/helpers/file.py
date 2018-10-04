@@ -1,29 +1,6 @@
 import os
 
 
-def get_files(path, recursive=False):
-    """
-    Recursively lists files
-    :param recursive: recursive search?
-    :param path: Path to look for
-    :return: flat list of files
-
-    Args:
-        path (path):
-    """
-    if recursive:
-        return [
-            os.path.join(dir_name, file)
-            for dir_name, _, files in os.walk(path)
-            for file in files
-        ]
-    else:
-        return [
-            os.path.join(path, file)
-            for file in os.listdir(path)
-        ]
-
-
 def get_visible_files(path, recursive=False):
     """
     Recursively lists visible files
@@ -63,6 +40,6 @@ def get_yamls(path):
 
     return [
         file
-        for file in get_files(path)
+        for file in get_visible_files(path)
         if is_yaml(file)
     ]

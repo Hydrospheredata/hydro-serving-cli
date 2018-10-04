@@ -42,10 +42,22 @@ def try_get(obj, obj_field):
     return obj.__dict__[obj_field]
 
 
-def ensure_model(obj, path, name, model_type, description, contract):
+def create_or_ensure_model(dir_path, name, model_type, description, path_to_contract):
+    """
+
+    Args:
+        dir_path (str):
+        name (str):
+        model_type (str or None):
+        description (str or None):
+        path_to_contract (str or None):
+
+    Returns:
+        Model:
+    """
     serving_files = [
         file
-        for file in get_yamls(path)
+        for file in get_yamls(dir_path)
         if os.path.splitext(os.path.basename(file))[0] == "serving"
     ]
     serving_file = serving_files[0] if serving_files else None
@@ -59,16 +71,37 @@ def ensure_model(obj, path, name, model_type, description, contract):
 
     if metadata is None:
         external_contract = None
-        if contract is not None:
-            external_contract = read_contract_file(contract)
+        if path_to_contract is not None:
+            external_contract = read_contract_file(path_to_contract)
 
         metadata = Model(
             name=name,
             model_type=model_type,
             contract=external_contract,
             description=description,
-            payload=['.']
+            payload=[os.path.join(dir_path, "*")]
         )
 
-    obj.model = metadata
+    ensure_model(dir_path, metadata)
+
     return metadata
+
+
+def ensure_model(dir_path, model):
+    """
+
+    Args:
+        dir_path (str): path to dir with metadata
+        model (Model):
+
+    Returns:
+        Model: with resolved payload paths
+    """
+    abs_payload_paths = []
+    for p in model.payload:
+        if not os.path.isabs(p):
+            p = os.path.normpath(os.path.join(dir_path, p))
+        abs_payload_paths.append(p)
+
+    model.payload = abs_payload_paths
+    return model

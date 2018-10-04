@@ -1,0 +1,5 @@
+kind: Model
+name: apply
+model-type: "python:3.6"
+payload:
+  - '../no_metadata/data_folder'

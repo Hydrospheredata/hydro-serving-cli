@@ -1,3 +1,4 @@
+import glob
 import os
 import shutil
 import tarfile
@@ -5,7 +6,6 @@ import tarfile
 import click
 
 from hydroserving.constants.package import TARGET_FOLDER, PACKAGE_CONTRACT_FILENAME, PACKAGE_FILES_DIR
-from hydroserving.helpers.file import get_visible_files
 from hydroserving.models.definitions.model import Model
 
 
@@ -20,42 +20,35 @@ def get_payload_files(payload):
         dict: key - parent path of file, value - files within parent component
 
     """
-    files = {}
-    for x in payload:
-        if os.path.isfile(x):
-            parent_dir = os.path.dirname(x)
-            if parent_dir not in files:
-                files[parent_dir] = []
-            files[parent_dir].append(os.path.relpath(x, parent_dir))
-        elif os.path.isdir(x):
-            sub_files = get_visible_files(x, recursive=True)
-            if x not in files:
-                files[x] = []
-            for sub_file in sub_files:
-                files[x].append(os.path.relpath(sub_file, x))
-        else:
-            raise ValueError("Path {} doesn't exist".format(x))
-    return files
+    paths = []
+    for glob_path in payload:
+        expanded = os.path.expanduser(glob_path)
+        unglobbed = glob.glob(expanded)
+        for path in unglobbed:
+            if os.path.exists(path):
+                paths.append(path)
+            else:
+                raise ValueError("Path {} doesn't exist".format(path))
+    return paths
 
 
-def copy_to_target(src_parent, src_path, package_path):
+def copy_to_target(src_path, package_path):
     """
     Copies path to TARGET_PATH
 
     Args:
-        src_parent (str):
         src_path (str):
         package_path (str):
     """
+    basename = os.path.basename(src_path)
 
-    model_dirs = os.path.dirname(src_path)
-    packed_dirs = os.path.join(package_path, model_dirs)
-    if not os.path.exists(packed_dirs):
-        os.makedirs(packed_dirs)
-
-    packed_path = os.path.join(package_path, src_path)
-    original_src_path = os.path.join(src_parent, src_path)
-    shutil.copy(original_src_path, packed_path)
+    packed_path = os.path.join(package_path, basename)
+    if os.path.isfile(src_path):
+        shutil.copy(src_path, packed_path)
+    elif os.path.isdir(src_path):
+        shutil.copytree(src_path, packed_path)
+    else:
+        raise FileNotFoundError(src_path)
     return packed_path
 
 
@@ -72,20 +65,16 @@ def pack_payload(model, package_path):
         os.makedirs(package_path)
 
     files = get_payload_files(model.payload)
-    all_files = [f
-                 for x in files
-                 for f in x]
-    copied_files = []
-    with click.progressbar(length=len(all_files),
+    print(files)
+    result_paths = []
+    with click.progressbar(iterable=files,
                            item_show_func=lambda x: x,
                            label='Packing the model') as bar:
-        for parent, sub_files in files.items():
-            for file in sub_files:
-                copied_file = copy_to_target(parent, file, package_path)
-                copied_files.append(copied_file)
-                bar.update(1)
+        for file in bar:
+            copied_path = copy_to_target(file, package_path)
+            result_paths.append(copied_path)
 
-    return copied_files
+    return result_paths
 
 
 def pack_contract(model, package_path):
@@ -135,30 +124,6 @@ def with_cwd(new_cwd, func, *args):
         raise err
     finally:
         os.chdir(old_cwd)
-
-
-def build_model(metadata):
-    """
-    Model build for local development purposes
-    :param metadata: FolderMetadata
-    :return: nothing
-    """
-    build_steps = metadata.local_deployment.build
-
-    def _execute_build_steps():
-        idx = 1
-        for build_step in build_steps:
-            click.echo("[{}] {}".format(idx, build_step))
-            os.system(build_step)
-            idx += 1
-
-    if build_steps is None or not build_steps:
-        click.echo("No build steps. Skipping...")
-        return None
-
-    click.echo("Build steps detected. Executing...")
-    with_cwd(TARGET_FOLDER, _execute_build_steps)
-    click.echo("Done.")
 
 
 def assemble_model(model, target_path):

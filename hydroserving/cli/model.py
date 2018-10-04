@@ -4,7 +4,7 @@ import click
 import requests
 
 from hydroserving.cli.hs import hs_cli
-from hydroserving.cli.utils import ensure_cluster, ensure_model
+from hydroserving.cli.utils import ensure_cluster, create_or_ensure_model
 from hydroserving.constants.help import CONTEXT_SETTINGS, UPLOAD_HELP, APPLY_HELP
 from hydroserving.constants.package import TARGET_FOLDER
 from hydroserving.helpers.upload import upload_model
@@ -12,7 +12,6 @@ from hydroserving.httpclient.api import ModelAPI
 from hydroserving.httpclient.remote_connection import RemoteConnection
 from hydroserving.parsers.abstract import ParserError
 from hydroserving.services.apply import ApplyService, ApplyError
-from hydroserving.services.client import HttpService
 
 
 @hs_cli.command(help=UPLOAD_HELP, context_settings=CONTEXT_SETTINGS)
@@ -37,7 +36,8 @@ def upload(obj, name, model_type, contract, description):
     remote = RemoteConnection(current_cluster['cluster']['server'])
     model_api = ModelAPI(remote)
 
-    model = ensure_model(obj, os.getcwd(), name, model_type, description, contract)
+    model = create_or_ensure_model(os.getcwd(), name, model_type, description, contract)
+    obj.model = model
 
     try:
         result = upload_model(model_api, model, TARGET_FOLDER)
@@ -62,7 +62,7 @@ def upload(obj, name, model_type, contract, description):
               is_flag=True)
 @click.pass_obj
 def apply(obj, f, ignore_monitoring):
-    http_service: HttpService = obj.services.http
+    http_service = obj.services.http
     apply_service = ApplyService(http_service)
     try:
         click.echo("Using current cluster at {}".format(http_service.connection.remote_addr))
