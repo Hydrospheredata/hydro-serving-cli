@@ -19,5 +19,6 @@ class ModelParser(AbstractParser):
             model_type=in_dict.get("model-type"),
             contract=contract_from_dict(in_dict.get("contract")),
             payload=in_dict.get("payload"),
-            description=in_dict.get("description")
+            description=in_dict.get("description"),
+            training_data_file=in_dict.get("training-data")
         )

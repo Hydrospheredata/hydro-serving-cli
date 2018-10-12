@@ -2,19 +2,16 @@ from hydro_serving_grpc import ModelContract
 
 
 class Model:
-    def __init__(self, name, model_type, contract, payload, description):
+    def __init__(self, name, model_type, contract, payload, description, training_data_file):
         """
 
-        :param name:
-        :type name: str
-        :param model_type:
-        :type model_type: str
-        :param contract:
-        :type contract: ModelContract
-        :param payload:
-        :type payload: list[str]
-        :param description:
-        :type description: str
+        Args:
+            name (str):
+            model_type (str or None):
+            contract (ModelContract or None):
+            payload (list of str):
+            description (str or None):
+            training_data_file (str or None):
         """
         if not isinstance(name, str):
             raise TypeError("name is not a string", type(name))
@@ -36,3 +33,4 @@ class Model:
         self.contract = contract
         self.payload = payload
         self.description = description
+        self.training_data_file = training_data_file

@@ -2,7 +2,6 @@ import os
 import time
 
 import click
-from requests import HTTPError
 
 from hydroserving.cli.utils import ensure_model
 from hydroserving.constants.package import TARGET_FOLDER
@@ -81,21 +80,11 @@ class ApplyService:
 
         """
         model_api = self.http.model_api()
+        profiler_api = self.http.profiler_api()
         folder = os.path.abspath(os.path.dirname(path))
         target_path = os.path.join(folder, TARGET_FOLDER)
         model = ensure_model(folder, model)
-        build_status = upload_model(model_api, model, target_path)
-
-        is_finished = False
-        is_failed = False
-        while not (is_finished or is_failed):
-            build_status = model_api.build_status(str(build_status['id']))
-            is_finished = build_status['status'] == 'Finished'
-            is_failed = build_status['status'] == 'Failed'
-            time.sleep(5)  # wait until it's finished
-
-        if is_failed:
-            raise ModelApplyError(build_status)
+        build_status = upload_model(model_api, profiler_api, model, target_path, is_async=False)
         print(build_status)
 
     def apply_runtime(self, runtime):

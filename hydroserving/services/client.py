@@ -30,6 +30,9 @@ class HttpService:
     def model_api(self):
         return ModelAPI(self.connection)
 
+    def profiler_api(self):
+        return ModelAPI(self.connection)
+
     def env_api(self):
         return EnvironmentAPI(self.connection)
 

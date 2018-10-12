@@ -42,7 +42,7 @@ def try_get(obj, obj_field):
     return obj.__dict__[obj_field]
 
 
-def create_or_ensure_model(dir_path, name, model_type, description, path_to_contract):
+def create_or_ensure_model(dir_path, name, model_type, description, path_to_contract, path_to_training_data):
     """
 
     Args:
@@ -79,7 +79,8 @@ def create_or_ensure_model(dir_path, name, model_type, description, path_to_cont
             model_type=model_type,
             contract=external_contract,
             description=description,
-            payload=[os.path.join(dir_path, "*")]
+            payload=[os.path.join(dir_path, "*")],
+            training_data_file=path_to_training_data
         )
 
     ensure_model(dir_path, metadata)
