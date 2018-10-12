@@ -8,6 +8,8 @@ import requests_mock
 from hydroserving.constants.package import TARGET_FOLDER
 from hydroserving.helpers.upload import upload_model
 from hydroserving.httpclient import HydroservingClient
+from hydroserving.httpclient.api import ModelAPI, ProfilerAPI
+from hydroserving.httpclient.remote_connection import RemoteConnection
 from hydroserving.parsers.model import ModelParser
 from tests.utils import with_target_cwd
 
@@ -36,10 +38,12 @@ class CLITests(unittest.TestCase):
 
         with requests_mock.Mocker() as req_mock:
             req_mock.add_matcher(_upload_matcher)
-            hs_api = HydroservingClient("http://localhost")
+            connection = RemoteConnection("http://localhost")
+            model_api = ModelAPI(connection)
+            profiler_api = ProfilerAPI(connection)
             yaml_path = os.path.join(MODEL_FOLDER, "serving.yml")
             meta = ModelParser().parse_yaml(yaml_path)
-            result = upload_model(hs_api.models, meta, TARGET_FOLDER)
+            result = upload_model(model_api, profiler_api, meta, TARGET_FOLDER, is_async=True)
             assert "example_script" in result["model_name"]
             assert "python:3.6" in result["model_type"]
 
