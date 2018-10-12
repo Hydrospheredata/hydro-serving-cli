@@ -2,7 +2,7 @@ import unittest
 import os
 import shutil
 
-from hydroserving.cli import create_or_ensure_model
+from hydroserving.cli import ensure_model
 from hydroserving.helpers.package import assemble_model
 
 MODEL_FOLDER = "./tests/test_metadata_resources/"
@@ -12,7 +12,7 @@ TRASH_FOLDER = "./tests/.hs"
 def pack_model(model_name):
     path = os.path.abspath(os.path.join(MODEL_FOLDER, model_name))
 
-    model = create_or_ensure_model(path, model_name, "type", "desc", None, None)
+    model = ensure_model(path, model_name, "type", "desc", None, None)
     result = assemble_model(model, TRASH_FOLDER)
     return result
 

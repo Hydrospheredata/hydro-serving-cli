@@ -3,7 +3,7 @@ import time
 
 import click
 
-from hydroserving.cli.utils import ensure_model
+from hydroserving.cli.utils import resolve_model_paths
 from hydroserving.constants.package import TARGET_FOLDER
 from hydroserving.helpers.file import is_yaml, get_yamls
 from hydroserving.helpers.upload import upload_model
@@ -83,7 +83,7 @@ class ApplyService:
         profiler_api = self.http.profiler_api()
         folder = os.path.abspath(os.path.dirname(path))
         target_path = os.path.join(folder, TARGET_FOLDER)
-        model = ensure_model(folder, model)
+        model = resolve_model_paths(folder, model)
         build_status = upload_model(model_api, profiler_api, model, target_path, is_async=False)
         print(build_status)
 
