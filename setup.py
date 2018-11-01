@@ -13,10 +13,11 @@ setup(
     include_package_data=True,
     install_requires=[
         "click==6.7",
-        "pyyaml",
+        "pyyaml~=3.13",
+        "protobuf~=3.6",
         "kafka-python==1.4.3",
-        "hydro-serving-grpc==0.1.20",
-        "requests==2.18.4",
+        "hydro-serving-grpc==0.1.21",
+        "requests~=2.20",
         "requests-toolbelt==0.8.0",
     ],
     setup_requires=[
