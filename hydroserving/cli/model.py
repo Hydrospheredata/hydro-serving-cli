@@ -2,6 +2,7 @@ import os
 import pprint
 import click
 import requests
+import json
 
 from hydroserving.cli.hs import hs_cli
 from hydroserving.cli.utils import ensure_cluster, ensure_model
@@ -49,7 +50,7 @@ def upload(obj, name, model_type, contract, training_data, description, is_async
     try:
         result = upload_model(model_api, profiler_api, model, TARGET_FOLDER, is_async)
         click.echo("Success response:")
-        click.echo(result)
+        click.echo(json.dumps(result))
     except requests.RequestException as err:
         click.echo()
         click.echo("Upload failed. Reason:")
