@@ -43,8 +43,8 @@ class Model:
 
 
 class UploadMetadata:
-    def __init__(self, name, model_contract, host_selector, runtime, install_command):
-        self.model_contract = model_contract
+    def __init__(self, name, contract, host_selector, runtime, install_command):
+        self.contract = contract
         self.host_selector = host_selector
         self.runtime = runtime
         self.name = name
@@ -88,7 +88,7 @@ class ModelService:
             create_encoder_callback=create_encoder_callback
         )
         if result.ok:
-            result.json()
+            return result.json()
         else:
             raise ValueError("Invalid request: {}".format(result.content.decode("utf-8")))
 
@@ -111,7 +111,7 @@ class ModelService:
 
         """
         res = self.connection.get("/api/v2/model/version/{}/{}".format(model_name, model_version))
-        if res.ok():
+        if res.ok:
             return res.json()
         else:
             return None

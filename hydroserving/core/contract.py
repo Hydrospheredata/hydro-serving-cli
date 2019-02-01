@@ -7,9 +7,77 @@ from hydro_serving_grpc import ModelContract, TensorShapeProto, ModelField, Mode
     DT_INVALID, DT_STRING, DT_BOOL, \
     DT_HALF, DT_FLOAT, DT_DOUBLE, DT_INT8, DT_INT16, \
     DT_INT32, DT_INT64, DT_UINT8, DT_UINT16, DT_UINT32, \
-    DT_UINT64, DT_QINT8, DT_QINT16, DT_QINT32, DT_QUINT8, DT_QUINT16, DT_VARIANT
+    DT_UINT64, DT_QINT8, DT_QINT16, DT_QINT32, DT_QUINT8, DT_QUINT16, DT_VARIANT, DataType
 
 log = logging.getLogger('helpers.contract')
+
+
+def contractToDict(contract):
+    if not isinstance(contract, ModelContract):
+        raise TypeError("contract is not ModelContract")
+    signatures = []
+    for signature in contract.signatures:
+        signatures.append(signatureToDict(signature))
+    result_dict = {
+        "modelName": contract.model_name,
+        "signatures": signatures
+    }
+    return result_dict
+
+
+def signatureToDict(signature):
+    if not isinstance(signature, ModelSignature):
+        raise TypeError("signature is not ModelSignature")
+    inputs = []
+    for i in signature.inputs:
+        inputs.append(fieldToDict(i))
+    outputs = []
+    for o in signature.outputs:
+        outputs.append(fieldToDict(o))
+    result_dict = {
+        "signatureName": signature.signature_name,
+        "inputs": inputs,
+        "outputs": outputs
+    }
+    return result_dict
+
+
+def fieldToDict(field):
+    if not isinstance(field, ModelField):
+        raise TypeError("field is not ModelField")
+    result_dict = {
+        "name": field.name,
+    }
+    if field.shape is not None:
+        result_dict["shape"] = shapeToDict(field.shape)
+
+    attachDtypeOrSubfields(result_dict, field)
+    return result_dict
+
+
+def shapeToDict(shape):
+    dims = []
+    for d in shape.dim:
+        dims.append({"size": d.size, "name": d.name})
+    result_dict = {
+        "dim": dims,
+        "unknownRank": shape.unknown_rank
+    }
+    return result_dict
+
+
+def attachDtypeOrSubfields(result_dict, field):
+    if field.dtype is not None:
+        result_dict["dtype"] = DataType.Name(field.dtype)
+    elif field.subfields is not None:
+        subfields = []
+        for f in field.subfields:
+            subfields.append(fieldToDict(f))
+        result_dict["subfields"] = subfields
+    else:
+        raise ValueError("Invalid ModelField type")
+    return result_dict
+
 
 NAME_TO_DTYPES = {
     "invalid": DT_INVALID,
@@ -129,6 +197,7 @@ def contract_from_dict(data_dict):
         )
         signatures.append(cur_sig)
     contract = ModelContract(
+        model_name="model",
         signatures=signatures
     )
     return contract

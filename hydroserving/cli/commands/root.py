@@ -1,6 +1,6 @@
 import os
 import pprint
-
+import json
 import click
 import requests
 
@@ -45,7 +45,7 @@ def upload(obj, name, model_type, contract, training_data, description, is_async
         tar = assemble_model(model_metadata, TARGET_FOLDER)
         result = upload_model(obj.model_service, obj.profiler_service, model_metadata, tar, is_async)
         click.echo("Success:")
-        click.echo(result)
+        click.echo(json.dumps(result))
     except requests.RequestException as err:
         click.echo()
         click.echo("Upload failed. Reason:")

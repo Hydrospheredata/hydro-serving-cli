@@ -1,28 +1,28 @@
 import time
-import json
+
 import click
 
+from hydroserving.core.contract import contractToDict
 from hydroserving.core.model.model import Model, UploadMetadata
-from google.protobuf.json_format import MessageToDict
 
 
 class ModelBuildError(RuntimeError):
     pass
 
 
-def await_upload(model_api, build_status):
+def await_upload(model_api, model_version):
     is_finished = False
     is_failed = False
     while not (is_finished or is_failed):
-        build_status = model_api.build_status(str(build_status['id']))
-        is_finished = build_status['status'] == 'Finished'
-        is_failed = build_status['status'] == 'Failed'
+        model_version = model_api.find_version(model_version["model"]["name"], model_version["modelVersion"])
+        is_finished = model_version['status'] == 'Released'
+        is_failed = model_version['status'] == 'Failed'
         time.sleep(5)  # wait until it's finished
 
     if is_failed:
-        raise ModelBuildError(build_status)
+        raise ModelBuildError(model_version)
 
-    return build_status
+    return model_version
 
 
 def await_training_data(profile_api, uid):
@@ -67,8 +67,8 @@ def upload_model_async(model_api, model, tar):
     metadata = UploadMetadata(
         name=model.name,
         host_selector=model.host_selector,
-        model_contract=MessageToDict(model.contract),
-        runtime=model.runtime,
+        contract=contractToDict(model.contract),
+        runtime=model.runtime.__dict__,
         install_command=model.install_command
     )
 
@@ -80,18 +80,18 @@ def upload_model_async(model_api, model, tar):
 
 
 def upload_model(model_service, profiler_service, model, model_path, is_async):
-    build_status = upload_model_async(model_service, model, model_path)
+    mv = upload_model_async(model_service, model, model_path)
 
     push_uid = None
 
     if model.training_data_file is not None:
-        model_version = build_status['id']
+        model_version = mv['id']
         push_uid = push_training_data_async(profiler_service, model_version, model.training_data_file)
 
     if is_async:
-        return build_status
+        return mv
     else:
-        build_status = await_upload(model_service, build_status)
+        build_status = await_upload(model_service, mv)
         if push_uid is not None:
             push_uid = await_training_data(profiler_service, push_uid)
         return build_status

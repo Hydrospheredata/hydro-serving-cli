@@ -1,4 +1,5 @@
 from hydroserving.core.contract import contract_from_dict
+from hydroserving.core.image import DockerImage
 from hydroserving.core.model.model import Model
 from hydroserving.core.parsers.abstract import AbstractParser
 
@@ -21,6 +22,6 @@ class ModelParser(AbstractParser):
             description=in_dict.get("description"),
             training_data_file=in_dict.get("training-data"),
             install_command=in_dict.get("install-command"),
-            runtime=in_dict["runtime"],
+            runtime=DockerImage.parse_fullname(in_dict["runtime"]),
             host_selector=in_dict.get("host-selector")
         )
