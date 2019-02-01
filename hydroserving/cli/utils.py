@@ -1,10 +1,10 @@
 import click
 import os
 
-from hydroserving.helpers.contract import read_contract_file
-from hydroserving.helpers.file import get_yamls, get_visible_files
-from hydroserving.models.definitions.model import Model
-from hydroserving.parsers.model import ModelParser
+from hydroserving.core.contract import read_contract_file
+from hydroserving.core.model.model import Model
+from hydroserving.core.parsers.model import ModelParser
+from hydroserving.filesystem.utils import get_yamls
 
 
 def ensure_config(obj):

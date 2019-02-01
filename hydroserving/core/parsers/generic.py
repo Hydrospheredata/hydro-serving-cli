@@ -1,14 +1,8 @@
-from hydroserving.models.definitions.application import Application
-from hydroserving.models.definitions.config import Config
-from hydroserving.models.definitions.environment import Environment
-from hydroserving.models.definitions.model import Model
-from hydroserving.models.definitions.runtime import Runtime
-from hydroserving.parsers.abstract import AbstractParser, UnknownResource
-from hydroserving.parsers.application import ApplicationParser
-from hydroserving.parsers.config import ConfigParser
-from hydroserving.parsers.environment import EnvironmentParser
-from hydroserving.parsers.model import ModelParser
-from hydroserving.parsers.runtime import RuntimeParser
+from hydroserving.core.parsers.abstract import AbstractParser, UnknownResource
+from hydroserving.core.parsers.application import ApplicationParser
+from hydroserving.core.parsers.config import ConfigParser
+from hydroserving.core.parsers.environment import HostSelectorParser
+from hydroserving.core.parsers.model import ModelParser
 
 
 class GenericParser(AbstractParser):
@@ -19,7 +13,7 @@ class GenericParser(AbstractParser):
     KIND_TO_PARSER = {
         "Config": ConfigParser(),
         "Model": ModelParser(),
-        "Environment": EnvironmentParser(),
+        "HostSelector": HostSelectorParser(),
         "Application": ApplicationParser()
     }
 

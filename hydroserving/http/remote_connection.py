@@ -1,8 +1,9 @@
-from json import JSONDecodeError
+from urllib.parse import urljoin
+
 import requests
 from requests_toolbelt.multipart.encoder import MultipartEncoder, MultipartEncoderMonitor
 
-from hydroserving.http.errors import ResponseIsNotJson, HSApiError
+from hydroserving.http.errors import BackendException
 
 
 class RemoteConnection:
@@ -10,7 +11,7 @@ class RemoteConnection:
         self.remote_addr = remote_addr
 
     def compose_url(self, url):
-        full_url = self.remote_addr + url
+        full_url = urljoin(self.remote_addr, url)
         return full_url
 
     def post(self, url, data):
@@ -20,7 +21,7 @@ class RemoteConnection:
         data = self.preprocess_request(data)
         print(data)
         result = requests.post(self.compose_url(url), json=data)
-        return self.postprocess_response(result)
+        return RemoteConnection.postprocess_response(result)
 
     def put(self, url, data):
         """
@@ -29,21 +30,22 @@ class RemoteConnection:
         data = self.preprocess_request(data)
         print(data)
         result = requests.put(self.compose_url(url), json=data)
-        return self.postprocess_response(result)
+        return RemoteConnection.postprocess_response(result)
 
     def get(self, url):
         """
         Sends GET request with to the given `url` and returns data as JSON dictionary.
+        Returns (requests.Response)
         """
         result = requests.get(self.compose_url(url))
-        return self.postprocess_response(result)
+        return RemoteConnection.postprocess_response(result)
 
     def delete(self, url):
         """
         Sends DELETE request with to the given `url` and returns data as JSON dictionary.
         """
         result = requests.delete(self.compose_url(url))
-        return self.postprocess_response(result)
+        return RemoteConnection.postprocess_response(result)
 
     def multipart_post(self, url, data, files, create_encoder_callback=None):
         encoder = MultipartEncoder(
@@ -62,7 +64,7 @@ class RemoteConnection:
             headers={'Content-Type': monitor.content_type}
         )
 
-        return self.postprocess_response(result)
+        return RemoteConnection.postprocess_response(result)
 
     @staticmethod
     def preprocess_request(request):
@@ -78,27 +80,9 @@ class RemoteConnection:
             Returns:
 
             """
-        try:
-            response.raise_for_status()
-            json = RemoteConnection._to_json(response)
-            return json
-        except requests.HTTPError as err:
-            raise HSApiError("Error response from server", response.text)
-
-    @staticmethod
-    def _to_json(result):
-        """
-        Tries to parse json from response
-        :param result: response
-        :return: json dict
-        """
-        try:
-            json_result = result.json()
-            return json_result
-        except JSONDecodeError:
-            raise ResponseIsNotJson(result)
-        except Exception as ex:
-            raise HSApiError(ex)
+        if 500 <= response.status_code < 600:
+            raise BackendException(response.content.decode('utf-8'))
+        return response
 
     @staticmethod
     def _remove_none(obj):

@@ -3,20 +3,17 @@ import time
 
 import click
 
+from hydroserving.cli.upload import upload_model
 from hydroserving.cli.utils import resolve_model_paths
-from hydroserving.constants.package import TARGET_FOLDER
-from hydroserving.helpers.file import is_yaml, get_yamls
-from hydroserving.helpers.upload import upload_model
-from hydroserving.httpclient.api.environment import EnvironmentAPI
-from hydroserving.httpclient.api.monitoring import EntryAggregationSpecification, MetricProviderSpecification, \
-    METRIC_PROVIDERS, MetricConfigSpecification, HealthConfigSpecification, FilterSpecification, PARAMETRIC_PROVIDERS
-from hydroserving.httpclient.errors import HSApiError
-from hydroserving.models.definitions.application import Application, PipelineStage, ModelService
-from hydroserving.models.definitions.environment import Environment
-from hydroserving.models.definitions.model import Model
-from hydroserving.models.definitions.runtime import Runtime
-from hydroserving.parsers.generic import GenericParser
-from hydroserving.services.client import HttpService
+from hydroserving.config.settings import TARGET_FOLDER
+from hydroserving.core.application import Application
+from hydroserving.core.host_selector import HostSelector, HostSelectorService
+from hydroserving.core.model.model import Model
+from hydroserving.core.monitoring import METRIC_PROVIDERS, PARAMETRIC_PROVIDERS, MetricProviderSpecification, \
+    MetricConfigSpecification, HealthConfigSpecification, EntryAggregationSpecification, FilterSpecification
+from hydroserving.core.parsers.generic import GenericParser
+from hydroserving.filesystem.utils import get_yamls, is_yaml
+from hydroserving.http.errors import BackendException
 
 
 class ApplyService:
@@ -59,12 +56,10 @@ class ApplyService:
         for doc_obj in self.parser.parse_yaml_stream(path):
             if isinstance(doc_obj, Model):
                 responses.append(self.apply_model(doc_obj, path))
-            elif isinstance(doc_obj, Runtime):
-                responses.append(self.apply_runtime(doc_obj))
             elif isinstance(doc_obj, Application):
                 responses.append(self.apply_application(doc_obj, **kwargs))
-            elif isinstance(doc_obj, Environment):
-                responses.append(self.apply_environment(doc_obj))
+            elif isinstance(doc_obj, HostSelector):
+                responses.append(self.apply_hostselector(doc_obj))
             else:
                 raise UnknownResource(doc_obj)
         return responses
@@ -119,8 +114,8 @@ class ApplyService:
         if is_failed:
             raise RuntimeApplyError(pull_status)
 
-    def apply_environment(self, env):
-        env_api = EnvironmentAPI(self.http.connection())
+    def apply_hostselector(self, env):
+        env_api = HostSelectorService(self.http.connection())
         found_env = env_api.get(env.name)
         if found_env is not None:
             click.echo(env.name + " environment already exists")
@@ -146,7 +141,7 @@ class ApplyService:
         if not ignore_monitoring:
             try:
                 self.http.monitoring_api().list_aggregations()
-            except HSApiError:
+            except BackendException:
                 raise ApplicationApplyError("Monitoring service is unavailable. Consider --ignore-monitoring flag.")
             id_mapper_mon = self.check_monitoring_deps(app)
 

@@ -3,7 +3,7 @@ import os
 import click
 
 from hydroserving.cli.context import CONTEXT_SETTINGS
-from hydroserving.config.config import HOME_PATH_EXPANDED
+from hydroserving.config.settings import HOME_PATH_EXPANDED
 from hydroserving.cli.context_object import ContextObject
 
 

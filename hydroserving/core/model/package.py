@@ -1,13 +1,13 @@
-import glob
 import os
 import shutil
 import tarfile
 
 import click
 
-from hydroserving.config.settings import TARGET_FOLDER, PACKAGE_CONTRACT_FILENAME, PACKAGE_FILES_DIR
-from hydroserving.filesystem.utils import copy_to_target, resolve_list_of_globs
+from hydroserving.config.settings import PACKAGE_CONTRACT_FILENAME, PACKAGE_FILES_DIR
 from hydroserving.core.model.model import Model
+from hydroserving.filesystem.utils import copy_to_target, resolve_list_of_globs
+
 
 def pack_payload(model, package_path):
     """
@@ -37,6 +37,7 @@ def pack_contract(model, package_path):
     """
     Reads a user contract and writes binary version to TARGET_PATH
     :param model: ModelDefinition
+    :param package_path
     :return: path to written contract
     """
     contract_destination = os.path.join(package_path, PACKAGE_CONTRACT_FILENAME)
@@ -63,14 +64,13 @@ def pack_model(model, package_path):
     return payload_files
 
 
-def resolve_model_payload(model, target_path):
+def resolve_model_payload(model):
     result_paths = []
 
     files = resolve_list_of_globs(model.payload)
     for file in files:
-            basename = os.path.basename(file)
-            relative_path = os.path.join(target_path, basename)
-            result_paths.append(relative_path)
+        result_paths.append(os.path.basename(file))
+    return result_paths
 
 
 def assemble_model(model, target_path):
@@ -86,18 +86,16 @@ def assemble_model(model, target_path):
     if os.path.exists(hs_model_dir):
         shutil.rmtree(hs_model_dir)
     os.makedirs(hs_model_dir)
-    package_path = os.path.join(hs_model_dir, PACKAGE_FILES_DIR)
-    files = resolve_model_payload(model, package_path)
+
+    files = resolve_model_payload(model)
 
     tar_name = "{}.tar.gz".format(model.name)
-    tar_path = os.path.join(target_path, model.name, tar_name)
+    tar_path = os.path.join(hs_model_dir, tar_name)
     with click.progressbar(iterable=files,
                            item_show_func=lambda x: x,
                            label='Assembling the model') as bar:
         with tarfile.open(tar_path, "w:gz") as tar:
-            tar_name = tar.name
             for entry in bar:
-                relative_name = os.path.relpath(entry, package_path)
-                tar.add(entry, arcname=relative_name)
+                tar.add(entry)
 
     return tar_path

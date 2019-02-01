@@ -1,29 +1,11 @@
 import os
 import click
+from urllib.parse import urlparse, urlunparse, urlsplit, urlunsplit
 
-from hydroserving.config.config import CONFIG_FILE
-from hydroserving.config.cluster import ClusterConfig
+from hydroserving.config.cluster_config import ClusterConfig
+from hydroserving.config.settings import CONFIG_FILE
 from hydroserving.core.parsers.config import ConfigParser
 from hydroserving.http.remote_connection import RemoteConnection
-
-class ClusterConfig:
-    def __init__(self, current_cluster=None, clusters_list=None):
-        """
-
-        :param current_cluster: currect cluster to use
-        :type current_cluster: str
-        :param clusters_list: all clusters
-        :type clusters_list: list[dict]
-        """
-        if clusters_list is None:
-            clusters_list = []
-        if not isinstance(clusters_list, list):
-            raise TypeError("clusters_list is not a list", clusters_list)
-        if current_cluster is not None and not isinstance(current_cluster, str):
-            raise TypeError("current_cluster is not a str", current_cluster)
-
-        self.clusters = clusters_list
-        self.current_cluster = current_cluster
 
 
 class ConfigService:
@@ -57,11 +39,14 @@ class ConfigService:
         return list(self.config.clusters)
 
     def add_cluster(self, name, endpoint):
+        url = urlsplit(endpoint)
+        if not url.scheme or not url.netloc:
+            raise ValueError("Invalid cluster address '{}'".format(endpoint))
         cluster = self.find_cluster(name)
         if cluster is None:
             cluster = {
                 'cluster': {
-                    'server': endpoint
+                    'server': urlunsplit([url.scheme, url.netloc, "", "", ""])
                 },
                 'name': name
             }

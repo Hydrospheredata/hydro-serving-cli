@@ -1,6 +1,6 @@
 import click
 
-from hydroserving.cli.hs import hs_cli
+from hydroserving.cli.commands.hs import hs_cli
 from hydroserving.cli.help import CLUSTER_HELP, CLUSTER_USE_HELP, CLUSTER_LIST_HELP, CLUSTER_ADD_HELP, \
     CLUSTER_RM_HELP
 
@@ -12,14 +12,14 @@ from hydroserving.cli.help import CLUSTER_HELP, CLUSTER_USE_HELP, CLUSTER_LIST_H
 @click.pass_context
 def cluster(ctx):
     if ctx.invoked_subcommand is None:
-        click.echo("Current cluster: {}".format(ctx.obj.services.config.current_cluster()))
+        click.echo("Current cluster: {}".format(ctx.obj.config_service.current_cluster()))
 
 
 @cluster.command(help=CLUSTER_USE_HELP)
 @click.argument('cluster_name')
 @click.pass_obj
 def use(obj, cluster_name):
-    res = obj.services.config.select_cluster(cluster_name)
+    res = obj.config_service.select_cluster(cluster_name)
     if res is not None:
         click.echo("Switched to cluster '{}'".format(cluster_name))
     else:
@@ -42,11 +42,14 @@ def list(obj):
               required=True)
 @click.pass_obj
 def add(obj, name, server):
-    res = obj.services.config.add_cluster(name, server)
-    if res is not None:
-        click.echo("Cluster '{}' @ {} added successfully".format(name, server))
-    else:
-        click.echo("There is already a cluster named '{}'".format(name))
+    try:
+        res = obj.config_service.add_cluster(name, server)
+        if res is not None:
+            click.echo("Cluster '{}' @ {} added successfully".format(name, server))
+        else:
+            click.echo("There is already a cluster named '{}'".format(name))
+    except ValueError as err:
+        click.echo("Cluster validation error: {}".format(err))
 
 
 @cluster.command(help=CLUSTER_RM_HELP)

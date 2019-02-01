@@ -1,5 +1,5 @@
-from hydroserving.models.definitions.config import Config
-from hydroserving.parsers.abstract import AbstractParser
+from hydroserving.config.cluster_config import ClusterConfig
+from hydroserving.core.parsers.abstract import AbstractParser
 
 
 class ConfigParser(AbstractParser):
@@ -8,7 +8,7 @@ class ConfigParser(AbstractParser):
     """
 
     def to_dict(self, obj):
-        if not isinstance(obj, Config):
+        if not isinstance(obj, ClusterConfig):
             raise TypeError("obj is not a Config", obj)
 
         res = {
@@ -21,4 +21,4 @@ class ConfigParser(AbstractParser):
     def parse_dict(self, in_dict):
         clusters = in_dict['clusters']
         current_cluster = in_dict['current-cluster']
-        return Config(current_cluster, clusters)
+        return ClusterConfig(current_cluster, clusters)

@@ -1,13 +1,14 @@
 from hydro_serving_grpc import ModelContract
+import json
+from hydroserving.http.remote_connection import RemoteConnection
 
 
 class Model:
-    def __init__(self, name, model_type, contract, payload, description, training_data_file):
+    def __init__(self, name, host_selector, runtime, contract, payload,
+                 description, training_data_file, install_command):
         """
-
         Args:
             name (str):
-            model_type (str or None):
             contract (ModelContract or None):
             payload (list of str):
             description (str or None):
@@ -16,8 +17,8 @@ class Model:
         if not isinstance(name, str):
             raise TypeError("name is not a string", type(name))
 
-        if model_type is not None and not isinstance(model_type, str):
-            raise TypeError("model_type is not a string", type(model_type))
+        if runtime is None:
+            raise ValueError("runtime cannot be None")
 
         if contract is not None and not isinstance(contract, ModelContract):
             raise TypeError("contract is not a ModelContract", type(contract))
@@ -26,59 +27,91 @@ class Model:
             raise TypeError("payload is not a list", type(contract))
 
         if description is not None and not isinstance(description, str):
-            raise TypeError("description is not a str", type(description))
+            raise TypeError("description is not a string", type(description))
+
+        if install_command is not None and not isinstance(install_command, str):
+            raise TypeError("install-command is not a string", type(description))
 
         self.name = name
-        self.model_type = model_type
+        self.host_selector = host_selector
+        self.runtime = runtime
         self.contract = contract
         self.payload = payload
         self.description = description
         self.training_data_file = training_data_file
+        self.install_command = install_command
+
 
 class UploadMetadata:
-    def __init__(self, model_name, model_type, model_contract, description):
-        self.model_description = description
+    def __init__(self, name, model_contract, host_selector, runtime, install_command):
         self.model_contract = model_contract
-        self.model_type = model_type
-        self.model_name = model_name
+        self.host_selector = host_selector
+        self.runtime = runtime
+        self.name = name
+        self.install_command = install_command
 
 
 class ModelService:
     def __init__(self, connection):
-        self.connection = connection
-
-    def build(self, model_id):
-        data = {
-            "modelId": model_id
-        }
-        return self.connection.post("/api/v1/model/build", data)
-
-    def build_status(self, build_id):
         """
 
         Args:
-            build_id (str):
+            connection (RemoteConnection):
         """
-        return self.connection.get("/api/v1/model/build/" + build_id)
+        self.connection = connection
 
-    def list(self):
-        return self.connection.get("/api/v1/model")
+    def list_models(self):
+        """
+
+        Returns:
+
+        """
+        return self.connection.get("/api/v2/model").json()
 
     def upload(self, assembly_path, metadata, create_encoder_callback=None):
+        """
+
+        Args:
+            assembly_path:
+            metadata:
+            create_encoder_callback:
+
+        Returns:
+
+        """
         if not isinstance(metadata, UploadMetadata):
-            raise HSApiError("{} is not UploadMetadata".format(metadata))
-        return self.connection.multipart_post(
-            url="/api/v1/model/upload",
-            data=metadata,
+            raise TypeError("{} is not UploadMetadata".format(metadata), type(metadata))
+        result = self.connection.multipart_post(
+            url="/api/v2/model/upload",
+            data={"metadata": json.dumps(metadata.__dict__)},
             files={"payload": ("filename", open(assembly_path, "rb"))},
             create_encoder_callback=create_encoder_callback
         )
+        if result.ok:
+            result.json()
+        else:
+            raise ValueError("Invalid request: {}".format(result.content.decode("utf-8")))
 
     def list_versions(self):
-        return self.connection.get("/api/v1/model/version")
+        """
+
+        Returns:
+
+        """
+        return self.connection.get("/api/v2/model/version").json()
 
     def find_version(self, model_name, model_version):
-        for version in self.list_versions():
-            if version["modelName"] == model_name and version["modelVersion"] == model_version:
-                return version
-        return None
+        """
+
+        Args:
+            model_name:
+            model_version:
+
+        Returns:
+
+        """
+        res = self.connection.get("/api/v2/model/version/{}/{}".format(model_name, model_version))
+        if res.ok():
+            return res.json()
+        else:
+            return None

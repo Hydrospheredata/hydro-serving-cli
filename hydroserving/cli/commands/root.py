@@ -1,19 +1,17 @@
 import os
 import pprint
+
 import click
 import requests
 
-from hydroserving.cli.hs import hs_cli
-from hydroserving.cli.utils import ensure_cluster, ensure_model
+from hydroserving.cli.commands.hs import hs_cli
 from hydroserving.cli.help import CONTEXT_SETTINGS, UPLOAD_HELP, APPLY_HELP, PROFILE_FILENAME_HELP
-from hydroserving.config.package import TARGET_FOLDER
 from hydroserving.cli.upload import upload_model
-from hydroserving.core.model.model import ModelService
-from hydroserving.core.profiler import ProfilerService
-from hydroserving.http.remote_connection import RemoteConnection
-from hydroserving.core.parsers.abstract import ParserError
+from hydroserving.cli.utils import ensure_model
+from hydroserving.config.settings import TARGET_FOLDER
+from hydroserving.core.apply import ApplyError
 from hydroserving.core.model.package import assemble_model
-from hydroserving.core.apply import ApplyService, ApplyError
+from hydroserving.core.parsers.abstract import ParserError
 
 
 @hs_cli.command(help=UPLOAD_HELP, context_settings=CONTEXT_SETTINGS)
@@ -53,6 +51,9 @@ def upload(obj, name, model_type, contract, training_data, description, is_async
         click.echo("Upload failed. Reason:")
         click.echo(err)
         raise SystemExit(-1)
+    except ValueError as err:
+        click.echo("Upload failed: {}".format(err))
+        raise SystemExit(-1)
 
 
 @hs_cli.command(help=APPLY_HELP, context_settings=CONTEXT_SETTINGS)
@@ -67,10 +68,8 @@ def upload(obj, name, model_type, contract, training_data, description, is_async
               is_flag=True)
 @click.pass_obj
 def apply(obj, f, ignore_monitoring):
-    http_service = obj.services.http
-    apply_service = ApplyService(http_service)
+    apply_service = obj.apply_service
     try:
-        click.echo("Using current cluster at {}".format(http_service.connection.remote_addr))
         result = apply_service.apply(f, ignore_monitoring=ignore_monitoring)
         click.echo(pprint.pformat(result))
     except ApplyError as ex:

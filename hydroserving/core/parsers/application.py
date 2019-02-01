@@ -1,7 +1,7 @@
-from hydroserving.httpclient.api import KafkaStreamingParams
-from hydroserving.models.definitions.application import Application, SingularModel, ModelService, Pipeline, \
-    PipelineStage, MonitoringParams
-from hydroserving.parsers.abstract import AbstractParser
+from hydroserving.core.application import KafkaStreamingParams, MonitoringParams, SingularModel, PipelineStage, \
+    Pipeline, Application
+from hydroserving.core.model.model import ModelService
+from hydroserving.core.parsers.abstract import AbstractParser
 
 
 class ApplicationParser(AbstractParser):

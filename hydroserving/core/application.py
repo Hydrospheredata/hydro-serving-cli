@@ -1,50 +1,14 @@
 from abc import ABC, abstractmethod
 
-from hydroserving.serving_api.api import CreateApplicationRequest, KafkaStreamingParams, ModelServiceRequest, \
-    ApplicationExecutionGraphRequest, ApplicationStageRequest
-
 
 class ExecutionGraphLike(ABC):
     @abstractmethod
-    def to_create_request(self, id_mapper):
-        """
-
-        Args:
-            id_mapper (dict):
-        """
+    def to_create_request(self):
         pass
 
 
-class ModelVariant(ExecutionGraphLike):
-    def __init__(self, model_version, runtime, weight, environment):
-        """
-
-        Args:
-            weight (int):
-            model_version (str):
-        """
-        self.weight = weight
-        self.model_version = model_version
-
-
-    def to_create_request(self, id_mapper):
-        request = ModelServiceRequest(
-            model_version_id=id_mapper[self.model_version],
-            runtime_id=id_mapper[self.runtime],
-            environment_id=None,
-            signature_name=None,
-            weight=None
-        )
-        if self.environment is not None:
-            request.environmentId = id_mapper[self.environment]
-        if self.weight is not None:
-            request.weight = self.weight
-
-        return request
-
-
 class SingularModel(ExecutionGraphLike):
-    def __init__(self, model_version, runtime, environment, monitoring_params):
+    def __init__(self, model_version_id, signature_name, monitoring_params):
         """
 
         Args:
@@ -54,13 +18,14 @@ class SingularModel(ExecutionGraphLike):
             monitoring_params (list of MonitoringParams):
         """
         self.model_service = ModelVariant(
-            model_version=model_version,
+            model_version_id=model_version_id,
+            signature_name=signature_name,
             weight=100
         )
         self.monitoring_params = monitoring_params
 
-    def to_create_request(self, id_mapper):
-        return self.as_pipeline().to_create_request(id_mapper)
+    def to_create_request(self):
+        return self.as_pipeline().to_create_request()
 
     def as_pipeline(self):
         """
@@ -92,10 +57,10 @@ class PipelineStage(ExecutionGraphLike):
         self.monitoring = monitoring
         self.services = services
 
-    def to_create_request(self, id_mapper):
+    def to_create_request(self):
         stage_services = []
         for service in self.services:
-            service_repr = service.to_create_request(id_mapper)
+            service_repr = service.to_create_request()
             service_repr.signatureName = self.signature
             stage_services.append(service_repr)
         return ApplicationStageRequest(stage_services)
@@ -110,8 +75,8 @@ class Pipeline(ExecutionGraphLike):
         """
         self.stages = stages
 
-    def to_create_request(self, id_mapper):
-        stages = [x.to_create_request(id_mapper) for x in self.stages]
+    def to_create_request(self):
+        stages = [x.to_create_request() for x in self.stages]
 
         return ApplicationExecutionGraphRequest(
             stages=stages
@@ -161,15 +126,16 @@ class Application:
         self.name = name
         self.execution_graph = execution_graph
 
-    def to_create_request(self, id_mapper):
+    def to_create_request(self):
         return CreateApplicationRequest(
             name=self.name,
             kafka_streaming=self.streaming_params,
-            execution_graph=self.execution_graph.to_create_request(id_mapper)
+            execution_graph=self.execution_graph.to_create_request()
         )
 
+
 class ModelVariant:
-    def __init__(self, model_version_id, runtime_id, environment_id, signature_name, weight):
+    def __init__(self, model_version_id, signature_name, weight):
         """
 
         Args:
@@ -181,8 +147,6 @@ class ModelVariant:
         """
         self.weight = weight
         self.signatureName = signature_name
-        self.environmentId = environment_id
-        self.runtimeId = runtime_id
         self.modelVersionId = model_version_id
 
 
@@ -196,7 +160,7 @@ class GraphStage:
         self.services = services
 
 
-class executionGraph:
+class ExecutionGraph:
     def __init__(self, stages):
         """
 
@@ -245,12 +209,12 @@ class ApplicationService:
         Returns:
             dict
         """
-        return self.connection.post("/api/v1/applications", application.__dict__)
+        return self.connection.post("/api/v2/application", application.__dict__)
 
     def update(self, id, application):
         update_req = application.__dict__
         update_req['id'] = int(id)
-        return self.connection.put('/api/v1/applications', update_req)
+        return self.connection.put('/api/v2/application', update_req)
 
     def serve(self, app_name, signature_name, data):
         """
@@ -264,7 +228,7 @@ class ApplicationService:
             dict:
         """
         return self.connection.post(
-            "/api/v1/applications/serve/{0}/{1}".format(app_name, signature_name),
+            "/api/v2/application/serve/{0}/{1}".format(app_name, signature_name),
             data
         )
 
@@ -274,7 +238,7 @@ class ApplicationService:
         Returns:
             list of dict:
         """
-        return self.connection.get("/api/v1/applications")
+        return self.connection.get("/api/v2/application")
 
     def find(self, app_name):
         """

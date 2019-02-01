@@ -16,7 +16,7 @@ setup(
         "pyyaml~=3.13",
         "protobuf~=3.6",
         "kafka-python==1.4.3",
-        "hydro-serving-grpc==0.1.21",
+        "hydro-serving-grpc~=0.2",
         "requests~=2.20",
         "requests-toolbelt==0.8.0",
     ],

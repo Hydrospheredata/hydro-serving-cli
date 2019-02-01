@@ -1,9 +1,9 @@
 import time
-
+import json
 import click
 
-from hydroserving.core.model.package import assemble_model
 from hydroserving.core.model.model import Model, UploadMetadata
+from google.protobuf.json_format import MessageToDict
 
 
 class ModelBuildError(RuntimeError):
@@ -64,15 +64,12 @@ def upload_model_async(model_api, model, tar):
 
     click.echo("Uploading to {}".format(model_api.connection.remote_addr))
 
-    contract = None
-    if model.contract is not None:
-        contract = model.contract.SerializeToString()
-
     metadata = UploadMetadata(
-        model_name=model.name,
-        model_type=model.model_type,
-        model_contract=contract,
-        description=model.description
+        name=model.name,
+        host_selector=model.host_selector,
+        model_contract=MessageToDict(model.contract),
+        runtime=model.runtime,
+        install_command=model.install_command
     )
 
     with click.progressbar(length=1, label='Uploading model assembly')as bar:
