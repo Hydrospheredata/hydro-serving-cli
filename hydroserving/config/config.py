@@ -22,7 +22,7 @@ class ConfigService:
         if os.path.isfile(self.config_path):
             self.config = self.confparser.parse_yaml(self.config_path)
         else:
-            click.echo("{} is not an existing directory", home_path)
+            click.echo("{} is not an existing directory".format(home_path))
             self.config = ClusterConfig()
             self.confparser.write_yaml(self.config_path, self.config)
 
@@ -85,4 +85,7 @@ class ConfigService:
 
     def get_connection(self):
         current_cluster = self.current_cluster()
-        return RemoteConnection(current_cluster['cluster']['server'])
+        if current_cluster is not None:
+            return RemoteConnection(current_cluster['cluster']['server'])
+        else:
+            return None

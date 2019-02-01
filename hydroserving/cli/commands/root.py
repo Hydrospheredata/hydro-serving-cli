@@ -37,7 +37,12 @@ from hydroserving.core.parsers.abstract import ParserError
 @click.option('--async', 'is_async', is_flag=True, default=False)
 @click.pass_obj
 def upload(obj, name, model_type, contract, training_data, description, is_async):
-    click.echo("Using '{}' cluster".format(obj.config_service.current_cluster()['name']))
+    cluster = obj.config_service.current_cluster()
+    if cluster is None:
+        click.echo("No cluster selected. Cannot continue.")
+        raise SystemExit(-1)
+
+    click.echo("Using '{}' cluster".format(cluster['name']))
 
     model_metadata = ensure_model(os.getcwd(), name, model_type, description, contract, training_data)
 
