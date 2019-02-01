@@ -1,17 +1,17 @@
 version: 2
 kind: Model
-name: claims-model
+name: apply-demo-claims-model
 model-type: python:3.6
 payload:
-  - "./*"
+  - /path/to/model
 runtime: hydrosphere/serving-runtime-python:3.6-latest
 # host-selector: xeon-cpu
 contract:
-  claim: # signature name
+  claim:
     inputs:
       client_profile:
-        shape: [112] # list of ints instead of scary structures
-        type: float32 # using tf type names instead of proto ones
+        shape: [112]
+        type: float64 # using tf type names instead of proto ones
         profile: text # data profiling
     outputs:
       amount:

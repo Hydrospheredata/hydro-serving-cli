@@ -1,11 +1,10 @@
+version: 2
 kind: Application
 name: claims-pipeline-app
 
 pipeline:
   - signature: claims
     model: claims-preprocessing:1
-    runtime: hydrosphere/serving-runtime-python:3.6-latest
-    environment: cpu
   - signature: claims
     monitoring:
       - name: ks
@@ -30,9 +29,6 @@ pipeline:
           treshold: 69
     modelservices:
       - model: claims-model:1
-        runtime: hydrosphere/serving-runtime-python:3.6-latest
-        environment: xeon
         weight: 80
-      - model: claims-model-old:2
-        runtime: hydrosphere/serving-runtime-python:3.6-latest
+      - model: claims-model:2
         weight: 20

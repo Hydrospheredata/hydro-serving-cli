@@ -11,20 +11,16 @@ def ensure_config(obj):
     return ensure(obj, "config", "hs config is not found")
 
 
-def ensure_cluster(obj):
-    maybe_result = obj.services.config.current_cluster()
+def ensure_config(obj):
+    maybe_result = obj.services.config
     if maybe_result is None:
-        click.echo("No current cluster. Check it with `hs cluster` command")
+        click.echo("No configuration. Check it with `hs cluster` command")
         raise SystemExit(-1)
     return maybe_result
 
 
 def ensure_app_data(obj):
     return ensure(obj, "app_data", "Directory doesn't have an application data")
-
-
-def ensure_kafka_params(obj):
-    return ensure(obj, "kafka_params", "Kafka params aren't specified")
 
 
 def ensure(obj, obj_field, error_msg=None):

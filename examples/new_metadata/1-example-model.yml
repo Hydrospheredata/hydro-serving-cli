@@ -4,6 +4,9 @@ name: claims-model
 model-type: python:3.6
 payload:
   - /user/models/claims-demo/claims-model
+runtime: hydrosphere/serving-runtime-python:3.6-latest
+# host-selector: xeon-cpu
+
 contract:
   claim: # signature name
     inputs:

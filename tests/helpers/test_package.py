@@ -3,7 +3,7 @@ import os
 import shutil
 
 from hydroserving.cli import ensure_model
-from hydroserving.helpers.package import assemble_model
+from hydroserving.core.model.package import assemble_model
 
 MODEL_FOLDER = "./tests/test_metadata_resources/"
 TRASH_FOLDER = "./tests/.hs"

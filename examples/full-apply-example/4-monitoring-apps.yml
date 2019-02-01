@@ -1,0 +1,5 @@
+version: 2
+kind: Application
+name: apply-demo-claims-autoencoder-app
+singular:
+  model: apply-demo-claims-autoencoder:1

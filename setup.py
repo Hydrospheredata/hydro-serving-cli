@@ -29,6 +29,6 @@ setup(
     ],
     entry_points='''
         [console_scripts]
-        hs=hydroserving.cli.hs:hs_cli
+        hs=hydroserving.cli.commands.hs:hs_cli
     '''
 )

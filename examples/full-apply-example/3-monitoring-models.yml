@@ -1,0 +1,8 @@
+version: 2
+kind: Model
+name: apply-demo-claims-autoencoder
+model-type: tensorflow:1.7.0
+runtime: hydrosphere/serving-runtime-tensorflow:1.7.0-latest
+# host-selector: xeon-cpu
+payload:
+  - /path/to/model

@@ -1,0 +1,18 @@
+version: 2
+kind: Application
+name: apply-demo-claims-app
+singular:
+  monitoring:
+    - name: ks
+      input: client_profile
+      type: Kolmogorov-Smirnov
+      healthcheck:
+        enabled: true
+    - name: autoencoder
+      input: client_profile
+      type: Autoencoder
+      app: apply-demo-claims-autoencoder-app
+      healthcheck:
+        enabled: true
+        threshold: 15
+  model: apply-demo-claims-model:2

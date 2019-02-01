@@ -1,6 +1,6 @@
 import os
 
-from hydroserving.helpers.file import get_visible_files, get_yamls
+from hydroserving.filesystem.utils import get_visible_files, get_yamls
 
 MODEL_FOLDER = "./examples/local_dev"
 
