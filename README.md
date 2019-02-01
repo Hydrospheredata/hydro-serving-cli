@@ -1,3 +1,5 @@
+[![PyPI version](https://badge.fury.io/py/hs.svg)](https://badge.fury.io/py/hs)
+
 # hydro-serving-cli
 
 CLI tool for [hydro-serving](https://github.com/Hydrospheredata/hydro-serving).
