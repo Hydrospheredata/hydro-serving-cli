@@ -91,6 +91,7 @@ def upload_model(model_service, profiler_service, model, model_path, is_async):
     if is_async:
         return mv
     else:
+        click.echo("Waiting for a model build to complete...")
         build_status = await_upload(model_service, mv)
         if push_uid is not None:
             push_uid = await_training_data(profiler_service, push_uid)

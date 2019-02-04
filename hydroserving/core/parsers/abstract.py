@@ -15,6 +15,11 @@ class UnknownResource(ParserError):
 
 
 class AbstractParser(ABC):
+    def parse_yaml_file(self, file):
+        yaml_dict_stream = yaml.safe_load_all(file)
+        for yaml_dict in yaml_dict_stream:
+            yield self.parse_dict(yaml_dict)
+
     def parse_yaml_stream(self, yaml_path):
         """
         Reads stream of documents from file.
@@ -26,16 +31,8 @@ class AbstractParser(ABC):
             stream of dict: if file is correct yam file
         """
         try:
-            if yaml_path == "-":
-                f = sys.stdin
-                yaml_dict_stream = yaml.safe_load_all(f)
-                for yaml_dict in yaml_dict_stream:
-                    yield self.parse_dict(yaml_dict)
-            else:
-                with open(yaml_path, 'r') as f:
-                    yaml_dict_stream = yaml.safe_load_all(f)
-                    for yaml_dict in yaml_dict_stream:
-                        yield self.parse_dict(yaml_dict)
+            with open(yaml_path, 'r') as f:
+                self.parse_yaml_file(f)
         except ParserError as ex:
             raise ParserError(yaml_path, ex)
         except KeyError as ex:

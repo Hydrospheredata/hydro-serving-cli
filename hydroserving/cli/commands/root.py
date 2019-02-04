@@ -85,9 +85,8 @@ def upload(obj, name, runtime, host_selector, training_data, dir, is_async):
 @click.pass_obj
 def apply(obj, f, ignore_monitoring):
     try:
-        print(f)
         result = obj.apply_service.apply(f, ignore_monitoring=ignore_monitoring)
-        click.echo(pprint.pformat(result))
+        click.echo(json.dumps(result))
     except ApplyError as ex:
         click.echo("Error while applying {}".format(f))
         click.echo(ex)

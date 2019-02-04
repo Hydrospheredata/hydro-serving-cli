@@ -1,6 +1,5 @@
 import os
 import sys
-import time
 
 import click
 
@@ -8,8 +7,9 @@ from hydroserving.cli.upload import upload_model
 from hydroserving.cli.utils import resolve_model_paths
 from hydroserving.config.settings import TARGET_FOLDER
 from hydroserving.core.application import Application
-from hydroserving.core.host_selector import HostSelector, HostSelectorService
+from hydroserving.core.host_selector import HostSelector
 from hydroserving.core.model.model import Model
+from hydroserving.core.model.package import assemble_model
 from hydroserving.core.monitoring import METRIC_PROVIDERS, PARAMETRIC_PROVIDERS, MetricProviderSpecification, \
     MetricConfigSpecification, HealthConfigSpecification, EntryAggregationSpecification, FilterSpecification
 from hydroserving.core.parsers.generic import GenericParser
@@ -18,13 +18,11 @@ from hydroserving.http.errors import BackendException
 
 
 class ApplyService:
-    def __init__(self, http_service):
-        """
-
-        Args:
-            http_service (HttpService): http client to access the cluster
-        """
-        self.http = http_service
+    def __init__(self, model_service, selector_service, application_service, profiler_service):
+        self.profiler_service = profiler_service
+        self.application_service = application_service
+        self.selector_service = selector_service
+        self.model_service = model_service
         self.parser = GenericParser()
 
     def apply(self, paths, **kwargs):
@@ -39,25 +37,32 @@ class ApplyService:
         results = {}
         for file in paths:
             abs_file = os.path.abspath(file)
-            if os.path.isdir(file):
+            if file == "-":  # special case for stdin redirect
+                click.echo("Applying resource from <STDIN> ...")
+                yaml_res = self.apply_yaml(file, **kwargs)
+                results["<STDIN>"] = yaml_res
+            elif os.path.isdir(file):
                 click.echo("Looking for resources in {} ...".format(os.path.basename(abs_file)))
                 for yaml_file in sorted(get_yamls(abs_file)):
+                    click.echo("Applying {} ...".format(os.path.basename(yaml_file)))
                     yaml_res = self.apply_yaml(yaml_file, **kwargs)
                     results[yaml_file] = yaml_res
             elif is_yaml(file):
+                click.echo("Applying {} ...".format(os.path.basename(file)))
                 yaml_res = self.apply_yaml(abs_file, **kwargs)
-                results[file] = yaml_res
-            elif file == "-":  # special case for stdin redirect
-                yaml_res = self.apply_yaml(file, **kwargs)
                 results[file] = yaml_res
             else:
                 raise UnknownFile(file)
         return results
 
     def apply_yaml(self, path, **kwargs):
-        click.echo("Applying {} ...".format(os.path.basename(path)))
         responses = []
-        for doc_obj in self.parser.parse_yaml_stream(path):
+        if path == "-":
+            path = os.getcwd()
+            stream = self.parser.parse_yaml_file(sys.stdin)
+        else:
+            stream = self.parser.parse_yaml_stream(path)
+        for doc_obj in stream:
             if isinstance(doc_obj, Model):
                 responses.append(self.apply_model(doc_obj, path))
             elif isinstance(doc_obj, Application):
@@ -78,53 +83,16 @@ class ApplyService:
         Returns:
 
         """
-        model_api = self.http.model_api()
-        profiler_api = self.http.profiler_api()
-        folder = os.path.abspath(os.path.dirname(path))
-        target_path = os.path.join(folder, TARGET_FOLDER)
-        model = resolve_model_paths(folder, model)
-        build_status = upload_model(model_api, profiler_api, model, target_path, is_async=False)
-        print(build_status)
-
-    def apply_runtime(self, runtime):
-        """
-
-        Args:
-            runtime (Runtime):
-
-        Returns:
-
-        """
-        runtime_api = self.http.runtime_api()
-        found_runtime = runtime_api.find(runtime.name, runtime.version)
-        if found_runtime is not None:
-            full_runtime_name = runtime.name + ':' + runtime.version
-            click.echo(full_runtime_name + " already exists")
-            return None
-        resp = runtime_api.create(
-            name=runtime.name,
-            version=runtime.version,
-            rtypes=[runtime.model_type]
-        )
-        is_finished = False
-        is_failed = False
-        pull_status = None
-        while not (is_finished or is_failed):
-            pull_status = runtime_api.get_status(resp['id'])
-            is_finished = pull_status['status'] == 'Finished'
-            is_failed = pull_status['status'] == 'Failed'
-            time.sleep(5)  # wait until it's finished
-
-        if is_failed:
-            raise RuntimeApplyError(pull_status)
+        tar = assemble_model(model, path)
+        result = upload_model(self.model_service, self.profiler_service, model, tar, is_async=False)
+        return result
 
     def apply_hostselector(self, env):
-        env_api = HostSelectorService(self.http.connection())
-        found_env = env_api.get(env.name)
+        found_env = self.selector_service.get(env.name)
         if found_env is not None:
             click.echo(env.name + " environment already exists")
             return None
-        return env_api.create(env.name, env.selector)
+        return self.selector_service.create(env.name, env.selector)
 
     def apply_application(self, app, ignore_monitoring):
         """
@@ -136,24 +104,22 @@ class ApplyService:
         Returns:
 
         """
-        application_api = self.http.app_api()
 
-        id_mapper_app = self.check_app_deps(app)
-        app_request = app.to_create_request(id_mapper_app)
+        app_request = app.to_create_request()
 
         id_mapper_mon = {}
         if not ignore_monitoring:
             try:
-                self.http.monitoring_api().list_aggregations()
+                self.profiler_service.list_aggregations()
             except BackendException:
                 raise ApplicationApplyError("Monitoring service is unavailable. Consider --ignore-monitoring flag.")
             id_mapper_mon = self.check_monitoring_deps(app)
 
-        found_app = application_api.find(app.name)
+        found_app = self.application_service.find(app.name)
         if found_app is None:
-            result = application_api.create(app_request)
+            result = self.application_service.create(app_request)
         else:
-            result = application_api.update(found_app['id'], app_request)
+            result = self.application_service.update(found_app['id'], app_request)
 
         click.echo("Server app response")
         click.echo(result)
@@ -170,7 +136,6 @@ class ApplyService:
             app (Application):
         """
         stages = app.execution_graph.as_pipeline().stages
-        app_api = self.http.app_api()
         id_mapper_mon = {}
         for stage in stages:
             for mon in stage.monitoring:
@@ -182,7 +147,7 @@ class ApplyService:
                         raise ValueError("Application (app) is required for metric {}".format(mon.__dict__))
                 else:
                     if mon.app not in id_mapper_mon:  # check for appName -> appId
-                        mon_app_result = app_api.find(mon.app)
+                        mon_app_result = self.application_service.find(mon.app)
                         print("MONAPPSEARCH")
                         print(mon.__dict__)
                         print(mon_app_result)
@@ -221,22 +186,16 @@ class ApplyService:
         """
         id_mapper = {}
         if service.environment is not None:
-            env_res = self.http.env_api().get(service.environment)
+            env_res = self.selector_service.get(service.environment)
             if env_res is None:
                 raise ApplicationApplyError("Can't find required environment: {}".format(service.environment))
             id_mapper[service.environment] = env_res['id']
 
         model_name, model_version = service.model_version.split(':', maxsplit=2)
-        model_res = self.http.model_api().find_version(model_name, int(model_version))
+        model_res = self.model_service.find_version(model_name, int(model_version))
         if model_res is None:
             raise ApplicationApplyError("Can't find required model: {}".format(service.model_version))
         id_mapper[service.model_version] = model_res['id']
-
-        runtime_name, runtime_version = service.runtime.split(':', maxsplit=2)
-        runtime_res = self.http.runtime_api().find(runtime_name, runtime_version)
-        if runtime_res is None:
-            raise ApplicationApplyError("Can't find required runtime: {}".format(service.runtime))
-        id_mapper[service.runtime] = runtime_res['id']
 
         return id_mapper
 
@@ -248,7 +207,7 @@ class ApplyService:
             app (Application):
             app_id (int):
         """
-        mon_api = self.http.monitoring_api()
+        mon_api = self.profiler_service
         pipeline = app.execution_graph.as_pipeline()
         results = []
         for idx, stage in enumerate(pipeline.stages):

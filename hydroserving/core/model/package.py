@@ -69,7 +69,8 @@ def resolve_model_payload(model):
 
     files = resolve_list_of_globs(model.payload)
     for file in files:
-        result_paths.append(os.path.basename(file))
+        print("Payload item detected: {}".format(file))
+        result_paths.append(file)
     return result_paths
 
 
@@ -89,7 +90,7 @@ def assemble_model(model, model_path):
     os.makedirs(hs_model_dir)
 
     files = resolve_model_payload(model)
-
+    print("Files to assemble: {}".format(files))
     tar_name = "{}.tar.gz".format(model.name)
     tar_path = os.path.join(hs_model_dir, tar_name)
     with click.progressbar(iterable=files,
