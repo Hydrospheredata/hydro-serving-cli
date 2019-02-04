@@ -5,13 +5,12 @@ from hydroserving.http.remote_connection import RemoteConnection
 
 class Model:
     def __init__(self, name, host_selector, runtime, contract, payload,
-                 description, training_data_file, install_command):
+                 training_data_file, install_command):
         """
         Args:
             name (str):
             contract (ModelContract or None):
             payload (list of str):
-            description (str or None):
             training_data_file (str or None):
         """
         if not isinstance(name, str):
@@ -26,18 +25,14 @@ class Model:
         if not isinstance(payload, list):
             raise TypeError("payload is not a list", type(contract))
 
-        if description is not None and not isinstance(description, str):
-            raise TypeError("description is not a string", type(description))
-
         if install_command is not None and not isinstance(install_command, str):
-            raise TypeError("install-command is not a string", type(description))
+            raise TypeError("install-command is not a string", type(install_command))
 
         self.name = name
         self.host_selector = host_selector
         self.runtime = runtime
         self.contract = contract
         self.payload = payload
-        self.description = description
         self.training_data_file = training_data_file
         self.install_command = install_command
 
@@ -45,10 +40,10 @@ class Model:
 class UploadMetadata:
     def __init__(self, name, contract, host_selector, runtime, install_command):
         self.contract = contract
-        self.host_selector = host_selector
+        self.hostSelectorName = host_selector
         self.runtime = runtime
         self.name = name
-        self.install_command = install_command
+        self.installCommand = install_command
 
 
 class ModelService:

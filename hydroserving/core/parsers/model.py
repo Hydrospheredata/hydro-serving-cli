@@ -19,7 +19,6 @@ class ModelParser(AbstractParser):
             name=in_dict.get("name"),
             contract=contract_from_dict(in_dict.get("contract")),
             payload=in_dict.get("payload"),
-            description=in_dict.get("description"),
             training_data_file=in_dict.get("training-data"),
             install_command=in_dict.get("install-command"),
             runtime=DockerImage.parse_fullname(in_dict["runtime"]),

@@ -4,7 +4,7 @@ import tarfile
 
 import click
 
-from hydroserving.config.settings import PACKAGE_CONTRACT_FILENAME, PACKAGE_FILES_DIR
+from hydroserving.config.settings import PACKAGE_CONTRACT_FILENAME, PACKAGE_FILES_DIR, TARGET_FOLDER
 from hydroserving.core.model.model import Model
 from hydroserving.filesystem.utils import copy_to_target, resolve_list_of_globs
 
@@ -73,16 +73,17 @@ def resolve_model_payload(model):
     return result_paths
 
 
-def assemble_model(model, target_path):
+def assemble_model(model, model_path):
     """
     Compresses TARGET_PATH to .tar.gz archive
     Returns path to the archive.
 
     Args:
         model (Model):
-        target_path (str):
+        model_path (str):
     """
-    hs_model_dir = os.path.join(target_path, model.name)
+    target_dir = os.path.join(model_path, TARGET_FOLDER)
+    hs_model_dir = os.path.join(target_dir, model.name)
     if os.path.exists(hs_model_dir):
         shutil.rmtree(hs_model_dir)
     os.makedirs(hs_model_dir)
@@ -96,6 +97,6 @@ def assemble_model(model, target_path):
                            label='Assembling the model') as bar:
         with tarfile.open(tar_path, "w:gz") as tar:
             for entry in bar:
-                tar.add(entry)
+                tar.add(os.path.join(model_path, entry), arcname=entry)
 
     return tar_path

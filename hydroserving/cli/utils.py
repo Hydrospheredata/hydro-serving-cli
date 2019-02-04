@@ -38,15 +38,14 @@ def try_get(obj, obj_field):
     return obj.__dict__[obj_field]
 
 
-def ensure_model(dir_path, name, model_type, description, path_to_contract, path_to_training_data):
+def ensure_model(dir_path, name, runtime, host_selector, path_to_training_data):
     """
 
     Args:
+        host_selector (str):
+        runtime (str):
         dir_path (str):
         name (str):
-        model_type (str or None):
-        description (str or None):
-        path_to_contract (str or None):
         path_to_training_data (str or None):
 
     Returns:
@@ -67,25 +66,25 @@ def ensure_model(dir_path, name, model_type, description, path_to_contract, path
         metadata = ModelParser().parse_yaml(serving_file)
         if name is not None:
             metadata.name = name
-        if model_type is not None:
-            metadata.model_type = model_type
-        if description is not None:
-            metadata.description = description
+        if runtime is not None:
+            metadata.runtime = runtime
+        if host_selector is not None:
+            metadata.host_selector = host_selector
         if path_to_training_data is not None:
             metadata.training_data_file = path_to_training_data
 
     if metadata is None:
+        if name is None:
+            name = os.path.basename(os.getcwd())
         metadata = Model(
             name=name,
-            model_type=model_type,
             contract=None,
-            description=description,
+            runtime=runtime,
+            host_selector=host_selector,
             payload=[os.path.join(dir_path, "*")],
-            training_data_file=path_to_training_data
+            training_data_file=path_to_training_data,
+            install_command=None
         )
-
-    if path_to_contract is not None:
-        metadata.contract = read_contract_file(path_to_contract)
 
     resolve_model_paths(dir_path, metadata)
 
