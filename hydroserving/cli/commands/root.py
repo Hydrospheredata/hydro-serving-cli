@@ -1,8 +1,11 @@
 import os
 import pprint
 import json
+import sys
+
 import click
 import requests
+from yaml.scanner import ScannerError
 
 from hydroserving.cli.commands.hs import hs_cli
 from hydroserving.cli.help import CONTEXT_SETTINGS, UPLOAD_HELP, APPLY_HELP, PROFILE_FILENAME_HELP
@@ -28,7 +31,11 @@ from hydroserving.core.parsers.abstract import ParserError
               required=False,
               help=PROFILE_FILENAME_HELP)
 @click.option('--dir',
-              type=click.Path(exists=True),
+              type=click.Path(
+                  exists=True,
+                  file_okay=False,
+                  dir_okay=True
+              ),
               default=os.getcwd(),
               show_default=True,
               required=False)
@@ -61,7 +68,13 @@ def upload(obj, name, runtime, host_selector, training_data, dir, is_async):
 
 @hs_cli.command(help=APPLY_HELP, context_settings=CONTEXT_SETTINGS)
 @click.option('-f',
-              type=click.File(),
+              type=click.Path(
+                  exists=True,
+                  file_okay=True,
+                  dir_okay=True,
+                  allow_dash=True,
+                  readable=True
+              ),
               multiple=True,
               required=True)
 @click.option('--ignore-monitoring',
@@ -71,9 +84,9 @@ def upload(obj, name, runtime, host_selector, training_data, dir, is_async):
               is_flag=True)
 @click.pass_obj
 def apply(obj, f, ignore_monitoring):
-    apply_service = obj.apply_service
     try:
-        result = apply_service.apply(f, ignore_monitoring=ignore_monitoring)
+        print(f)
+        result = obj.apply_service.apply(f, ignore_monitoring=ignore_monitoring)
         click.echo(pprint.pformat(result))
     except ApplyError as ex:
         click.echo("Error while applying {}".format(f))
@@ -83,3 +96,6 @@ def apply(obj, f, ignore_monitoring):
         click.echo("Error while applying: {}".format(f))
         click.echo(ex)
         raise SystemExit(-1)
+    except ScannerError as ex:
+        click.echo("Error while applying: {}".format(f))
+        click.echo("Invalid YAML format: {}".format(ex))

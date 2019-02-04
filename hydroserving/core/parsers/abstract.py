@@ -1,3 +1,4 @@
+import sys
 from abc import ABC, abstractmethod
 import yaml
 
@@ -25,12 +26,20 @@ class AbstractParser(ABC):
             stream of dict: if file is correct yam file
         """
         try:
-            with open(yaml_path, 'r') as f:
+            if yaml_path == "-":
+                f = sys.stdin
                 yaml_dict_stream = yaml.safe_load_all(f)
                 for yaml_dict in yaml_dict_stream:
                     yield self.parse_dict(yaml_dict)
+            else:
+                with open(yaml_path, 'r') as f:
+                    yaml_dict_stream = yaml.safe_load_all(f)
+                    for yaml_dict in yaml_dict_stream:
+                        yield self.parse_dict(yaml_dict)
         except ParserError as ex:
             raise ParserError(yaml_path, ex)
+        except KeyError as ex:
+            raise ParserError(yaml_path, "Can't find {} field".format(ex))
 
     def parse_yaml(self, yaml_path):
         """

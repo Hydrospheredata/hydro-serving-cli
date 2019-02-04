@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 
 import click
@@ -45,6 +46,9 @@ class ApplyService:
                     results[yaml_file] = yaml_res
             elif is_yaml(file):
                 yaml_res = self.apply_yaml(abs_file, **kwargs)
+                results[file] = yaml_res
+            elif file == "-":  # special case for stdin redirect
+                yaml_res = self.apply_yaml(file, **kwargs)
                 results[file] = yaml_res
             else:
                 raise UnknownFile(file)
