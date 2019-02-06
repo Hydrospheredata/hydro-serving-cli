@@ -1,6 +1,6 @@
 from hydroserving.core.contract import contract_from_dict
 from hydroserving.core.image import DockerImage
-from hydroserving.core.model.model import Model
+from hydroserving.core.model.entities import Model
 from hydroserving.core.parsers.abstract import AbstractParser
 
 
@@ -15,7 +15,7 @@ class ModelParser(AbstractParser):
     def parse_dict(self, in_dict):
         if in_dict is None:
             return None
-        return Model(
+        model = Model(
             name=in_dict.get("name"),
             contract=contract_from_dict(in_dict.get("contract")),
             payload=in_dict.get("payload"),
@@ -24,3 +24,5 @@ class ModelParser(AbstractParser):
             runtime=DockerImage.parse_fullname(in_dict["runtime"]),
             host_selector=in_dict.get("host-selector")
         )
+        model.validate()
+        return model

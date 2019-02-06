@@ -1,3 +1,5 @@
+import logging
+
 class HostSelector:
     def __init__(self, name, selector):
         """
@@ -8,6 +10,7 @@ class HostSelector:
         """
         self.name = name
         self.selector = selector
+
 
 class HostSelectorService:
     def __init__(self, connection):
@@ -33,3 +36,10 @@ class HostSelectorService:
             'placeholders': [env_selector]
         }
         return self.connection.post("/api/v1/environment", data)
+
+    def apply(self, env):
+        found_env = self.get(env.name)
+        if found_env is not None:
+            logging.warning(env.name + " environment already exists")
+            return None
+        return self.create(env.name, env.selector)

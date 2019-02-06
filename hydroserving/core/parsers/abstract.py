@@ -1,4 +1,3 @@
-import sys
 from abc import ABC, abstractmethod
 import yaml
 
@@ -15,45 +14,24 @@ class UnknownResource(ParserError):
 
 
 class AbstractParser(ABC):
-    def parse_yaml_file(self, file):
-        yaml_dict_stream = yaml.safe_load_all(file)
-        for yaml_dict in yaml_dict_stream:
-            yield self.parse_dict(yaml_dict)
-
-    def parse_yaml_stream(self, yaml_path):
-        """
-        Reads stream of documents from file.
-        Assumes that every doc in stream is the same kind.
-        Args:
-            yaml_path: str
-
-        Returns:
-            stream of dict: if file is correct yam file
-        """
+    def yaml_file_stream(self, file):
         try:
-            with open(yaml_path, 'r') as f:
-                self.parse_yaml_file(f)
+            yaml_dict_stream = yaml.safe_load_all(file)
+            for yaml_dict in yaml_dict_stream:
+                yield self.parse_dict(yaml_dict)
         except ParserError as ex:
-            raise ParserError(yaml_path, ex)
+            raise ParserError(file, ex)
         except KeyError as ex:
-            raise ParserError(yaml_path, "Can't find {} field".format(ex))
+            raise ParserError(file, "Can't find {} field".format(ex))
 
-    def parse_yaml(self, yaml_path):
-        """
-        Reads single doc from file.
-
-        Args:
-            yaml_path (str): path to yaml
-
-        Returns:
-            object: if read and parse is successful
-        """
+    def yaml_file(self, file):
         try:
-            with open(yaml_path, 'r') as f:
-                yaml_dict = yaml.safe_load(f)
+            yaml_dict = yaml.safe_load(file)
             return self.parse_dict(yaml_dict)
         except ParserError as ex:
-            raise ParserError(yaml_path, ex)
+            raise ParserError(file, ex)
+        except KeyError as ex:
+            raise ParserError(file, "Can't find {} field".format(ex))
 
     def write_yaml(self, yaml_path, obj):
         """

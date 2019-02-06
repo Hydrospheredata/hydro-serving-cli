@@ -27,7 +27,7 @@ pipeline:
         healthcheck:
           enabled: true
           treshold: 69
-    modelservices:
+    model-variants:
       - model: claims-model:1
         weight: 80
       - model: claims-model:2

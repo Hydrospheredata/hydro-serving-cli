@@ -1,4 +1,5 @@
 import click
+import logging
 
 from hydroserving.cli import CONTEXT_SETTINGS
 from hydroserving.cli.commands.hs import hs_cli
@@ -28,5 +29,5 @@ def push(obj, model_version, filename, is_async):
         mv = obj.model_service.find_version(model, int(version))
         mv_id = mv["id"]
     obj.profiler_service.push_training_data(mv_id, filename, is_async)
-    click.echo("Data profile for {} will be available: {}/models/{}/{}".format(
+    logging.info("Data profile for {} will be available: {}/models/{}/{}".format(
         model_version, url, mv["model"]["id"], mv["modelVersion"]))

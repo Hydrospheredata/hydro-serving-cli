@@ -12,8 +12,9 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
-        "click==6.7",
-        "pyyaml~=4.2",
+        "click~=6.7",
+        "click-log~=0.3",
+        "pyyaml~=4.2b4",
         "protobuf~=3.6",
         "kafka-python==1.4.3",
         "hydro-serving-grpc~=0.2",

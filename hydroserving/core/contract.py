@@ -7,7 +7,7 @@ from hydro_serving_grpc import ModelContract, TensorShapeProto, ModelField, Mode
     DT_INVALID, DT_STRING, DT_BOOL, \
     DT_HALF, DT_FLOAT, DT_DOUBLE, DT_INT8, DT_INT16, \
     DT_INT32, DT_INT64, DT_UINT8, DT_UINT16, DT_UINT32, \
-    DT_UINT64, DT_QINT8, DT_QINT16, DT_QINT32, DT_QUINT8, DT_QUINT16, DT_VARIANT, DataType
+    DT_UINT64, DT_QINT8, DT_QINT16, DT_QINT32, DT_QUINT8, DT_QUINT16, DT_VARIANT, DataType, DT_COMPLEX64, DT_COMPLEX128
 
 log = logging.getLogger('helpers.contract')
 
@@ -106,7 +106,10 @@ NAME_TO_DTYPES = {
     "qint32": DT_QINT32,
 
     "quint8": DT_QUINT8,
-    "quint16": DT_QUINT16
+    "quint16": DT_QUINT16,
+
+    "complex64": DT_COMPLEX64,
+    "complex128": DT_COMPLEX128,
 }
 
 DTYPE_TO_NAMES = {
@@ -134,7 +137,10 @@ DTYPE_TO_NAMES = {
     DT_QINT32: "qint32",
 
     DT_QUINT8: "quint8",
-    DT_QUINT16: "quint16"
+    DT_QUINT16: "quint16",
+
+    DT_COMPLEX64: "complex64",
+    DT_COMPLEX128: "complex128"
 }
 
 

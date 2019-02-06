@@ -1,7 +1,8 @@
+import logging
 from urllib.parse import urljoin
 
 import requests
-from requests_toolbelt.multipart.encoder import MultipartEncoder, MultipartEncoderMonitor
+from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 from hydroserving.http.errors import BackendException
 
@@ -19,7 +20,6 @@ class RemoteConnection:
         Sends POST request with `data` to the given `url` and returns data as JSON dictionary.
         """
         data = self.preprocess_request(data)
-        print(data)
         result = requests.post(self.compose_url(url), json=data)
         return RemoteConnection.postprocess_response(result)
 
@@ -28,7 +28,6 @@ class RemoteConnection:
         Sends PUT request with `data` to the given `url` and returns data as JSON dictionary.
         """
         data = self.preprocess_request(data)
-        print(data)
         result = requests.put(self.compose_url(url), json=data)
         return RemoteConnection.postprocess_response(result)
 
@@ -47,21 +46,17 @@ class RemoteConnection:
         result = requests.delete(self.compose_url(url))
         return RemoteConnection.postprocess_response(result)
 
-    def multipart_post(self, url, data, files, create_encoder_callback=None):
+    def multipart_post(self, url, data, files):
+        fields = {**self.preprocess_request(data), **files}
+        logging.debug("Multipart request. Parts: {}".format(fields))
         encoder = MultipartEncoder(
-            fields={**self.preprocess_request(data), **files}
+            fields=fields
         )
-
-        callback = None
-        if create_encoder_callback is not None:
-            callback = create_encoder_callback(encoder)
-
-        monitor = MultipartEncoderMonitor(encoder, callback)
 
         result = requests.post(
             url=self.compose_url(url),
-            data=monitor,
-            headers={'Content-Type': monitor.content_type}
+            data=encoder,
+            headers={'Content-Type': encoder.content_type}
         )
 
         return RemoteConnection.postprocess_response(result)
@@ -81,6 +76,7 @@ class RemoteConnection:
 
             """
         if 500 <= response.status_code < 600:
+            logging.error("Got server error {}".format(response))
             raise BackendException(response.content.decode('utf-8'))
         return response
 

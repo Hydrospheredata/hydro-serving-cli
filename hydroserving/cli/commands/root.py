@@ -1,18 +1,16 @@
-import os
-import pprint
 import json
-import sys
+import os
 
 import click
 import requests
 from yaml.scanner import ScannerError
+import logging
 
 from hydroserving.cli.commands.hs import hs_cli
 from hydroserving.cli.help import CONTEXT_SETTINGS, UPLOAD_HELP, APPLY_HELP, PROFILE_FILENAME_HELP
-from hydroserving.cli.upload import upload_model
-from hydroserving.cli.utils import ensure_model
-from hydroserving.core.apply import ApplyError
-from hydroserving.core.model.package import assemble_model
+from hydroserving.core.model.service import InvalidModelException
+from hydroserving.core.model.package import assemble_model, ensure_model
+from hydroserving.core.model.upload import upload_model, ModelBuildError
 from hydroserving.core.parsers.abstract import ParserError
 
 
@@ -34,36 +32,39 @@ from hydroserving.core.parsers.abstract import ParserError
               type=click.Path(
                   exists=True,
                   file_okay=False,
-                  dir_okay=True
-              ),
+                  dir_okay=True),
               default=os.getcwd(),
               show_default=True,
               required=False)
 @click.option('--async', 'is_async', is_flag=True, default=False)
 @click.pass_obj
 def upload(obj, name, runtime, host_selector, training_data, dir, is_async):
-    cluster = obj.config_service.current_cluster()
-    if cluster is None:
-        click.echo("No cluster selected. Cannot continue.")
-        raise SystemExit(-1)
-
-    click.echo("Using '{}' cluster".format(cluster['name']))
-
-    model_metadata = ensure_model(dir, name, runtime, host_selector, training_data)
-
+    dir = os.path.abspath(dir)
     try:
+        model_metadata = ensure_model(dir, name, runtime, host_selector, training_data)
         tar = assemble_model(model_metadata, dir)
         result = upload_model(obj.model_service, obj.profiler_service, model_metadata, tar, is_async)
-        click.echo("Success:")
+        logging.info("Success:")
         click.echo(json.dumps(result))
+    except ModelBuildError as err:
+        logging.error("Model build failed")
+        logging.info(json.dumps(err.model_version))
+        raise SystemExit(-1)
     except requests.RequestException as err:
-        click.echo()
-        click.echo("Upload failed. Reason:")
-        click.echo(err)
+        logging.error("Server returned an error")
+        logging.info(err)
         raise SystemExit(-1)
     except ValueError as err:
-        click.echo("Upload failed: {}".format(err))
+        logging.error("Upload failed")
+        logging.info(err)
         raise SystemExit(-1)
+    except InvalidModelException as err:
+        logging.error("Invalid model definition")
+        logging.info(err)
+    except RuntimeError as err:
+        logging.error("Unexpected error")
+        logging.info(err)
+        logging.info(err.__traceback__)
 
 
 @hs_cli.command(help=APPLY_HELP, context_settings=CONTEXT_SETTINGS)
@@ -84,17 +85,20 @@ def upload(obj, name, runtime, host_selector, training_data, dir, is_async):
               is_flag=True)
 @click.pass_obj
 def apply(obj, f, ignore_monitoring):
+    f = list(f)
+    for i, x in enumerate(f):
+        if x == "-":
+            f[i] = "<STDIN>"
+    logging.debug("Got files: {}".format(f))
     try:
         result = obj.apply_service.apply(f, ignore_monitoring=ignore_monitoring)
-        click.echo(json.dumps(result))
-    except ApplyError as ex:
-        click.echo("Error while applying {}".format(f))
-        click.echo(ex)
-        raise SystemExit(-1)
+        logging.info(json.dumps(result))
     except ParserError as ex:
-        click.echo("Error while applying: {}".format(f))
-        click.echo(ex)
+        logging.error("Error while parsing: {}".format(ex))
         raise SystemExit(-1)
     except ScannerError as ex:
-        click.echo("Error while applying: {}".format(f))
-        click.echo("Invalid YAML format: {}".format(ex))
+        logging.error("Error while applying: Invalid YAML: {}".format(ex))
+        raise SystemExit(-1)
+    except Exception as err:
+        logging.error("Error while applying: {}".format(err))
+        raise SystemExit(-1)

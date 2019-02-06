@@ -2,6 +2,7 @@ import os
 import shutil
 import glob
 
+
 def resolve_list_of_globs(globs):
     """
     Iterates over payload paths and recursively retrieves visible files
@@ -23,6 +24,7 @@ def resolve_list_of_globs(globs):
             else:
                 raise ValueError("Path {} doesn't exist".format(path))
     return paths
+
 
 def copy_to_target(src_path, package_path):
     """
@@ -62,6 +64,7 @@ def with_cwd(new_cwd, func, *args):
         raise err
     finally:
         os.chdir(old_cwd)
+
 
 def get_visible_files(path, recursive=False):
     """

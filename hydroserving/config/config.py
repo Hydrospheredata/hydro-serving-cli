@@ -1,10 +1,11 @@
 import os
+from urllib.parse import urlsplit, urlunsplit
+
 import click
-from urllib.parse import urlparse, urlunparse, urlsplit, urlunsplit
 
 from hydroserving.config.cluster_config import ClusterConfig
+from hydroserving.config.parser import ConfigParser
 from hydroserving.config.settings import CONFIG_FILE
-from hydroserving.core.parsers.config import ConfigParser
 from hydroserving.http.remote_connection import RemoteConnection
 
 
@@ -15,12 +16,14 @@ class ConfigService:
     Works with configuration yaml files under `home_path` directory
     """
 
-    def __init__(self, home_path):
+    def __init__(self, home_path, overridden_cluster=None):
         self.home_path = home_path
         self.config_path = os.path.join(home_path, CONFIG_FILE)
         self.confparser = ConfigParser()
+        self.overriden_cluster = overridden_cluster
         if os.path.isfile(self.config_path):
-            self.config = self.confparser.parse_yaml(self.config_path)
+            with open(self.config_path, 'r') as f:
+                self.config = self.confparser.yaml_file(f)
         else:
             click.echo("{} is not an existing directory".format(home_path))
             self.config = ClusterConfig()
@@ -81,10 +84,20 @@ class ConfigService:
         return None
 
     def current_cluster(self):
-        return self.find_cluster(self.config.current_cluster)
+        if self.overriden_cluster:
+            return self.find_cluster(self.overriden_cluster)
+        else:
+            return self.find_cluster(self.config.current_cluster)
 
     def get_connection(self):
         current_cluster = self.current_cluster()
+        if current_cluster is not None:
+            return RemoteConnection(current_cluster['cluster']['server'])
+        else:
+            return None
+
+    def get_cluster_connection(self, cluster_name):
+        current_cluster = self.find_cluster(cluster_name)
         if current_cluster is not None:
             return RemoteConnection(current_cluster['cluster']['server'])
         else:

@@ -1,4 +1,4 @@
-from hydroserving.core.host_selector import HostSelector
+from hydroserving.core.host_selector.host_selector import HostSelector
 from hydroserving.core.parsers.abstract import AbstractParser
 
 

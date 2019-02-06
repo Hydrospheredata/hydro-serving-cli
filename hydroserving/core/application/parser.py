@@ -1,6 +1,4 @@
-from hydroserving.core.application import KafkaStreamingParams, MonitoringParams, SingularModel, PipelineStage, \
-    Pipeline, Application
-from hydroserving.core.model.model import ModelService
+from hydroserving.core.application.entities import *
 from hydroserving.core.parsers.abstract import AbstractParser
 
 
@@ -83,42 +81,39 @@ class ApplicationParser(AbstractParser):
     def parse_singular(in_dict):
         return SingularModel(
             model_version=in_dict['model'],
-            runtime=in_dict['runtime'],
-            environment=in_dict.get("environment"),
+            signature_name=in_dict['signature'],
             monitoring_params=ApplicationParser.parse_monitoring_param_list(in_dict.get("monitoring"))
         )
 
     @staticmethod
-    def parse_model_service_list(in_list):
+    def parse_model_variant_list(in_list):
         services = [
-            ApplicationParser.parse_model_service(x)
+            ApplicationParser.parse_model_variant(x)
             for x in in_list
         ]
         return services
 
     @staticmethod
-    def parse_model_service(in_dict):
-        return ModelService(
+    def parse_model_variant(in_dict):
+        return ModelVariant(
             model_version=in_dict['model'],
-            runtime=in_dict['runtime'],
-            weight=in_dict['weight'],
-            environment=in_dict.get("environment")
+            signature=in_dict['signature'],
+            weight=in_dict['weight']
         )
 
     @staticmethod
     def parse_pipeline_stage(stage_dict):
         monitoring = ApplicationParser.parse_monitoring_param_list(stage_dict.get("monitoring", []))
         signature = stage_dict['signature']
-        multi_services = stage_dict.get('modelservices')
+        multi_services = stage_dict.get('model-variants')
         if multi_services is not None:
-            services = ApplicationParser.parse_model_service_list(multi_services)
+            services = ApplicationParser.parse_model_variant_list(multi_services)
         else:
             services = [
-                ModelService(
+                ModelVariant(
                     model_version=stage_dict['model'],
-                    runtime=stage_dict['runtime'],
                     weight=100,
-                    environment=stage_dict.get('environment')
+                    signature=stage_dict['signature']
                 )
             ]
         return PipelineStage(

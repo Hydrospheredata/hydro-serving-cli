@@ -1,8 +1,8 @@
+from hydroserving.config.parser import ConfigParser
+from hydroserving.core.application.parser import ApplicationParser
+from hydroserving.core.host_selector.parser import HostSelectorParser
+from hydroserving.core.model.parser import ModelParser
 from hydroserving.core.parsers.abstract import AbstractParser, UnknownResource
-from hydroserving.core.parsers.application import ApplicationParser
-from hydroserving.core.parsers.config import ConfigParser
-from hydroserving.core.parsers.environment import HostSelectorParser
-from hydroserving.core.parsers.model import ModelParser
 
 
 class GenericParser(AbstractParser):

@@ -1,5 +1,9 @@
 from hydroserving.cli.context import CONTEXT_SETTINGS, AUTO_ENVVAR_PREFIX
 
+VERBOSE_HELP = """
+Enable debug output.
+"""
+
 CONTRACT_HELP = """
 Show validated model contract.
 """
@@ -14,35 +18,6 @@ Prepare payload and validate contract.
 
 STATUS_HELP = """
 Return the status of current folder.
-"""
-
-# KAFKA HELP
-KAFKA_HELP = """
-kafka read/write utils
-"""
-
-KAFKA_ADVERTISED_ADDR_HELP = """
-KAFKA_ADVERTISED_ADDR
-"""
-
-KAFKA_TOPIC_HELP = """
-KAFKA_TOPIC
-"""
-
-KAFKA_PREDICT_REQUEST_FILE_HELP = """
-KAFKA_PREDICT_REQUEST_FILE
-"""
-
-KAFKA_TAIL_HELP = """
-KAFKA_TAIL
-"""
-
-PUBLISH_TO_KAFKA_HELP = """
-Publishes predict request to kafka.
-"""
-
-READ_FROM_KAFKA_HELP = """
-Reads messages from kafka
 """
 
 # UPLOAD HELP

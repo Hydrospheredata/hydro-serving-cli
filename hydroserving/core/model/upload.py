@@ -1,13 +1,14 @@
+import logging
 import time
 
-import click
-
 from hydroserving.core.contract import contractToDict
-from hydroserving.core.model.model import Model, UploadMetadata
+from hydroserving.core.model.service import UploadMetadata
 
 
 class ModelBuildError(RuntimeError):
-    pass
+    def __init__(self, model_version):
+        self.model_version = model_version
+        super().__init__(model_version)
 
 
 def await_upload(model_api, model_version):
@@ -34,10 +35,9 @@ def await_training_data(profile_api, uid):
 
 
 def push_training_data_async(profile_api, model_version_id, filename):
-    with click.progressbar(length=1, label='Uploading training data') as bar:
-        uid = profile_api.push(model_version_id, filename, create_bar_callback_factory(bar))
-    click.echo()
-    click.echo("Data profile computing is started with id {}".format(uid))
+    logging.info("Uploading training data")
+    uid = profile_api.push(model_version_id, filename)
+    logging.info("Data profile computing is started with id {}".format(uid))
     return uid
 
 
@@ -61,8 +61,8 @@ def upload_model_async(model_api, model, tar):
     Returns:
         dict:
     """
-
-    click.echo("Uploading to {}".format(model_api.connection.remote_addr))
+    logger = logging.getLogger()
+    logger.debug("Uploading model to {}".format(model_api.connection.remote_addr))
 
     metadata = UploadMetadata(
         name=model.name,
@@ -72,14 +72,12 @@ def upload_model_async(model_api, model, tar):
         install_command=model.install_command
     )
 
-    with click.progressbar(length=1, label='Uploading model assembly')as bar:
-        create_encoder_callback = create_bar_callback_factory(bar)
-        result = model_api.upload(tar, metadata, create_encoder_callback)
-
+    result = model_api.upload(tar, metadata)
     return result
 
 
 def upload_model(model_service, profiler_service, model, model_path, is_async):
+    logger = logging.getLogger()
     mv = upload_model_async(model_service, model, model_path)
 
     push_uid = None
@@ -91,20 +89,8 @@ def upload_model(model_service, profiler_service, model, model_path, is_async):
     if is_async:
         return mv
     else:
-        click.echo("Waiting for a model build to complete...")
+        logger.info("Waiting for a model build to complete...")
         build_status = await_upload(model_service, mv)
         if push_uid is not None:
             push_uid = await_training_data(profiler_service, push_uid)
         return build_status
-
-
-def create_bar_callback_factory(bar):
-    def create_click_callback(multipart_encoder):
-        bar.length = multipart_encoder.len
-
-        def callback(monitor):
-            bar.update(monitor.bytes_read)
-
-        return callback
-
-    return create_click_callback
