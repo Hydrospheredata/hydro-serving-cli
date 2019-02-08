@@ -39,4 +39,4 @@ def hs_cli(ctx, verbose, cluster):
         logging.error("Error occurred while preparing cluster: {}".format(err))
         raise SystemExit(-1)
 
-    logging.info("Current cluster: {}".format(ctx.obj.config_service.current_cluster()))
+    logging.debug("Current cluster: {}".format(ctx.obj.config_service.current_cluster()))

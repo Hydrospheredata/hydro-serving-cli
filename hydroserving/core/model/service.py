@@ -2,13 +2,6 @@ import json
 from hydroserving.core.model.entities import UploadMetadata
 from hydroserving.core.model.package import assemble_model
 from hydroserving.core.model.upload import upload_model
-from hydroserving.http.remote_connection import RemoteConnection
-
-
-class InvalidModelException(RuntimeError):
-    def __init__(self, msg, model_dict):
-        super().__init__(msg)
-        self.model_dict = model_dict
 
 
 class ModelService:
@@ -48,8 +41,7 @@ class ModelService:
         )
         if result.ok:
             return result.json()
-        else:
-            raise ValueError("Invalid request: {}".format(result.content.decode("utf-8")))
+        raise ValueError("Invalid request: {}".format(result.content.decode("utf-8")))
 
     def list_versions(self):
         """
@@ -72,8 +64,7 @@ class ModelService:
         res = self.connection.get("/api/v2/model/version/{}/{}".format(model_name, model_version))
         if res.ok:
             return res.json()
-        else:
-            return None
+        return None
 
     def apply(self, model, path):
         """

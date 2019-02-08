@@ -8,7 +8,7 @@ import logging
 
 from hydroserving.cli.commands.hs import hs_cli
 from hydroserving.cli.help import CONTEXT_SETTINGS, UPLOAD_HELP, APPLY_HELP, PROFILE_FILENAME_HELP
-from hydroserving.core.model.service import InvalidModelException
+from hydroserving.core.model.entities import InvalidModelException
 from hydroserving.core.model.package import assemble_model, ensure_model
 from hydroserving.core.model.upload import upload_model, ModelBuildError
 from hydroserving.core.parsers.abstract import ParserError
@@ -42,7 +42,10 @@ def upload(obj, name, runtime, host_selector, training_data, dir, is_async):
     dir = os.path.abspath(dir)
     try:
         model_metadata = ensure_model(dir, name, runtime, host_selector, training_data)
+        logging.info("Assembling model payload")
         tar = assemble_model(model_metadata, dir)
+        current_cluster = obj.config_service.current_cluster()
+        logging.info("Uploading payload to cluster '{}' at {}".format(current_cluster['name'], current_cluster['cluster']['server']))
         result = upload_model(obj.model_service, obj.profiler_service, model_metadata, tar, is_async)
         logging.info("Success:")
         click.echo(json.dumps(result))

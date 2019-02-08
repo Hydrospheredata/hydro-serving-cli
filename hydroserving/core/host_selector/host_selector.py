@@ -40,6 +40,6 @@ class HostSelectorService:
     def apply(self, env):
         found_env = self.get(env.name)
         if found_env is not None:
-            logging.warning(env.name + " environment already exists")
+            logging.warning("%s environment already exists", env.name)
             return None
         return self.create(env.name, env.selector)

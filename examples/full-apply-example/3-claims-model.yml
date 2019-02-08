@@ -1,0 +1,56 @@
+version: 2
+kind: Model
+name: apply-demo-claims-model
+model-type: python:3.6
+payload:
+  - /path/to/model
+runtime: hydrosphere/serving-runtime-python:3.6-latest
+# host-selector: xeon-cpu
+contract:
+  claim:
+    inputs:
+      client_profile:
+        shape: [112]
+        type: float64 # using tf type names instead of proto ones
+        profile: text # data profiling
+    outputs:
+      amount:
+        shape: scalar
+        type: int64
+        profile: real
+
+#monitoring:
+#  - name: ks
+#    input: client_profile
+#    type: Kolmogorov-Smirnov
+#    healthcheck:
+#      enabled: true
+#  - name: autoencoder
+#    input: client_profile
+#    type: Autoencoder
+#    app: apply-demo-claims-autoencoder-app
+#    healthcheck:
+#      enabled: true
+#      threshold: 15
+
+monitoring:
+- name: ks
+  input: feature_42
+  type: Kolmogorov-Smirnov
+  healthcheck:
+    enabled: true
+    treshold: 69
+- name: gan
+  input: feature
+  type: GAN
+  app: claims-autoencoder-app
+  healthcheck:
+    enabled: true
+    treshold: 69
+- name: autoencoder
+  input: feature
+  type: Autoencoder
+  app: claims-autoencoder-app
+  healthcheck:
+    enabled: true
+    treshold: 69

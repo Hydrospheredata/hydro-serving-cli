@@ -1,0 +1,13 @@
+version: 2
+kind: Application
+name: claims-pipeline-app
+
+pipeline:
+  - signature: claims
+    model: claims-preprocessing:1
+  - signature: claims
+    model-variants:
+      - model: claims-model:1
+        weight: 80
+      - model: claims-model:2
+        weight: 20

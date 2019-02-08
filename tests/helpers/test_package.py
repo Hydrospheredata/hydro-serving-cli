@@ -12,7 +12,7 @@ TRASH_FOLDER = "./tests/.hs"
 def pack_model(model_name):
     path = os.path.abspath(os.path.join(MODEL_FOLDER, model_name))
 
-    model = ensure_model(path, model_name, "type", "desc", None, None)
+    model = ensure_model(path, model_name, "type", "desc", None)
     result = assemble_model(model, TRASH_FOLDER)
     return result
 

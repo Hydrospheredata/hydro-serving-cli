@@ -1,3 +1,7 @@
+"""
+Filesystem utilities
+"""
+
 import os
 import shutil
 import glob
@@ -80,17 +84,24 @@ def get_visible_files(path, recursive=False):
             for file in files
             if not file.startswith('.')
         ]
-    else:
-        return [
-            os.path.join(path, file)
-            for file in os.listdir(path)
-            if not file.startswith('.')
-        ]
+    return [
+        os.path.join(path, file)
+        for file in os.listdir(path)
+        if not file.startswith('.')
+    ]
 
 
 def is_yaml(path):
+    """
+    Checks if file's extension is .yaml or .yml
+    Args:
+        path:
+
+    Returns:
+
+    """
     ext = os.path.splitext(path)[1]
-    return os.path.isfile(path) and (ext == ".yml" or ext == ".yaml")
+    return os.path.isfile(path) and (ext in (".yml", ".yaml"))
 
 
 def get_yamls(path):

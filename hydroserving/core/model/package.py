@@ -4,74 +4,19 @@ import pprint
 import shutil
 import tarfile
 
-import click
-
-from hydroserving.config.settings import PACKAGE_CONTRACT_FILENAME, TARGET_FOLDER
+from hydroserving.config.settings import TARGET_FOLDER
+from hydroserving.core.contract import contract_to_dict
 from hydroserving.core.model.entities import Model
 from hydroserving.core.model.parser import ModelParser
-from hydroserving.filesystem.utils import copy_to_target, resolve_list_of_globs, get_yamls
-
-
-def pack_payload(model, package_path):
-    """
-    Moves payload to target_path
-
-    Args:
-        model Model:
-        package_path str:
-    """
-
-    if not os.path.exists(package_path):
-        os.makedirs(package_path)
-
-    files = resolve_list_of_globs(model.payload)
-    result_paths = []
-    with click.progressbar(iterable=files,
-                           item_show_func=lambda x: x,
-                           label='Packing the model') as bar:
-        for file in bar:
-            copied_path = copy_to_target(file, package_path)
-            result_paths.append(copied_path)
-
-    return result_paths
-
-
-def pack_contract(model, package_path):
-    """
-    Reads a user contract and writes binary version to TARGET_PATH
-    :param model: ModelDefinition
-    :param package_path
-    :return: path to written contract
-    """
-    contract_destination = os.path.join(package_path, PACKAGE_CONTRACT_FILENAME)
-
-    with open(contract_destination, "wb") as contract_file:
-        contract_file.write(model.contract.SerializeToString())
-
-    return contract_destination
-
-
-def pack_model(model, package_path):
-    """
-    Copies payload and contract to TARGET_PATH
-    Args:
-        package_path (str):
-        model (Model):
-
-    Returns:
-
-    """
-    payload_files = pack_payload(model, package_path)
-    if model.contract is not None:
-        pack_contract(model, package_path)
-    return payload_files
+from hydroserving.util.fileutil import resolve_list_of_globs, get_yamls
+from hydroserving.util.dictutil import extract_dict
 
 
 def resolve_model_payload(model):
     result_paths = []
     files = resolve_list_of_globs(model.payload)
     for file in files:
-        logging.debug("Payload item detected: {}".format(file))
+        logging.debug("Payload item detected: %s", file)
         result_paths.append(file)
     return result_paths
 
@@ -93,14 +38,14 @@ def assemble_model(model, model_path):
     os.makedirs(hs_model_dir)
 
     files = resolve_model_payload(model)
-    logger.info("Files to assemble: {}".format(files))
+    logger.info("Files to assemble: %s", files)
     tar_name = "{}.tar.gz".format(model.name)
     tar_path = os.path.join(hs_model_dir, tar_name)
-    logging.info("Assembling the model")
+    logging.debug("Creating archive: %s", tar_path)
     with tarfile.open(tar_path, "w:gz") as tar:
         for entry in files:
             entry_name = os.path.basename(entry)
-            logger.debug("Archiving {} as {}".format(entry, entry_name))
+            logger.debug("Archiving %s as %s", entry, entry_name)
             tar.add(entry, arcname=entry_name)
     return tar_path
 
@@ -124,11 +69,11 @@ def ensure_model(dir_path, name, runtime, host_selector, path_to_training_data):
         if os.path.splitext(os.path.basename(file))[0] == "serving"
     ]
     serving_file = serving_files[0] if serving_files else None
-    logging.debug("Serving YAML definitions: {}".format(serving_files))
+    logging.debug("Serving YAML definitions: %s", serving_files)
     if len(serving_files) > 1:
-        logging.warning("Multiple serving files. Using {}".format(serving_file))
+        logging.warning("Multiple serving files. Using %s", serving_file)
 
-    logging.debug("Chosen YAML file: {}".format(serving_file))
+    logging.debug("Chosen YAML file: %s", serving_file)
 
     metadata = None
     if serving_file is not None:
@@ -156,8 +101,9 @@ def ensure_model(dir_path, name, runtime, host_selector, path_to_training_data):
             install_command=None
         )
     resolve_model_paths(dir_path, metadata)
-    logging.info("Model definition composed: {}".format(pprint.pformat(metadata.__dict__, compact=True)))
-
+    meta_dict = extract_dict(metadata)
+    meta_dict['contract'] = contract_to_dict(meta_dict['contract'])
+    logging.info("Model definition composed: %s", pprint.pformat(meta_dict, compact=False))
     metadata.validate()
     return metadata
 
@@ -183,9 +129,10 @@ def resolve_model_paths(dir_path, model):
             normalized = os.path.normpath(os.path.join(dir_path, normalized))
         abs_payload_paths.append(normalized)
 
-    logging.debug("Resolving payload paths. dir={}, payload={}, resolved={}".format(dir_path,
-                                                                                    model.payload,
-                                                                                    abs_payload_paths))
+    logging.debug("Resolving payload paths. dir=%s, payload=%s, resolved=%s",
+                  dir_path,
+                  model.payload,
+                  abs_payload_paths)
 
     model.payload = abs_payload_paths
     return model

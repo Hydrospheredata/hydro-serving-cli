@@ -1,8 +1,11 @@
+"""
+Functions for handling async/sync upload logic.
+"""
 import logging
 import time
 
-from hydroserving.core.contract import contractToDict
-from hydroserving.core.model.service import UploadMetadata
+from hydroserving.core.contract import contract_to_dict
+from hydroserving.core.model.entities import UploadMetadata
 
 
 class ModelBuildError(RuntimeError):
@@ -15,7 +18,10 @@ def await_upload(model_api, model_version):
     is_finished = False
     is_failed = False
     while not (is_finished or is_failed):
-        model_version = model_api.find_version(model_version["model"]["name"], model_version["modelVersion"])
+        model_version = model_api.find_version(
+            model_version["model"]["name"],
+            model_version["modelVersion"]
+        )
         is_finished = model_version['status'] == 'Released'
         is_failed = model_version['status'] == 'Failed'
         time.sleep(5)  # wait until it's finished
@@ -37,7 +43,7 @@ def await_training_data(profile_api, uid):
 def push_training_data_async(profile_api, model_version_id, filename):
     logging.info("Uploading training data")
     uid = profile_api.push(model_version_id, filename)
-    logging.info("Data profile computing is started with id {}".format(uid))
+    logging.info("Data profile computing is started with id %s", uid)
     return uid
 
 
@@ -46,8 +52,7 @@ def push_training_data(profile_api, model_version_id, filename, is_async):
 
     if is_async:
         return uid
-    else:
-        return await_training_data(profile_api, uid)
+    return await_training_data(profile_api, uid)
 
 
 def upload_model_async(model_api, model, tar):
@@ -62,12 +67,12 @@ def upload_model_async(model_api, model, tar):
         dict:
     """
     logger = logging.getLogger()
-    logger.debug("Uploading model to {}".format(model_api.connection.remote_addr))
+    logger.debug("Uploading model to %s", model_api.connection.remote_addr)
 
     metadata = UploadMetadata(
         name=model.name,
         host_selector=model.host_selector,
-        contract=contractToDict(model.contract),
+        contract=contract_to_dict(model.contract),
         runtime=model.runtime.__dict__,
         install_command=model.install_command
     )
@@ -84,13 +89,17 @@ def upload_model(model_service, profiler_service, model, model_path, is_async):
 
     if model.training_data_file is not None:
         model_version = mv['id']
-        push_uid = push_training_data_async(profiler_service, model_version, model.training_data_file)
+        push_uid = push_training_data_async(
+            profiler_service,
+            model_version,
+            model.training_data_file
+        )
 
     if is_async:
         return mv
-    else:
-        logger.info("Waiting for a model build to complete...")
-        build_status = await_upload(model_service, mv)
-        if push_uid is not None:
-            push_uid = await_training_data(profiler_service, push_uid)
-        return build_status
+
+    logger.info("Waiting for a model build to complete...")
+    build_status = await_upload(model_service, mv)
+    if push_uid is not None:
+        push_uid = await_training_data(profiler_service, push_uid)
+    return build_status

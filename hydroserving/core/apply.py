@@ -8,7 +8,7 @@ from hydroserving.core.model.service import ModelService
 from hydroserving.core.application.entities import Application
 from hydroserving.core.model.entities import Model
 from hydroserving.core.parsers.generic_parser import GenericParser
-from hydroserving.filesystem.utils import get_yamls, is_yaml
+from hydroserving.util.fileutil import get_yamls, is_yaml
 
 
 class ApplyService:

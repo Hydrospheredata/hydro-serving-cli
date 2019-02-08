@@ -1,7 +1,5 @@
 from hydro_serving_grpc import ModelContract
 
-from hydroserving.core.model.service import InvalidModelException
-
 
 class UploadMetadata:
     def __init__(self, name, contract, host_selector, runtime, install_command):
@@ -45,3 +43,10 @@ class Model:
 
         if self.install_command is not None and not isinstance(self.install_command, str):
             raise InvalidModelException("install-command is not a string", self.__dict__)
+
+
+
+class InvalidModelException(RuntimeError):
+    def __init__(self, msg, model_dict):
+        super().__init__(msg)
+        self.model_dict = model_dict

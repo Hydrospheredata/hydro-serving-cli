@@ -5,6 +5,7 @@ import requests
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 from hydroserving.http.errors import BackendException
+from hydroserving.util.dictutil import remove_none
 
 
 class RemoteConnection:
@@ -48,7 +49,7 @@ class RemoteConnection:
 
     def multipart_post(self, url, data, files):
         fields = {**self.preprocess_request(data), **files}
-        logging.debug("Multipart request. Parts: {}".format(fields))
+        logging.debug("Multipart request. Parts: %s", fields)
         encoder = MultipartEncoder(
             fields=fields
         )
@@ -63,7 +64,7 @@ class RemoteConnection:
 
     @staticmethod
     def preprocess_request(request):
-        return RemoteConnection._remove_none(request)
+        return remove_none(request)
 
     @staticmethod
     def postprocess_response(response):
@@ -76,18 +77,6 @@ class RemoteConnection:
 
             """
         if 500 <= response.status_code < 600:
-            logging.error("Got server error {}".format(response))
+            logging.error("Got server error %s", response)
             raise BackendException(response.content.decode('utf-8'))
         return response
-
-    @staticmethod
-    def _remove_none(obj):
-        if isinstance(obj, (list, tuple, set)):
-            return type(obj)(RemoteConnection._remove_none(x) for x in obj if x is not None)
-        elif isinstance(obj, dict):
-            return dict((RemoteConnection._remove_none(k), RemoteConnection._remove_none(v))
-                        for k, v in obj.items() if k is not None and v is not None)
-        elif hasattr(obj, '__dict__'):
-            return RemoteConnection._remove_none(obj.__dict__)
-        else:
-            return obj
