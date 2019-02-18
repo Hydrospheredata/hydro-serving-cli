@@ -6,8 +6,7 @@ def remove_none(obj):
                     for k, v in obj.items() if k is not None and v is not None)
     elif hasattr(obj, '__dict__'):
         return remove_none(obj.__dict__)
-    else:
-        return obj
+    return obj
 
 
 def extract_dict(obj):
@@ -18,5 +17,4 @@ def extract_dict(obj):
                     for k, v in obj.items())
     elif hasattr(obj, '__dict__'):
         return extract_dict(obj.__dict__)
-    else:
-        return obj
+    return obj

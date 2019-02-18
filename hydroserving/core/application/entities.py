@@ -1,192 +1,42 @@
-from abc import ABC, abstractmethod
+from collections import namedtuple
 
 
-class ExecutionGraphLike(ABC):
-    @abstractmethod
-    def to_create_request(self):
-        pass
+def model_variant(model_version_id, signature_name, weight=100):
+    return {
+        'modelVersionId': model_version_id,
+        'signatureName': signature_name,
+        'weight': weight
+    }
 
 
-class SingularModel(ExecutionGraphLike):
-    def __init__(self, model_version, signature_name, monitoring_params):
-        """
-
-        Args:
-            model_version (str):
-            monitoring_params (list of MonitoringParams):
-        """
-        self.model_service = ModelVariant(
-            model_version=model_version,
-            signature=signature_name,
-            weight=100
-        )
-        self.monitoring_params = monitoring_params
-
-    def to_create_request(self, id_mapper):
-        return self.as_pipeline().to_create_request()
-
-    def as_pipeline(self):
-        """
-        Wraps singular model as complete pipeline.
-        Returns:
-            Pipeline:
-        """
-        fict_pipeline = Pipeline([
-            PipelineStage(
-                services=[self.model_service],
-                monitoring=self.monitoring_params,
-                signature="signature-to-be-ignored"
-            )
-        ])
-        return fict_pipeline
+def pipeline_stage(variants):
+    weights = [x['weight'] for x in variants]
+    if weights != 100:
+        raise ValueError("ModelVariant weights should add up to 100 inside one stage")
+    return {
+        "model_variants": variants
+    }
 
 
-class PipelineStage(ExecutionGraphLike):
-    def __init__(self, services, monitoring, signature):
-        """
-
-        Args:
-            signature (str):
-            monitoring (list of MonitoringParams):
-            services (list of ModelService):
-            name (str):
-        """
-        self.signature = signature
-        self.monitoring = monitoring
-        self.services = services
-
-    def to_create_request(self):
-        stage_services = []
-        for service in self.services:
-            service_repr = service.to_create_request()
-            service_repr.signatureName = self.signature
-            stage_services.append(service_repr)
-        return ApplicationStageRequest(stage_services)
+def pipeline(stages):
+    return {
+        "stages": stages
+    }
 
 
-class Pipeline(ExecutionGraphLike):
-    def __init__(self, stages):
-        """
-
-        Args:
-            stages (list of PipelineStage):
-        """
-        self.stages = stages
-
-    def to_create_request(self):
-        stages = [x.to_create_request() for x in self.stages]
-
-        return ApplicationExecutionGraphRequest(
-            stages=stages
-        )
-
-    def as_pipeline(self):
-        """
-
-        Returns:
-            Pipeline: returns self
-        """
-        return self
+def streaming_params(in_topic, out_topic):
+    return {
+        'sourceTopic': in_topic,
+        'destinationTopic': out_topic
+    }
 
 
-class MonitoringParams:
-    def __init__(self, name, input, type, app, healthcheck_on, threshold):
-        """
-
-        Args:
-            threshold (float or None):
-            healthcheck_on (bool):
-            app (str):
-            type (str):
-            input (str):
-            name (str):
-        """
-        self.threshold = threshold
-        self.healthcheck_on = healthcheck_on
-        self.app = app
-        self.type = type
-        self.input = input
-        self.name = name
+def app_creation_request(name, executionGraph, kafka_params):
+    return {
+        "name": name,
+        "executionGraph": executionGraph,
+        "kafkaStreaming": kafka_params
+    }
 
 
-class Application:
-    def __init__(self, name, execution_graph, streaming_params):
-        """
-
-        Args:
-            streaming_params (list of KafkaStreamingParams):
-            execution_graph (SingularModel or Pipeline):
-            name (str):
-        """
-        if streaming_params is None:
-            streaming_params = []
-        self.streaming_params = streaming_params
-        self.name = name
-        self.execution_graph = execution_graph
-
-    def to_create_request(self):
-        return CreateApplicationRequest(
-            name=self.name,
-            kafka_streaming=self.streaming_params,
-            execution_graph=self.execution_graph.to_create_request()
-        )
-
-
-class ModelVariant:
-    def __init__(self, model_version, signature, weight):
-        """
-
-        Args:
-            weight (int or None): from 100 to 0
-            signature (str or None):
-            model_version (int):
-        """
-        self.weight = weight
-        self.signatureName = signature
-        self.modelVersionId = model_version
-
-
-class GraphStage:
-    def __init__(self, services):
-        """
-
-        Args:
-            services (list of ModelVariant):
-        """
-        self.services = services
-
-
-class ExecutionGraph:
-    def __init__(self, stages):
-        """
-
-        Args:
-            stages (list of GraphStage):
-        """
-        self.stages = stages
-
-
-class KafkaStreamingParams:
-    def __init__(self, source_topic, destination_topic):
-        """
-
-        Args:
-            destination_topic (str):
-            source_topic (str):
-        """
-        self.destinationTopic = destination_topic
-        self.sourceTopic = source_topic
-
-
-class CreateApplicationRequest:
-    def __init__(self, name, execution_graph, kafka_streaming):
-        """
-
-        Args:
-            kafka_streaming (list of KafkaStreamingParams):
-            execution_graph (ApplicationExecutionGraphRequest):
-            name (str):
-        """
-        self.kafkaStreaming = kafka_streaming
-        self.executionGraph = execution_graph
-        self.name = name
+ApplicationDef = namedtuple('ApplicationDef', ('name', 'execution_graph', 'kafka_streaming'))

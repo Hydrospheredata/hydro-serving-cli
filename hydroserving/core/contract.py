@@ -9,10 +9,10 @@ from hydro_serving_grpc import ModelContract, TensorShapeProto, ModelField, Mode
     DT_INT32, DT_INT64, DT_UINT8, DT_UINT16, DT_UINT32, \
     DT_UINT64, DT_QINT8, DT_QINT16, DT_QINT32, DT_QUINT8, DT_QUINT16, DT_VARIANT, DataType, DT_COMPLEX64, DT_COMPLEX128
 
-log = logging.getLogger('helpers.contract')
-
 
 def contract_to_dict(contract):
+    if contract is None:
+        return None
     if not isinstance(contract, ModelContract):
         raise TypeError("contract is not ModelContract")
     signatures = []

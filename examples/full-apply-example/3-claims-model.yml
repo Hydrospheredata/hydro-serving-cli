@@ -6,6 +6,7 @@ payload:
   - /path/to/model
 runtime: hydrosphere/serving-runtime-python:3.6-latest
 # host-selector: xeon-cpu
+training-data: s3://bucket/object.csv
 contract:
   claim:
     inputs:
@@ -19,38 +20,23 @@ contract:
         type: int64
         profile: real
 
-#monitoring:
-#  - name: ks
-#    input: client_profile
-#    type: Kolmogorov-Smirnov
-#    healthcheck:
-#      enabled: true
-#  - name: autoencoder
-#    input: client_profile
-#    type: Autoencoder
-#    app: apply-demo-claims-autoencoder-app
-#    healthcheck:
-#      enabled: true
-#      threshold: 15
-
 monitoring:
-- name: ks
-  input: feature_42
-  type: Kolmogorov-Smirnov
-  healthcheck:
-    enabled: true
-    treshold: 69
-- name: gan
-  input: feature
-  type: GAN
-  app: claims-autoencoder-app
-  healthcheck:
-    enabled: true
-    treshold: 69
-- name: autoencoder
-  input: feature
-  type: Autoencoder
-  app: claims-autoencoder-app
-  healthcheck:
-    enabled: true
-    treshold: 69
+  - name: ks
+    kind: Kolmogorov-Smirnov
+    config:
+      input: client_profile_42
+    with-health: true
+  - name: gan
+    kind: GAN
+    with-health: true
+    config:
+      input: feature
+      application-name: claims-gan-app
+      treshold: 69
+  - name: autoencoder
+    kind: Autoencoder
+    with-health: true
+    config:
+      application-name: claims-autoencoder-app
+      input: feature
+      treshold: 69

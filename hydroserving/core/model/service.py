@@ -1,11 +1,14 @@
 import json
+import os
+import sys
+
 from hydroserving.core.model.entities import UploadMetadata
 from hydroserving.core.model.package import assemble_model
 from hydroserving.core.model.upload import upload_model
 
 
 class ModelService:
-    def __init__(self, connection, profiler_service):
+    def __init__(self, connection, profiler_service, monitoring_service):
         """
 
         Args:
@@ -13,6 +16,7 @@ class ModelService:
         """
         self.connection = connection
         self.profiler_service = profiler_service
+        self.monitoring_service = monitoring_service
 
     def list_models(self):
         """
@@ -66,10 +70,12 @@ class ModelService:
             return res.json()
         return None
 
-    def apply(self, model, path):
+    def apply(self, model, path, no_training_data=False, ignore_monitoring=False):
         """
 
         Args:
+            ignore_monitoring (bool):
+            no_training_data (bool):
             model (Model):
             path (str): where to build
 
@@ -77,5 +83,14 @@ class ModelService:
 
         """
         tar = assemble_model(model, path)
-        result = upload_model(self, self.profiler_service, model, tar, is_async=False)
+        result = upload_model(
+            model_service=self,
+            profiler_service=self.profiler_service,
+            monitoring_service=self.monitoring_service,
+            model=model,
+            model_path=tar,
+            is_async=False,
+            no_training_data=no_training_data,
+            ignore_monitoring=ignore_monitoring
+        )
         return result

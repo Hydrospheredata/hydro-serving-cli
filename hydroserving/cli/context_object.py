@@ -4,7 +4,7 @@ from hydroserving.core.apply import ApplyService
 from hydroserving.core.application.service import ApplicationService
 from hydroserving.core.host_selector.host_selector import HostSelectorService
 from hydroserving.core.model.service import ModelService
-from hydroserving.core.monitoring import MonitoringService
+from hydroserving.core.monitoring.service import MonitoringService
 from hydroserving.core.profiler import ProfilerService
 
 
@@ -22,7 +22,7 @@ class ContextObject:
         self.monitoring_service = MonitoringService(conn)
         self.model_service = ModelService(conn, self.profiler_service)
         self.selector_service = HostSelectorService(conn)
-        self.application_service = ApplicationService(conn, self.model_service, self.monitoring_service)
+        self.application_service = ApplicationService(conn, self.model_service)
 
         self.apply_service = ApplyService(
             self.model_service,

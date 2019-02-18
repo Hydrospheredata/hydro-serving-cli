@@ -1,6 +1,7 @@
 kind: Model
 name: upload
 model-type: "python:3.6"
+runtime: test:latest
 payload:
   - 'file1.txt'
   - 'data_folder/'

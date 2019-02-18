@@ -81,25 +81,99 @@ def upload_model_async(model_api, model, tar):
     return result
 
 
-def upload_model(model_service, profiler_service, model, model_path, is_async):
-    logger = logging.getLogger()
+def upload_model(model_service, profiler_service, monitoring_service, model, model_path, is_async, no_training_data, ignore_monitoring):
     mv = upload_model_async(model_service, model, model_path)
 
-    push_uid = None
+    is_monitorable = not ignore_monitoring and model.monitoring
+    if is_monitorable:
+        logging.info("Monitoring config is here. Preparing config for monitoring service.")
+        monitoring_params = model.monitoring
+        for param in monitoring_params:
+            param["modelVersionId"] = mv["id"]
+        logging.debug("Creating monitoring %s", monitoring_params)
+        monitoring_service.create(monitoring_params)
 
-    if model.training_data_file is not None:
+    is_pushable = model.training_data_file and not no_training_data
+    if is_pushable:
+        logging.info("Training data is here. Preparing push to the profiler service.")
         model_version = mv['id']
-        push_uid = push_training_data_async(
-            profiler_service,
-            model_version,
-            model.training_data_file
-        )
+        try:
+            push_uid = push_training_data_async(
+                profiler_service,
+                model_version,
+                model.training_data_file
+            )
+            logging.info("Training data push id: %s", push_uid)
+        except RuntimeError as ex:
+            logging.error(ex)
+            logging.error("Training data upload failed. Please use `hs profile push` command to try again.")
 
     if is_async:
         return mv
 
-    logger.info("Waiting for a model build to complete...")
+    logging.info("Waiting for a model build to complete...")
     build_status = await_upload(model_service, mv)
-    if push_uid is not None:
-        push_uid = await_training_data(profiler_service, push_uid)
+
     return build_status
+
+    # def check_monitoring_deps(self, app):
+    #     """
+    #
+    #     Args:
+    #         app (Application):
+    #     """
+    #     stages = app.execution_graph.as_pipeline().stages
+    #     id_mapper_mon = {}
+    #     for stage in stages:
+    #         for mon in stage.monitoring:
+    #             mon_type_res = METRIC_SPECIFICATION_KINDS.get(mon.type)
+    #             if mon_type_res is None:
+    #                 raise ValueError("Can't find metric provider for : {}".format(mon.__dict__))
+    #             if mon.app is None:
+    #                 if mon_type_res in PARAMETRIC_PROVIDERS:
+    #                     raise ValueError("Application (app) is required for metric {}".format(mon.__dict__))
+    #             else:
+    #                 if mon.app not in id_mapper_mon:  # check for appName -> appId
+    #                     mon_app_result = self.find(mon.app)
+    #                     logging.debug("MONAPPSEARCH")
+    #                     logging.debug(mon.__dict__)
+    #                     logging.debug(mon_app_result)
+    #                     if mon_app_result is None:
+    #                         raise ValueError("Can't find metric application for {}".format(mon.__dict__))
+    #                     id_mapper_mon[mon.app] = mon_app_result['id']
+    #
+    #     return id_mapper_mon
+
+    # def configure_monitoring(self, app_id, app, id_mapper_mon):
+    #     """
+    #
+    #     Args:
+    #         id_mapper_mon (dict):
+    #         app (Application):
+    #         app_id (int):
+    #     """
+    #     pipeline = app.execution_graph.as_pipeline()
+    #     results = []
+    #     for idx, stage in enumerate(pipeline.stages):
+    #         for mon in stage.monitoring:
+    #             spec = MetricProviderSpecification(
+    #                 metric_provider_class=METRIC_SPECIFICATION_KINDS[mon.type],
+    #                 config=None,
+    #                 with_health=mon.healthcheck_on,
+    #                 health_config=None
+    #             )
+    #             if mon.app is not None:
+    #                 spec.config = MetricConfigSpecification(id_mapper_mon[mon.app])
+    #             if mon.threshold is not None:
+    #                 spec.healthConfig = HealthConfigSpecification(mon.threshold)
+    #
+    #             aggregation = EntryAggregationSpecification(
+    #                 name=mon.name,
+    #                 metric_provider_specification=spec,
+    #                 filter=FilterSpecification(
+    #                     source_name=mon.input,
+    #                     stage_id="app{}stage{}".format(app_id, idx)
+    #                 )
+    #             )
+    #             results.append(self.monitoring_service.create_aggregation(aggregation))
+    #     return results

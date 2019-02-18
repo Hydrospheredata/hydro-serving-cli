@@ -2,7 +2,7 @@ import shutil
 import os
 
 from hydroserving.config.settings import TARGET_FOLDER
-from hydroserving.filesystem.utils import with_cwd
+from hydroserving.util.fileutil import with_cwd
 
 
 def with_target_cwd(cwd, func, *args):

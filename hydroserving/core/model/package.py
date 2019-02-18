@@ -7,9 +7,10 @@ import tarfile
 from hydroserving.config.settings import TARGET_FOLDER
 from hydroserving.core.contract import contract_to_dict
 from hydroserving.core.model.entities import Model
-from hydroserving.core.model.parser import ModelParser
+from hydroserving.core.model.parser import parse_model
 from hydroserving.util.fileutil import resolve_list_of_globs, get_yamls
 from hydroserving.util.dictutil import extract_dict
+from hydroserving.util.yamlutil import yaml_file
 
 
 def resolve_model_payload(model):
@@ -78,7 +79,8 @@ def ensure_model(dir_path, name, runtime, host_selector, path_to_training_data):
     metadata = None
     if serving_file is not None:
         with open(serving_file, 'r') as f:
-            metadata = ModelParser().yaml_file(f)
+            doc = yaml_file(f)
+            metadata = parse_model(doc)
             if name is not None:
                 metadata.name = name
             if runtime is not None:
@@ -98,12 +100,14 @@ def ensure_model(dir_path, name, runtime, host_selector, path_to_training_data):
             host_selector=host_selector,
             payload=[os.path.join(dir_path, "*")],
             training_data_file=path_to_training_data,
-            install_command=None
+            install_command=None,
+            monitoring=None
         )
     resolve_model_paths(dir_path, metadata)
     meta_dict = extract_dict(metadata)
     meta_dict['contract'] = contract_to_dict(meta_dict['contract'])
-    logging.info("Model definition composed: %s", pprint.pformat(meta_dict, compact=False))
+    logging.info("Model definition composed:")
+    logging.info(pprint.pformat(meta_dict, compact=True, ))
     metadata.validate()
     return metadata
 

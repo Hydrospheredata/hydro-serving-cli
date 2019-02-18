@@ -1,172 +1,90 @@
-from hydroserving.core.application.entities import *
-from hydroserving.core.parsers.abstract import AbstractParser
+from hydroserving.core.application.entities import streaming_params, ApplicationDef
 
 
-class ApplicationParser(AbstractParser):
-    @staticmethod
-    def parse_streaming_params(in_list):
-        """
+def parse_streaming_params(in_list):
+    """
 
-        Args:
-            in_list (list of dict):
+    Args:
+        in_list (list of dict):
 
-        Returns:
-            StreamingParams:
-        """
-        params = []
-        for item in in_list:
-            params.append(KafkaStreamingParams(
-                source_topic=item["in-topic"],
-                destination_topic=item["out-topic"]
-            ))
-        return params
+    Returns:
+        StreamingParams:
+    """
+    params = []
+    for item in in_list:
+        params.append(streaming_params(item["in-topic"], item["out-topic"]))
+    return params
 
-    @staticmethod
-    def streaming_to_dict(streaming_params):
-        """
 
-        Args:
-            streaming_params (StreamingParams):
-        """
-        return {
-            'sourceTopic': streaming_params.source_topic,
-            'destinationTopic': streaming_params.destination_topic
-        }
-
-    @staticmethod
-    def parse_monitoring_param_list(in_list):
-        """
-
-        Args:
-            in_list (list of dict): 
-
-        Returns:
-            list of MonitoringParams: 
-        """
-        if in_list is None:
-            return []
-        result = [
-            ApplicationParser.parse_monitoring_params(x)
-            for x in in_list
+def parse_singular_app(in_dict):
+    return {
+        "stages": [
+            {
+                "modelVariants": [parse_singular(in_dict)]
+            }
         ]
-        return result
+    }
 
-    @staticmethod
-    def parse_monitoring_params(in_dict):
-        """
 
-        Args:
-            in_dict (dict):
+def parse_singular(in_dict):
+    return {
+        'modelVersion': in_dict['model'],
+        'signatureName': in_dict['signature'],
+        'weight': 100
+    }
 
-        Returns:
-            MonitoringParams:
-        """
-        if in_dict is None:
-            return None
-        healthcheck_params = in_dict.get('healthcheck')
-        params = MonitoringParams(
-            name=in_dict['name'],
-            input=in_dict['input'],
-            type=in_dict['type'],
-            app=in_dict.get('app'),
-            healthcheck_on=False,
-            threshold=None
-        )
-        if healthcheck_params is not None:
-            params.healthcheck_on = healthcheck_params.get("enabled", False)
-            params.threshold = healthcheck_params.get("threshold")
-        return params
 
-    @staticmethod
-    def parse_singular(in_dict):
-        return SingularModel(
-            model_version=in_dict['model'],
-            signature_name=in_dict['signature'],
-            monitoring_params=ApplicationParser.parse_monitoring_param_list(in_dict.get("monitoring"))
-        )
+def parse_model_variant_list(in_list):
+    services = [
+        parse_model_variant(x)
+        for x in in_list
+    ]
+    return services
 
-    @staticmethod
-    def parse_model_variant_list(in_list):
-        services = [
-            ApplicationParser.parse_model_variant(x)
-            for x in in_list
-        ]
-        return services
 
-    @staticmethod
-    def parse_model_variant(in_dict):
-        return ModelVariant(
-            model_version=in_dict['model'],
-            signature=in_dict['signature'],
-            weight=in_dict['weight']
-        )
+def parse_model_variant(in_dict):
+    return {
+        'modelVersion': in_dict['model'],
+        'signatureName': in_dict['signature'],
+        'weight': in_dict['weight']
+    }
 
-    @staticmethod
-    def parse_pipeline_stage(stage_dict):
-        monitoring = ApplicationParser.parse_monitoring_param_list(stage_dict.get("monitoring", []))
-        signature = stage_dict['signature']
-        multi_services = stage_dict.get('model-variants')
-        if multi_services is not None:
-            services = ApplicationParser.parse_model_variant_list(multi_services)
-        else:
-            services = [
-                ModelVariant(
-                    model_version=stage_dict['model'],
-                    weight=100,
-                    signature=stage_dict['signature']
-                )
-            ]
-        return PipelineStage(
-            services=services,
-            monitoring=monitoring,
-            signature=signature
-        )
 
-    @staticmethod
-    def parse_pipeline(in_list):
-        pipeline_stages = []
-        for i, stage in enumerate(in_list):
-            pipeline_stages.append(ApplicationParser.parse_pipeline_stage(stage))
-        return Pipeline(pipeline_stages)
+def parse_pipeline_stage(stage_dict):
+    if len(stage_dict) == 1:
+        parsed_variants = [parse_singular(stage_dict[0])]
+    else:
+        parsed_variants = parse_model_variant_list(stage_dict)
+    return {"modelVariants": parsed_variants}
 
-    def parse_dict(self, in_dict):
-        if in_dict is None:
-            return None
 
-        streaming_params = None
+def parse_pipeline(in_list):
+    pipeline_stages = []
+    for i, stage in enumerate(in_list):
+        pipeline_stages.append(parse_pipeline_stage(stage))
+    return {'stages': pipeline_stages}
 
-        singular_def = in_dict.get("singular")
-        pipeline_def = in_dict.get("pipeline")
-        streaming_def = in_dict.get('streaming')
 
-        if streaming_def is not None:
-            streaming_params = self.parse_streaming_params(streaming_def)
+def parse_application(in_dict):
+    singular_def = in_dict.get("singular")
+    pipeline_def = in_dict.get("pipeline")
 
-        if singular_def is not None \
-                and pipeline_def is not None:
-            raise ValueError("Both singular and pipeline definitions are provided")
+    streaming_def = in_dict.get('streaming')
+    if streaming_def:
+        streaming_def = parse_streaming_params(streaming_def)
 
-        if singular_def is not None:
-            execution_graph = self.parse_singular(singular_def)
-        elif pipeline_def is not None:
-            execution_graph = self.parse_pipeline(pipeline_def)
-        else:
-            raise ValueError("Neither model nor graph are defined")
+    if singular_def and pipeline_def:
+        raise ValueError("Both singular and pipeline definitions are provided")
 
-        return Application(
-            name=in_dict['name'],
-            execution_graph=execution_graph,
-            streaming_params=streaming_params
-        )
+    if singular_def:
+        execution_graph = parse_singular_app(singular_def)
+    elif pipeline_def:
+        execution_graph = parse_pipeline(pipeline_def)
+    else:
+        raise ValueError("Neither model nor graph are defined")
 
-    def to_dict(self, obj):
-        """
-
-        Args:
-            obj (Application):
-        """
-        return {
-            "name": obj.name,
-            'kafkaStreaming': self.streaming_to_dict(obj.streaming_params),
-            "executionGraph": obj.execution_graph.to_graph_repr()
-        }
+    return ApplicationDef(
+        name=in_dict['name'],
+        execution_graph=execution_graph,
+        kafka_streaming=streaming_def
+    )

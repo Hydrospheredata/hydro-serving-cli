@@ -2,13 +2,31 @@ import logging
 import os
 import sys
 
+from hydroserving.config.parser import parse_config
+from hydroserving.core.application.parser import parse_application
 from hydroserving.core.application.service import ApplicationService
-from hydroserving.core.host_selector.host_selector import HostSelector
+from hydroserving.core.host_selector.parser import parse_host_selector
+from hydroserving.core.model.parser import parse_model
 from hydroserving.core.model.service import ModelService
-from hydroserving.core.application.entities import Application
-from hydroserving.core.model.entities import Model
-from hydroserving.core.parsers.generic_parser import GenericParser
 from hydroserving.util.fileutil import get_yamls, is_yaml
+from hydroserving.util.yamlutil import yaml_file_stream
+
+KIND_TO_PARSER = {
+    "Config": parse_config,
+    "Model": parse_model,
+    "HostSelector": parse_host_selector,
+    "Application": parse_application
+}
+
+
+def parse_generic_dict(in_dict):
+    kind = in_dict.get("kind")
+    if not kind:
+        raise ValueError("Cannot parse resource without kind")
+    parser = KIND_TO_PARSER.get(kind)
+    if parser is None:
+        raise ValueError("No parser found for resource kind {}".format(kind))
+    return parser(in_dict)
 
 
 class ApplyService:
@@ -23,7 +41,6 @@ class ApplyService:
         self.application_service = application_service
         self.selector_service = selector_service
         self.model_service = model_service
-        self.parser = GenericParser()
 
     def apply(self, paths, **kwargs):
         """
@@ -38,40 +55,43 @@ class ApplyService:
         for file in paths:
             abs_file = os.path.abspath(file)
             if file == "<STDIN>":  # special case for stdin redirect
-                logging.info("Applying resource from <STDIN> ...")
-                yaml_res = self.apply_yaml(sys.stdin, **kwargs)
-                results[file] = yaml_res
+                logging.info("Reading resource from <STDIN> ...")
+                results[os.getcwd()] = yaml_file_stream(sys.stdin)
             elif os.path.isdir(file):
                 logging.debug("Looking for resources in {} ...".format(os.path.basename(abs_file)))
                 for yaml_file in sorted(get_yamls(abs_file)):
-                    logging.info("Applying {} ...".format(os.path.basename(yaml_file)))
+                    logging.info("Reading {} ...".format(os.path.basename(yaml_file)))
                     with open(yaml_file, 'r') as f:
-                        yaml_res = self.apply_yaml(f, **kwargs)
-                        results[yaml_file] = yaml_res
+                        results[file] = yaml_file_stream(f)
             elif is_yaml(file):
-                logging.info("Applying {} ...".format(os.path.basename(file)))
+                logging.info("Reading {} ...".format(os.path.basename(file)))
                 with open(file, 'r') as f:
-                    yaml_res = self.apply_yaml(f, **kwargs)
-                    results[file] = yaml_res
+                    results[os.path.dirname(file)] = yaml_file_stream(f)
             else:
                 raise UnknownFile(file)
+
+        for source, docs in results.items():
+            results[source] = self.apply_yaml(docs, source, **kwargs)
         return results
 
-    def apply_yaml(self, file, **kwargs):
+    def apply_yaml(self, docs, call_path, **kwargs):
         responses = []
-        stream = self.parser.yaml_file_stream(file)
-        for doc_obj in stream:
-            if isinstance(doc_obj, Model):
+        for doc_obj in docs:
+            parsed = parse_generic_dict(doc_obj)
+            kind = doc_obj.get('kind')
+            if kind is None:
+                raise ValueError("Resource kind is not specified.")
+            if kind == 'Model':
                 logging.debug("Model detected")
-                responses.append(self.model_service.apply(doc_obj, file))
-            elif isinstance(doc_obj, Application):
+                responses.append(self.model_service.apply(parsed, call_path, **kwargs))
+            elif kind == 'Application':
                 logging.debug("Application detected")
-                responses.append(self.application_service.apply(doc_obj, **kwargs))
-            elif isinstance(doc_obj, HostSelector):
+                responses.append(self.application_service.apply(parsed))
+            elif kind == 'HostSelector':
                 logging.debug("HostSelector detected")
-                responses.append(self.selector_service.apply(doc_obj))
+                responses.append(self.selector_service.apply(parsed))
             else:
-                logging.error("Unknown resource: {}".format(doc_obj))
+                logging.error("Unknown resource: {}".format(parsed))
                 raise UnknownResource(doc_obj)
         return responses
 

@@ -1,5 +1,6 @@
 kind: Model
 name: apply
 model-type: "python:3.6"
+runtime: test:latest
 payload:
-  - '../no_metadata/data_folder'
+  - '../no_metadata/data_folder/*'

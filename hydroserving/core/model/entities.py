@@ -12,14 +12,7 @@ class UploadMetadata:
 
 class Model:
     def __init__(self, name, host_selector, runtime, contract, payload,
-                 training_data_file, install_command):
-        """
-        Args:
-            name (str):
-            contract (ModelContract or None):
-            payload (list of str):
-            training_data_file (str or None):
-        """
+                 training_data_file, install_command, monitoring):
         self.name = name
         self.host_selector = host_selector
         self.runtime = runtime
@@ -27,6 +20,7 @@ class Model:
         self.payload = payload
         self.training_data_file = training_data_file
         self.install_command = install_command
+        self.monitoring = monitoring
 
     def validate(self):
         if not isinstance(self.name, str):
@@ -43,7 +37,6 @@ class Model:
 
         if self.install_command is not None and not isinstance(self.install_command, str):
             raise InvalidModelException("install-command is not a string", self.__dict__)
-
 
 
 class InvalidModelException(RuntimeError):

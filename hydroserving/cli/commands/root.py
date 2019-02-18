@@ -3,6 +3,7 @@ import os
 
 import click
 import requests
+from yaml.parser import ParserError
 from yaml.scanner import ScannerError
 import logging
 
@@ -11,7 +12,6 @@ from hydroserving.cli.help import CONTEXT_SETTINGS, UPLOAD_HELP, APPLY_HELP, PRO
 from hydroserving.core.model.entities import InvalidModelException
 from hydroserving.core.model.package import assemble_model, ensure_model
 from hydroserving.core.model.upload import upload_model, ModelBuildError
-from hydroserving.core.parsers.abstract import ParserError
 
 
 @hs_cli.command(help=UPLOAD_HELP, context_settings=CONTEXT_SETTINGS)
@@ -36,17 +36,29 @@ from hydroserving.core.parsers.abstract import ParserError
               default=os.getcwd(),
               show_default=True,
               required=False)
+@click.option('--no-training-data',
+              type=bool,
+              required=False,
+              default=False,
+              is_flag=True)
+@click.option('--ignore-monitoring',
+              type=bool,
+              required=False,
+              default=False,
+              is_flag=True)
 @click.option('--async', 'is_async', is_flag=True, default=False)
 @click.pass_obj
-def upload(obj, name, runtime, host_selector, training_data, dir, is_async):
+def upload(obj, name, runtime, host_selector, training_data, dir, no_training_data, ignore_monitoring, is_async):
     dir = os.path.abspath(dir)
     try:
         model_metadata = ensure_model(dir, name, runtime, host_selector, training_data)
         logging.info("Assembling model payload")
         tar = assemble_model(model_metadata, dir)
         current_cluster = obj.config_service.current_cluster()
-        logging.info("Uploading payload to cluster '{}' at {}".format(current_cluster['name'], current_cluster['cluster']['server']))
-        result = upload_model(obj.model_service, obj.profiler_service, model_metadata, tar, is_async)
+        logging.info("Uploading payload to cluster '{}' at {}".format(
+            current_cluster['name'], current_cluster['cluster']['server']))
+        result = upload_model(obj.model_service, obj.profiler_service, obj.monitoring_service, model_metadata,
+                              tar, is_async, no_training_data, ignore_monitoring)
         logging.info("Success:")
         click.echo(json.dumps(result))
     except ModelBuildError as err:
