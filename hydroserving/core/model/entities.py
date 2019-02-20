@@ -1,4 +1,11 @@
+from enum import Enum
 from hydro_serving_grpc import ModelContract
+
+
+class VersionStatus(Enum):
+    Assembling = "Assembling"
+    Released = "Released"
+    Failed = "Failed"
 
 
 class UploadMetadata:

@@ -1,4 +1,11 @@
+from enum import Enum
 from collections import namedtuple
+
+
+class ApplicationStatus(Enum):
+    Assembling = "Assembling"
+    Ready = "Ready"
+    Failed = "Failed"
 
 
 def model_variant(model_version_id, signature_name, weight=100):

@@ -1,5 +1,6 @@
 import logging
 
+
 class HostSelector:
     def __init__(self, name, selector):
         """
@@ -22,20 +23,20 @@ class HostSelectorService:
         self.connection = connection
 
     def get(self, env_name):
-        for env in self.list():
-            if env['name'] == env_name:
-                return env
+        resp = self.connection.get("/api/v2/hostSelector/{}".format(env_name))
+        if resp.ok:
+            return resp.json()
         return None
 
     def list(self):
-        return self.connection.get("/api/v1/environment")
+        return self.connection.get("/api/v2/hostSelector").json()
 
     def create(self, env_name, env_selector):
         data = {
             'name': env_name,
             'placeholders': [env_selector]
         }
-        return self.connection.post("/api/v1/environment", data)
+        return self.connection.post("/api/v2/hostSelector", data).json()
 
     def apply(self, env):
         found_env = self.get(env.name)

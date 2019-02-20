@@ -5,7 +5,7 @@ import logging
 import time
 
 from hydroserving.core.contract import contract_to_dict
-from hydroserving.core.model.entities import UploadMetadata
+from hydroserving.core.model.entities import UploadMetadata, VersionStatus
 
 
 class ModelBuildError(RuntimeError):
@@ -15,22 +15,26 @@ class ModelBuildError(RuntimeError):
 
 
 def await_upload(model_api, model_version):
-    is_finished = False
-    is_failed = False
-    while not (is_finished or is_failed):
-        model_version = model_api.find_version(
-            model_version["model"]["name"],
-            model_version["modelVersion"]
-        )
-        is_finished = model_version['status'] == 'Released'
-        is_failed = model_version['status'] == 'Failed'
-        time.sleep(5)  # wait until it's finished
+    while True:
+        name = model_version["model"]["name"]
+        version = model_version["modelVersion"]
+        model_version = model_api.find_version(name, version)
+        str_status = model_version['status']
+        try:
+            status = VersionStatus[str_status]
+            if status is VersionStatus.Assembling:
+                time.sleep(5)  # wait until it's finished
+                continue
+            elif status is VersionStatus.Released:
+                return model_version
+            elif status is VersionStatus.Failed:
+                raise ModelBuildError(model_version)
+            else:
+                raise ValueError("Unknown status '{}' for model {}:{}".format(str_status, name, version))
+        except KeyError:
+            raise ValueError("Unknown status '{}' for model {}:{}".format(str_status, name, version))
 
-    if is_failed:
-        raise ModelBuildError(model_version)
-
-    return model_version
-
+    # end of loop
 
 def await_training_data(profile_api, uid):
     status = ""

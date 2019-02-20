@@ -77,7 +77,7 @@ class ApplicationService:
         Args:
             app_name (str):
         """
-        for app in self.list():
-            if app['name'] == app_name:
-                return app
+        resp = self.connection.get("/api/v2/application/{}".format(app_name))
+        if resp.ok:
+            return resp.json()
         return None

@@ -1,6 +1,4 @@
 import json
-import os
-import sys
 
 from hydroserving.core.model.entities import UploadMetadata
 from hydroserving.core.model.package import assemble_model
