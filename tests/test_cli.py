@@ -22,7 +22,7 @@ MODEL_FOLDER = "./examples/local_dev"
 class CLITests(unittest.TestCase):
     def test_hs(self):
         runner = CliRunner()
-        result = runner.invoke(hs_cli, ['Peter'])
+        result = runner.invoke(hs_cli)
         print(result)
         assert result.exit_code == 0
 
