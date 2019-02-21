@@ -101,7 +101,8 @@ def ensure_model(dir_path, name, runtime, host_selector, path_to_training_data):
             payload=[os.path.join(dir_path, "*")],
             training_data_file=path_to_training_data,
             install_command=None,
-            monitoring=None
+            monitoring=None,
+            metadata=None
         )
     resolve_model_paths(dir_path, metadata)
     meta_dict = extract_dict(metadata)

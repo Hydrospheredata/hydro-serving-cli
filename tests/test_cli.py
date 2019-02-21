@@ -1,10 +1,11 @@
 import json
 import os
 import unittest
-
+from click.testing import CliRunner
 import requests
 import requests_mock
 
+from hydroserving.cli.commands.hs import hs_cli
 from hydroserving.core.application.service import ApplicationService
 from hydroserving.core.apply import ApplyService
 from hydroserving.core.host_selector.host_selector import HostSelectorService
@@ -19,6 +20,12 @@ MODEL_FOLDER = "./examples/local_dev"
 
 
 class CLITests(unittest.TestCase):
+    def test_hs(self):
+        runner = CliRunner()
+        result = runner.invoke(hs_cli, ['Peter'])
+        print(result)
+        assert result.exit_code == 0
+
     def test_model_upload(self):
         def _upload_matcher(request):
             if request.path_url == "/api/v2/model/upload":

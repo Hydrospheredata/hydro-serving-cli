@@ -1,8 +1,8 @@
 import click
 import logging
 
-from hydroserving.cli import CONTEXT_SETTINGS
 from hydroserving.cli.commands.hs import hs_cli
+from hydroserving.cli.context import CONTEXT_SETTINGS
 from hydroserving.cli.help import PROFILE_HELP, PROFILE_PUSH_HELP, PROFILE_MODEL_VERSION_HELP
 
 

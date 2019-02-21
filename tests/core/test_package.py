@@ -3,8 +3,7 @@ import os
 import shutil
 import tarfile
 
-from hydroserving.cli import ensure_model
-from hydroserving.core.model.package import assemble_model
+from hydroserving.core.model.package import assemble_model, ensure_model
 
 MODEL_FOLDER = "./tests/test_metadata_resources/"
 TRASH_FOLDER = "./tests/.hs"
