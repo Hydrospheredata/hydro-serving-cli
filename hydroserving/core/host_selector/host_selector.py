@@ -36,7 +36,7 @@ class HostSelectorService:
             'name': env_name,
             'placeholders': [env_selector]
         }
-        return self.connection.post("/api/v2/hostSelector", data).json()
+        return self.connection.post_json("/api/v2/hostSelector", data).json()
 
     def apply(self, env):
         found_env = self.get(env.name)

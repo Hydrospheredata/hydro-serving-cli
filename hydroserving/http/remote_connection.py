@@ -27,7 +27,15 @@ class RemoteConnection:
         """
         composed = self.compose_url(url)
         logging.debug("POST: %s", composed)
-        data = self.preprocess_request(data)
+        result = requests.post(composed, data=data)
+        return RemoteConnection.postprocess_response(result)
+
+    def post_json(self, url, data):
+        """
+        Sends POST request with `data` to the given `url` and returns data as JSON dictionary.
+        """
+        composed = self.compose_url(url)
+        logging.debug("POST: %s", composed)
         result = requests.post(composed, json=data)
         return RemoteConnection.postprocess_response(result)
 
@@ -37,7 +45,6 @@ class RemoteConnection:
         """
         composed = self.compose_url(url)
         logging.debug("PUT: %s", composed)
-        data = self.preprocess_request(data)
         result = requests.put(composed, json=data)
         return RemoteConnection.postprocess_response(result)
 
@@ -61,7 +68,7 @@ class RemoteConnection:
         return RemoteConnection.postprocess_response(result)
 
     def multipart_post(self, url, data, files):
-        fields = {**self.preprocess_request(data), **files}
+        fields = {**data, **files}
         composed = self.compose_url(url)
         logging.debug("MULTIPART POST: %s. Parts: %s", composed, fields)
         encoder = MultipartEncoder(
@@ -75,10 +82,6 @@ class RemoteConnection:
         )
 
         return RemoteConnection.postprocess_response(result)
-
-    @staticmethod
-    def preprocess_request(request):
-        return remove_none(request)
 
     @staticmethod
     def postprocess_response(response):

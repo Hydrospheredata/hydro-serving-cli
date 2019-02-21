@@ -40,6 +40,8 @@ class ApplicationService:
             variants = []
             for variant in stage['modelVariants']:
                 names = variant["modelVersion"].split(":")
+                if len(names) != 2:
+                    raise ValueError("Invalid modelVersion name: {}".format(variant["modelVersion"]))
                 mv = self.model_service.find_version(names[0], int(names[1]))
                 if not mv:
                     raise ValueError("Can't find model version {}".format(variant))
@@ -58,7 +60,7 @@ class ApplicationService:
         return result
 
     def create(self, application):
-        return self.connection.post("/api/v2/application", application).json()
+        return self.connection.post_json("/api/v2/application", application).json()
 
     def update(self, application):
         return self.connection.put('/api/v2/application', application).json()

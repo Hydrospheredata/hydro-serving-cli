@@ -1,3 +1,13 @@
+from enum import Enum
+
+
+class DataProfileStatus(Enum):
+    Success = "Success"
+    Failure = "Failure"
+    Processing = "Processing"
+    NotRegistered = "NotRegistered"
+
+
 def ks_metric_spec(input):
     if not isinstance(input, str):
         raise TypeError("Invalid input: {}".format(input))
@@ -118,21 +128,32 @@ class MonitoringService:
         """
         self.connection = connection
 
-    def create_aggregation(self, create_request):
+    def create_metric_spec(self, create_request):
         """
 
         Args:
             create_request (EntryAggregationSpecification):
         """
-        return self.connection.post("/monitoring/aggregations", create_request)
+        return self.connection.post_json("/monitoring/metricspec", create_request).json()
 
-    def delete_aggregation(self, aggregation_id):
-        """
+    def list_metric_specs(self):
+        return self.connection.get("/monitoring/metricspec").json()
 
-        Args:
-            aggregation_id (str):
-        """
-        return self.connection.delete("/monitoring/aggregations/" + aggregation_id)
+    def start_data_processing(self,model_version_id, data_file):
+        res = self.connection.post_json(
+            "/monitoring/profiles/batch/{}".format(model_version_id),
+            data=data_file
+        )
+        return res.text  # 200 OK "ok"
 
-    def list_aggregations(self):
-        return self.connection.get("/monitoring/aggregations")
+    def get_data_processing_status(self, model_version_id):
+        res = self.connection.get("/monitoring/profiles/batch/{}/status".format(model_version_id))
+        if res.ok:
+            d = res.json()
+            try:
+                status = DataProfileStatus[d["kind"]]
+                return status
+            except KeyError:
+                raise ValueError("Invalid data processing status for modelversion id {}: {}".format(
+                    model_version_id, d))
+        return None

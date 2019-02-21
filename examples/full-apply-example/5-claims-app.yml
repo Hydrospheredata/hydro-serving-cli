@@ -1,4 +1,3 @@
-version: 2
 kind: Application
 name: apply-demo-claims-app
 

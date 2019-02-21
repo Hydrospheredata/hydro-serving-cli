@@ -1,12 +1,18 @@
-version: 2
 kind: Model
 name: apply-demo-claims-model
-model-type: python:3.6
 payload:
   - /path/to/model
 runtime: hydrosphere/serving-runtime-python:3.6-latest
 # host-selector: xeon-cpu
-training-data: s3://bucket/object.csv
+#training-data: s3://bucket/object.csv
+metadata:
+  author: cool-data-satan
+  type: example
+  class: org.apache.spark.ml.PipelineModel
+  timestamp: 1497440372794
+  sparkVersion: 2.1.1
+  uid: PipelineModel_4ccbbca3d107857d3ed8
+
 contract:
   claim:
     inputs:
@@ -22,21 +28,20 @@ contract:
 
 monitoring:
   - name: ks
-    kind: Kolmogorov-Smirnov
+    kind: KSMetricSpec
     config:
       input: client_profile_42
     with-health: true
   - name: gan
-    kind: GAN
+    kind: GANMetricSpec
     with-health: true
     config:
       input: feature
-      application-name: claims-gan-app
-      treshold: 69
+      application: claims-gan-app
   - name: autoencoder
-    kind: Autoencoder
+    kind: AEMetricSpec
     with-health: true
     config:
-      application-name: claims-autoencoder-app
+      application: claims-autoencoder-app
       input: feature
-      treshold: 69
+      threshold: 69

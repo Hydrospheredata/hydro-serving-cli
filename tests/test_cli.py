@@ -12,7 +12,6 @@ from hydroserving.core.model.parser import parse_model
 from hydroserving.core.model.service import ModelService
 from hydroserving.core.model.upload import upload_model
 from hydroserving.core.monitoring.service import MonitoringService
-from hydroserving.core.profiler import ProfilerService
 from hydroserving.http.remote_connection import RemoteConnection
 from hydroserving.util.yamlutil import yaml_file
 
@@ -56,69 +55,74 @@ class CLITests(unittest.TestCase):
         with requests_mock.Mocker() as req_mock:
             req_mock.add_matcher(_upload_matcher)
             connection = RemoteConnection("http://localhost")
-            profiler_service = ProfilerService(connection)
             monitoring_service = MonitoringService(connection)
-            model_api = ModelService(connection, profiler_service, monitoring_service)
+            model_api = ModelService(connection, monitoring_service)
             yaml_path = os.path.join(MODEL_FOLDER, "serving.yaml")
             with open(yaml_path, 'r') as f:
                 yaml_dict = yaml_file(f)
                 meta = parse_model(yaml_dict)
                 result = upload_model(
                     model_service=model_api,
-                    profiler_service=profiler_service,
                     monitoring_service=monitoring_service,
                     model=meta,
                     model_path=yaml_path,
                     is_async=True,
-                    no_training_data=True,
+                    ignore_training_data=True,
                     ignore_monitoring=True)
                 assert "example_script" == result["model"]["name"]
                 assert 1 == result["modelVersion"]
 
     def test_model_apply(self):
         def _upload_matcher(request):
+            resp = None
             if request.path_url == "/api/v2/model/upload":
                 fields = request.text.fields
                 assert 'metadata' in fields
                 assert 'payload' in fields
                 metadata = json.loads(fields['metadata'])
                 print(metadata)
-                assert metadata["name"] == "example_script"
-                assert metadata["installCommand"] == "pip install -r requirements.txt"
+                assert metadata["name"] == "apply-demo-claims-model"
                 assert metadata["hostSelectorName"] is None
                 resp = requests.Response()
                 resp.status_code = 200
                 resp._content = json.dumps(
                     {
-                        "model": {"name": "example_script"},
-                        "modelVersion": 1
+                        "id": 1,
+                        "model": {"name": "apply-demo-claims-model"},
+                        "modelVersion": 1,
+                        "status": "Pending"
                     }
                 ).encode("utf-8")
-                return resp
-            elif request.path_url == '/api/v2/model/version/example_script/1':
+            elif request.path_url == '/api/v2/model/version/apply-demo-claims-model/1':
                 resp = requests.Response()
                 resp.status_code = 200
                 resp._content = json.dumps(
                     {
-                        "model": {"name": "example_script"},
+                        "id": 1,
+                        "model": {"name": "apply-demo-claims-model"},
                         "modelVersion": 1,
                         "status": "Released"
                     }
                 ).encode("utf-8")
-                return resp
-            return None
+            elif request.path_url == "/monitoring/metricspec" and request.method == "POST":
+                d = json.loads(request.text)
+                print(d)
+                assert d["modelVersionId"] == 1
+                resp = requests.Response()
+                resp.status_code = 200
+                resp._content = request.text.encode("utf-8")
+            return resp
 
         with requests_mock.Mocker() as req_mock:
             req_mock.add_matcher(_upload_matcher)
             connection = RemoteConnection("http://localhost")
-            profiler_service = ProfilerService(connection)
             monitoring_service = MonitoringService(connection)
-            model_api = ModelService(connection, profiler_service, monitoring_service)
+            model_api = ModelService(connection, monitoring_service)
             apply_api = ApplyService(model_api, None, None)
-            yaml_path = os.path.join(MODEL_FOLDER, "serving.yaml")
-            result = apply_api.apply([yaml_path], ignore_monitoring=True, no_training_data=True)
+            yaml_path = os.path.join("./examples/full-apply-example/3-claims-model.yml")
+            result = apply_api.apply([yaml_path], ignore_monitoring=False, no_training_data=False)
             print(result)
-            assert "Released" == result["./examples/local_dev"][0]["status"]
+            assert "Released" == result["./examples/full-apply-example"][0]["status"]
 
     def test_application_singular_apply(self):
         def _upload_matcher(request):
@@ -154,9 +158,8 @@ class CLITests(unittest.TestCase):
         with requests_mock.Mocker() as req_mock:
             req_mock.add_matcher(_upload_matcher)
             connection = RemoteConnection("http://localhost")
-            profiler_service = ProfilerService(connection)
             monitoring_service = MonitoringService(connection)
-            model_api = ModelService(connection, profiler_service, monitoring_service)
+            model_api = ModelService(connection, monitoring_service)
             application_api = ApplicationService(connection, model_api)
             apply_service = ApplyService(model_api, None, application_api)
             result = apply_service.apply(["./examples/full-apply-example/5-claims-app.yml"])
@@ -231,9 +234,8 @@ class CLITests(unittest.TestCase):
         with requests_mock.Mocker() as req_mock:
             req_mock.add_matcher(_upload_matcher)
             connection = RemoteConnection("http://localhost")
-            profiler_service = ProfilerService(connection)
             monitoring_service = MonitoringService(connection)
-            model_api = ModelService(connection, profiler_service, monitoring_service)
+            model_api = ModelService(connection, monitoring_service)
             application_api = ApplicationService(connection, model_api)
             apply_service = ApplyService(model_api, None, application_api)
             result = apply_service.apply(["./examples/full-apply-example/6-claims-pipeline-app.yml"])
@@ -275,9 +277,8 @@ class CLITests(unittest.TestCase):
         with requests_mock.Mocker() as req_mock:
             req_mock.add_matcher(_upload_matcher)
             connection = RemoteConnection("http://localhost")
-            profiler_service = ProfilerService(connection)
             monitoring_service = MonitoringService(connection)
-            model_api = ModelService(connection, profiler_service, monitoring_service)
+            model_api = ModelService(connection, monitoring_service)
             application_api = ApplicationService(connection, model_api)
             apply_service = ApplyService(model_api, None, application_api)
             result = apply_service.apply(["./examples/full-apply-example/5-claims-app.yml"])
@@ -299,9 +300,8 @@ class CLITests(unittest.TestCase):
         with requests_mock.Mocker() as req_mock:
             req_mock.add_matcher(_upload_matcher)
             connection = RemoteConnection("http://localhost")
-            profiler_service = ProfilerService(connection)
             monitoring_service = MonitoringService(connection)
-            model_api = ModelService(connection, profiler_service, monitoring_service)
+            model_api = ModelService(connection, monitoring_service)
             application_api = ApplicationService(connection, model_api)
             selector_api = HostSelectorService(connection)
             apply_service = ApplyService(model_api, selector_api, application_api)
@@ -320,9 +320,8 @@ class CLITests(unittest.TestCase):
         with requests_mock.Mocker() as req_mock:
             req_mock.add_matcher(_upload_matcher)
             connection = RemoteConnection("http://localhost")
-            profiler_service = ProfilerService(connection)
             monitoring_service = MonitoringService(connection)
-            model_api = ModelService(connection, profiler_service, monitoring_service)
+            model_api = ModelService(connection, monitoring_service)
             application_api = ApplicationService(connection, model_api)
             selector_api = HostSelectorService(connection)
             apply_service = ApplyService(model_api, selector_api, application_api)

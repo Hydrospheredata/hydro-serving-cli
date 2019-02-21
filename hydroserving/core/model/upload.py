@@ -6,6 +6,7 @@ import time
 
 from hydroserving.core.contract import contract_to_dict
 from hydroserving.core.model.entities import UploadMetadata, VersionStatus
+from hydroserving.core.monitoring.service import DataProfileStatus
 
 
 class ModelBuildError(RuntimeError):
@@ -33,20 +34,28 @@ def await_upload(model_api, model_version):
                 raise ValueError("Unknown status '{}' for model {}:{}".format(str_status, name, version))
         except KeyError:
             raise ValueError("Unknown status '{}' for model {}:{}".format(str_status, name, version))
-
     # end of loop
 
-def await_training_data(profile_api, uid):
-    status = ""
-    while status != "success":
-        status = profile_api.status(uid)
-        time.sleep(30)
-    return uid
+
+def await_training_data(monitoring_api, mv_id):
+    while True:
+        status = monitoring_api.get_data_processing_status(mv_id)
+        if status == DataProfileStatus.Failure:
+            raise ValueError("Data profile for modelversion {} failed".format(mv_id))
+        elif status == DataProfileStatus.Success:
+            return status
+        elif status == DataProfileStatus.NotRegistered:
+            raise ValueError("There is no data profile for model version {}".format(mv_id))
+        elif status == DataProfileStatus.Processing:
+            time.sleep(30)
+            continue
+        else:
+            raise ValueError("Unknown data profile status for model version {}: {}".format(mv_id, status))
 
 
-def push_training_data_async(profile_api, model_version_id, filename):
+def push_training_data_async(monitoring_api, model_version_id, data_file):
     logging.info("Uploading training data")
-    uid = profile_api.push(model_version_id, filename)
+    uid = monitoring_api.start_data_processing(model_version_id, data_file)
     logging.info("Data profile computing is started with id %s", uid)
     return uid
 
@@ -85,7 +94,8 @@ def upload_model_async(model_api, model, tar):
     return result
 
 
-def upload_model(model_service, profiler_service, monitoring_service, model, model_path, is_async, no_training_data, ignore_monitoring):
+def upload_model(model_service, monitoring_service, model, model_path,
+                 is_async, ignore_training_data, ignore_monitoring):
     mv = upload_model_async(model_service, model, model_path)
 
     is_monitorable = not ignore_monitoring and model.monitoring
@@ -94,20 +104,22 @@ def upload_model(model_service, profiler_service, monitoring_service, model, mod
         monitoring_params = model.monitoring
         for param in monitoring_params:
             param["modelVersionId"] = mv["id"]
-        logging.debug("Creating monitoring %s", monitoring_params)
-        monitoring_service.create(monitoring_params)
+            logging.debug("Creating monitoring %s", param)
+            result = monitoring_service.create_metric_spec(param)
+            logging.debug("Monitoring service output for %s : %s".format(param, result))
 
-    is_pushable = model.training_data_file and not no_training_data
+    is_pushable = model.training_data_file and not ignore_training_data
     if is_pushable:
         logging.info("Training data is here. Preparing push to the profiler service.")
         model_version = mv['id']
         try:
-            push_uid = push_training_data_async(
-                profiler_service,
-                model_version,
-                model.training_data_file
-            )
-            logging.info("Training data push id: %s", push_uid)
+            with open(model.training_data_file, "rb") as f:
+                push_uid = push_training_data_async(
+                    monitoring_service,
+                    model_version,
+                    f
+                )
+                logging.info("Training data push id: %s", push_uid)
         except RuntimeError as ex:
             logging.error(ex)
             logging.error("Training data upload failed. Please use `hs profile push` command to try again.")
@@ -119,65 +131,3 @@ def upload_model(model_service, profiler_service, monitoring_service, model, mod
     build_status = await_upload(model_service, mv)
 
     return build_status
-
-    # def check_monitoring_deps(self, app):
-    #     """
-    #
-    #     Args:
-    #         app (Application):
-    #     """
-    #     stages = app.execution_graph.as_pipeline().stages
-    #     id_mapper_mon = {}
-    #     for stage in stages:
-    #         for mon in stage.monitoring:
-    #             mon_type_res = METRIC_SPECIFICATION_KINDS.get(mon.type)
-    #             if mon_type_res is None:
-    #                 raise ValueError("Can't find metric provider for : {}".format(mon.__dict__))
-    #             if mon.app is None:
-    #                 if mon_type_res in PARAMETRIC_PROVIDERS:
-    #                     raise ValueError("Application (app) is required for metric {}".format(mon.__dict__))
-    #             else:
-    #                 if mon.app not in id_mapper_mon:  # check for appName -> appId
-    #                     mon_app_result = self.find(mon.app)
-    #                     logging.debug("MONAPPSEARCH")
-    #                     logging.debug(mon.__dict__)
-    #                     logging.debug(mon_app_result)
-    #                     if mon_app_result is None:
-    #                         raise ValueError("Can't find metric application for {}".format(mon.__dict__))
-    #                     id_mapper_mon[mon.app] = mon_app_result['id']
-    #
-    #     return id_mapper_mon
-
-    # def configure_monitoring(self, app_id, app, id_mapper_mon):
-    #     """
-    #
-    #     Args:
-    #         id_mapper_mon (dict):
-    #         app (Application):
-    #         app_id (int):
-    #     """
-    #     pipeline = app.execution_graph.as_pipeline()
-    #     results = []
-    #     for idx, stage in enumerate(pipeline.stages):
-    #         for mon in stage.monitoring:
-    #             spec = MetricProviderSpecification(
-    #                 metric_provider_class=METRIC_SPECIFICATION_KINDS[mon.type],
-    #                 config=None,
-    #                 with_health=mon.healthcheck_on,
-    #                 health_config=None
-    #             )
-    #             if mon.app is not None:
-    #                 spec.config = MetricConfigSpecification(id_mapper_mon[mon.app])
-    #             if mon.threshold is not None:
-    #                 spec.healthConfig = HealthConfigSpecification(mon.threshold)
-    #
-    #             aggregation = EntryAggregationSpecification(
-    #                 name=mon.name,
-    #                 metric_provider_specification=spec,
-    #                 filter=FilterSpecification(
-    #                     source_name=mon.input,
-    #                     stage_id="app{}stage{}".format(app_id, idx)
-    #                 )
-    #             )
-    #             results.append(self.monitoring_service.create_aggregation(aggregation))
-    #     return results

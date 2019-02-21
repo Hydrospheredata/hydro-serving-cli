@@ -6,14 +6,13 @@ from hydroserving.core.model.upload import upload_model
 
 
 class ModelService:
-    def __init__(self, connection, profiler_service, monitoring_service):
+    def __init__(self, connection, monitoring_service):
         """
 
         Args:
             connection (RemoteConnection):
         """
         self.connection = connection
-        self.profiler_service = profiler_service
         self.monitoring_service = monitoring_service
 
     def list_models(self):
@@ -83,12 +82,11 @@ class ModelService:
         tar = assemble_model(model, path)
         result = upload_model(
             model_service=self,
-            profiler_service=self.profiler_service,
             monitoring_service=self.monitoring_service,
             model=model,
             model_path=tar,
             is_async=False,
-            no_training_data=no_training_data,
+            ignore_training_data=no_training_data,
             ignore_monitoring=ignore_monitoring
         )
         return result
