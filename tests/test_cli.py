@@ -80,9 +80,11 @@ class CLITests(unittest.TestCase):
                 assert 'metadata' in fields
                 assert 'payload' in fields
                 metadata = json.loads(fields['metadata'])
+                m = metadata["metadata"]
                 print(metadata)
                 assert metadata["name"] == "apply-demo-claims-model"
                 assert metadata["hostSelectorName"] is None
+                assert m["author"] == "cool-data-stan"
                 resp = requests.Response()
                 resp.status_code = 200
                 resp._content = json.dumps(

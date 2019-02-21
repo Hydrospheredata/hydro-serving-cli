@@ -6,7 +6,7 @@ runtime: hydrosphere/serving-runtime-python:3.6-latest
 # host-selector: xeon-cpu
 #training-data: s3://bucket/object.csv
 metadata:
-  author: cool-data-satan
+  author: cool-data-stan
   type: example
   class: org.apache.spark.ml.PipelineModel
   timestamp: 1497440372794

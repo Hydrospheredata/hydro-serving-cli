@@ -9,17 +9,18 @@ class VersionStatus(Enum):
 
 
 class UploadMetadata:
-    def __init__(self, name, contract, host_selector, runtime, install_command):
+    def __init__(self, name, contract, host_selector, runtime, install_command, metadata):
         self.contract = contract
         self.hostSelectorName = host_selector
         self.runtime = runtime
         self.name = name
         self.installCommand = install_command
+        self.metadata = metadata
 
 
 class Model:
     def __init__(self, name, host_selector, runtime, contract, payload,
-                 training_data_file, install_command, monitoring):
+                 training_data_file, install_command, monitoring, metadata):
         self.name = name
         self.host_selector = host_selector
         self.runtime = runtime
@@ -28,6 +29,7 @@ class Model:
         self.training_data_file = training_data_file
         self.install_command = install_command
         self.monitoring = monitoring
+        self.metadata = metadata
 
     def validate(self):
         if not isinstance(self.name, str):
@@ -44,6 +46,9 @@ class Model:
 
         if self.install_command is not None and not isinstance(self.install_command, str):
             raise InvalidModelException("install-command is not a string", self.__dict__)
+
+        if self.metadata and not isinstance(self.metadata, dict):
+            raise InvalidModelException("metadata is not a dictionary", self.__dict__)
 
 
 class InvalidModelException(RuntimeError):
