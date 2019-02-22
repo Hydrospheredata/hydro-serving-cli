@@ -57,7 +57,7 @@ def upload(obj, name, runtime, host_selector, training_data, dir, no_training_da
         current_cluster = obj.config_service.current_cluster()
         logging.info("Uploading payload to cluster '{}' at {}".format(
             current_cluster['name'], current_cluster['cluster']['server']))
-        result = upload_model(obj.model_service, obj.profiler_service, obj.monitoring_service, model_metadata,
+        result = upload_model(obj.model_service, obj.monitoring_service, model_metadata,
                               tar, is_async, no_training_data, ignore_monitoring)
         logging.info("Success:")
         click.echo(json.dumps(result))

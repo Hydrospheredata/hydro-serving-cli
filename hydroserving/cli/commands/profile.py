@@ -16,7 +16,7 @@ def profile():
               required=True,
               help=PROFILE_MODEL_VERSION_HELP)
 @click.argument('filename',
-                type=click.Path(exists=True))
+                type=click.File())
 @click.option('--async', 'is_async', is_flag=True, default=False)
 @click.pass_obj
 def push(obj, model_version, filename, is_async):
@@ -28,6 +28,15 @@ def push(obj, model_version, filename, is_async):
         model, version = model_version.split(":")
         mv = obj.model_service.find_version(model, int(version))
         mv_id = mv["id"]
-    obj.profiler_service.push_training_data(mv_id, filename, is_async)
+    obj.monitoring_service.start_data_processing(mv_id, filename)
     logging.info("Data profile for {} will be available: {}/models/{}/{}".format(
         model_version, url, mv["model"]["id"], mv["modelVersion"]))
+
+
+@profile.command(context_settings=CONTEXT_SETTINGS)
+@click.argument('model-version-id',
+                required=True)
+@click.pass_obj
+def status(obj, model_version_id):
+    res = obj.monitoring_service.get_data_processing_status(model_version_id)
+    logging.info("Data profiling status: %s", res)

@@ -7,6 +7,7 @@ import time
 from hydroserving.core.contract import contract_to_dict
 from hydroserving.core.model.entities import UploadMetadata, VersionStatus
 from hydroserving.core.monitoring.service import DataProfileStatus
+from hydroserving.util.fileutil import read_in_chunks
 
 
 class ModelBuildError(RuntimeError):
@@ -24,7 +25,7 @@ def await_upload(model_api, model_version):
         try:
             status = VersionStatus[str_status]
             if status is VersionStatus.Assembling:
-                time.sleep(5)  # wait until it's finished
+                time.sleep(10)  # wait until it's finished
                 continue
             elif status is VersionStatus.Released:
                 return model_version
@@ -54,10 +55,9 @@ def await_training_data(monitoring_api, mv_id):
 
 
 def push_training_data_async(monitoring_api, model_version_id, data_file):
-    logging.info("Uploading training data")
-    uid = monitoring_api.start_data_processing(model_version_id, data_file)
-    logging.info("Data profile computing is started with id %s", uid)
-    return uid
+    monitoring_api.start_data_processing(model_version_id, data_file)
+    logging.info("Data profile computing is started")
+    return model_version_id
 
 
 def push_training_data(profile_api, model_version_id, filename, is_async):
@@ -105,9 +105,9 @@ def upload_model(model_service, monitoring_service, model, model_path,
         monitoring_params = model.monitoring
         for param in monitoring_params:
             param["modelVersionId"] = mv["id"]
-            logging.debug("Creating monitoring %s", param)
+            logging.info("Creating monitoring %s", param)
             result = monitoring_service.create_metric_spec(param)
-            logging.debug("Monitoring service output for %s : %s".format(param, result))
+            logging.debug("Monitoring service output: %s", result)
 
     is_pushable = model.training_data_file and not ignore_training_data
     if is_pushable:
@@ -115,10 +115,13 @@ def upload_model(model_service, monitoring_service, model, model_path,
         model_version = mv['id']
         try:
             with open(model.training_data_file, "rb") as f:
+                chunk_size = 420420
+                logging.info("Uploading training data file %s with chunk_size=%s", f.name, chunk_size)
+                gen = read_in_chunks(f, chunk_size=chunk_size)
                 push_uid = push_training_data_async(
                     monitoring_service,
                     model_version,
-                    f
+                    gen
                 )
                 logging.info("Training data push id: %s", push_uid)
         except RuntimeError as ex:

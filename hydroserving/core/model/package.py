@@ -6,6 +6,7 @@ import tarfile
 
 from hydroserving.config.settings import TARGET_FOLDER
 from hydroserving.core.contract import contract_to_dict
+from hydroserving.core.image import DockerImage
 from hydroserving.core.model.entities import Model
 from hydroserving.core.model.parser import parse_model
 from hydroserving.util.fileutil import resolve_list_of_globs, get_yamls
@@ -84,7 +85,7 @@ def ensure_model(dir_path, name, runtime, host_selector, path_to_training_data):
             if name is not None:
                 metadata.name = name
             if runtime is not None:
-                metadata.runtime = runtime
+                metadata.runtime = DockerImage.parse_fullname(runtime)
             if host_selector is not None:
                 metadata.host_selector = host_selector
             if path_to_training_data is not None:
@@ -96,7 +97,7 @@ def ensure_model(dir_path, name, runtime, host_selector, path_to_training_data):
         metadata = Model(
             name=name,
             contract=None,
-            runtime=runtime,
+            runtime=DockerImage.parse_fullname(runtime),
             host_selector=host_selector,
             payload=[os.path.join(dir_path, "*")],
             training_data_file=path_to_training_data,

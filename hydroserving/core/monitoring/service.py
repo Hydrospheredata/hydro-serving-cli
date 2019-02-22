@@ -139,8 +139,8 @@ class MonitoringService:
     def list_metric_specs(self):
         return self.connection.get("/monitoring/metricspec").json()
 
-    def start_data_processing(self,model_version_id, data_file):
-        res = self.connection.post_json(
+    def start_data_processing(self, model_version_id, data_file):
+        res = self.connection.post_stream(
             "/monitoring/profiles/batch/{}".format(model_version_id),
             data=data_file
         )

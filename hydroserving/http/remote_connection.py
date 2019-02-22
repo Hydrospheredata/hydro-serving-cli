@@ -21,13 +21,13 @@ class RemoteConnection:
         full_url = urljoin(self.remote_addr, url)
         return full_url
 
-    def post(self, url, data):
+    def post_stream(self, url, data):
         """
         Sends POST request with `data` to the given `url` and returns data as JSON dictionary.
         """
         composed = self.compose_url(url)
-        logging.debug("POST: %s", composed)
-        result = requests.post(composed, data=data)
+        result = requests.post(composed, data=data, stream=True)
+        logging.debug(result.request.__dict__)
         return RemoteConnection.postprocess_response(result)
 
     def post_json(self, url, data):
@@ -35,7 +35,6 @@ class RemoteConnection:
         Sends POST request with `data` to the given `url` and returns data as JSON dictionary.
         """
         composed = self.compose_url(url)
-        logging.debug("POST: %s", composed)
         result = requests.post(composed, json=data)
         return RemoteConnection.postprocess_response(result)
 
@@ -44,7 +43,6 @@ class RemoteConnection:
         Sends PUT request with `data` to the given `url` and returns data as JSON dictionary.
         """
         composed = self.compose_url(url)
-        logging.debug("PUT: %s", composed)
         result = requests.put(composed, json=data)
         return RemoteConnection.postprocess_response(result)
 
@@ -54,7 +52,6 @@ class RemoteConnection:
         Returns (requests.Response)
         """
         composed = self.compose_url(url)
-        logging.debug("GET: %s", composed)
         result = requests.get(composed)
         return RemoteConnection.postprocess_response(result)
 
@@ -63,7 +60,6 @@ class RemoteConnection:
         Sends DELETE request with to the given `url` and returns data as JSON dictionary.
         """
         composed = self.compose_url(url)
-        logging.debug("DELETE: %s", composed)
         result = requests.delete(composed)
         return RemoteConnection.postprocess_response(result)
 
