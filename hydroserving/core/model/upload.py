@@ -115,13 +115,10 @@ def upload_model(model_service, monitoring_service, model, model_path,
         model_version = mv['id']
         try:
             with open(model.training_data_file, "rb") as f:
-                chunk_size = 420420
-                logging.info("Uploading training data file %s with chunk_size=%s", f.name, chunk_size)
-                gen = read_in_chunks(f, chunk_size=chunk_size)
                 push_uid = push_training_data_async(
                     monitoring_service,
                     model_version,
-                    gen
+                    f
                 )
                 logging.info("Training data push id: %s", push_uid)
         except RuntimeError as ex:

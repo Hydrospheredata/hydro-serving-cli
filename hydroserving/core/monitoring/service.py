@@ -1,4 +1,7 @@
+import logging
 from enum import Enum
+
+from hydroserving.util.fileutil import read_in_chunks
 
 
 class DataProfileStatus(Enum):
@@ -139,10 +142,13 @@ class MonitoringService:
     def list_metric_specs(self):
         return self.connection.get("/monitoring/metricspec").json()
 
-    def start_data_processing(self, model_version_id, data_file):
+    def start_data_processing(self, model_version_id, data_file, chunk_size=420420):
+        logging.info("Uploading training data file %s with chunk_size=%s", data_file.name, chunk_size)
+        gen = read_in_chunks(data_file, chunk_size=chunk_size)
+
         res = self.connection.post_stream(
             "/monitoring/profiles/batch/{}".format(model_version_id),
-            data=data_file
+            data=gen
         )
         return res.text  # 200 OK "ok"
 

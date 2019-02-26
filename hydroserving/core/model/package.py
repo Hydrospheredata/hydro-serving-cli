@@ -6,6 +6,7 @@ import tarfile
 
 from hydroserving.config.settings import TARGET_FOLDER
 from hydroserving.core.contract import contract_to_dict
+from hydroserving.core.git_extractor import collect_git_info
 from hydroserving.core.image import DockerImage
 from hydroserving.core.model.entities import Model
 from hydroserving.core.model.parser import parse_model
@@ -94,6 +95,8 @@ def ensure_model(dir_path, name, runtime, host_selector, path_to_training_data):
     if metadata is None:
         if name is None:
             name = os.path.basename(os.getcwd())
+        if runtime is None:
+            raise ValueError("Runtime is not defined. Please use YAML config or CLI argument to set it.")
         metadata = Model(
             name=name,
             contract=None,
@@ -103,9 +106,15 @@ def ensure_model(dir_path, name, runtime, host_selector, path_to_training_data):
             training_data_file=path_to_training_data,
             install_command=None,
             monitoring=None,
-            metadata=None
+            metadata={}
         )
     resolve_model_paths(dir_path, metadata)
+    gitinfo = collect_git_info(dir_path, search_parent_directories=True)
+    if gitinfo:
+        logging.debug("Extracted .git metadata: %s", gitinfo)
+        metadata.metadata['git.branch'] = gitinfo.branch_name
+        metadata.metadata['git.commit'] = gitinfo.commit_sha
+        metadata.metadata['git.is-dirty'] = gitinfo.is_dirty
     meta_dict = extract_dict(metadata)
     meta_dict['contract'] = contract_to_dict(meta_dict['contract'])
     logging.info("Model definition composed:")

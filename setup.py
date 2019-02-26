@@ -20,6 +20,7 @@ setup(
         "hydro-serving-grpc~=0.2",
         "requests~=2.21",
         "requests-toolbelt==0.8.0",
+        "gitpython~=2.1"
     ],
     setup_requires=[
         'pytest-runner'
