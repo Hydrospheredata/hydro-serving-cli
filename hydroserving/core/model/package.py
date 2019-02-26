@@ -113,7 +113,10 @@ def ensure_model(dir_path, name, runtime, host_selector, path_to_training_data):
     if gitinfo:
         logging.debug("Extracted .git metadata: %s", gitinfo)
         metadata.metadata['git.branch'] = gitinfo.branch_name
-        metadata.metadata['git.commit'] = gitinfo.commit_sha
+        metadata.metadata['git.branch.head.sha'] = gitinfo.commit_sha
+        metadata.metadata['git.branch.head.author.name'] = gitinfo.author_name
+        metadata.metadata['git.branch.head.author.email'] = gitinfo.author_email
+        metadata.metadata['git.branch.head.date'] = gitinfo.date
         metadata.metadata['git.is-dirty'] = str(gitinfo.is_dirty)
     meta_dict = extract_dict(metadata)
     meta_dict['contract'] = contract_to_dict(meta_dict['contract'])
