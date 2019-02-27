@@ -1,6 +1,20 @@
 kind: Model
 name: "example_script"
-model-type: "python:3.6"
+runtime: hydrosphere/serving-runtime-python:3.6-latest
 payload:
   - "calculator/src/"
   - "calculator/requirements.txt"
+install-command: "pip install -r requirements.txt"
+contract:
+  sum:
+    inputs:
+      a:
+        shape: scalar
+        type: float64
+      b:
+        shape: scalar
+        type: float64
+    outputs:
+      c:
+        shape: scalar
+        type: float64

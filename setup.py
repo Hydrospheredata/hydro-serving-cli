@@ -12,13 +12,15 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
-        "click==6.7",
-        "pyyaml~=3.13",
+        "click~=6.7",
+        "click-log~=0.3",
+        "pyyaml~=4.2b4",
         "protobuf~=3.6",
         "kafka-python==1.4.3",
-        "hydro-serving-grpc~=0.1",
-        "requests~=2.20",
+        "hydro-serving-grpc~=0.2",
+        "requests~=2.21",
         "requests-toolbelt==0.8.0",
+        "gitpython~=2.1"
     ],
     setup_requires=[
         'pytest-runner'
@@ -29,6 +31,6 @@ setup(
     ],
     entry_points='''
         [console_scripts]
-        hs=hydroserving.cli.hs:hs_cli
+        hs=hydroserving.cli.commands.hs:hs_cli
     '''
 )
