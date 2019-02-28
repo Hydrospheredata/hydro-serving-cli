@@ -6,7 +6,8 @@ import tarfile
 
 from hydroserving.config.settings import TARGET_FOLDER
 from hydroserving.core.contract import contract_to_dict
-from hydroserving.core.git_extractor import collect_git_info
+from hydroserving.integrations.dvc_extractor import collect_dvc_info, dvc_to_dict
+from hydroserving.integrations.git_extractor import collect_git_info, git_to_dict
 from hydroserving.core.image import DockerImage
 from hydroserving.core.model.entities import Model
 from hydroserving.core.model.parser import parse_model
@@ -78,26 +79,26 @@ def ensure_model(dir_path, name, runtime, host_selector, path_to_training_data):
 
     logging.debug("Chosen YAML file: %s", serving_file)
 
-    metadata = None
+    model = None
     if serving_file is not None:
         with open(serving_file, 'r') as f:
             doc = yaml_file(f)
-            metadata = parse_model(doc)
+            model = parse_model(doc)
             if name is not None:
-                metadata.name = name
+                model.name = name
             if runtime is not None:
-                metadata.runtime = DockerImage.parse_fullname(runtime)
+                model.runtime = DockerImage.parse_fullname(runtime)
             if host_selector is not None:
-                metadata.host_selector = host_selector
+                model.host_selector = host_selector
             if path_to_training_data is not None:
-                metadata.training_data_file = path_to_training_data
+                model.training_data_file = path_to_training_data
 
-    if metadata is None:
+    if model is None:
         if name is None:
             name = os.path.basename(os.getcwd())
         if runtime is None:
             raise ValueError("Runtime is not defined. Please use YAML config or CLI argument to set it.")
-        metadata = Model(
+        model = Model(
             name=name,
             contract=None,
             runtime=DockerImage.parse_fullname(runtime),
@@ -108,22 +109,23 @@ def ensure_model(dir_path, name, runtime, host_selector, path_to_training_data):
             monitoring=None,
             metadata={}
         )
-    resolve_model_paths(dir_path, metadata)
+    resolve_model_paths(dir_path, model)
     gitinfo = collect_git_info(dir_path, search_parent_directories=True)
     if gitinfo:
-        logging.debug("Extracted .git metadata: %s", gitinfo)
-        metadata.metadata['git.branch'] = gitinfo.branch_name
-        metadata.metadata['git.branch.head.sha'] = gitinfo.commit_sha
-        metadata.metadata['git.branch.head.author.name'] = gitinfo.author_name
-        metadata.metadata['git.branch.head.author.email'] = gitinfo.author_email
-        metadata.metadata['git.branch.head.date'] = gitinfo.date
-        metadata.metadata['git.is-dirty'] = str(gitinfo.is_dirty)
-    meta_dict = extract_dict(metadata)
+        logging.debug("Extracted git metadata: %s", gitinfo)
+        model.metadata.update(git_to_dict(gitinfo))
+
+    dvcinfo = collect_dvc_info(dir_path)
+    if dvcinfo:
+        logging.debug("Extracted dvc metadata: %s", dvcinfo)
+        model.metadata.update(dvc_to_dict(dvcinfo))
+
+    meta_dict = extract_dict(model)
     meta_dict['contract'] = contract_to_dict(meta_dict['contract'])
     logging.info("Model definition composed:")
     logging.info(pprint.pformat(meta_dict, compact=True, ))
-    metadata.validate()
-    return metadata
+    model.validate()
+    return model
 
 
 def resolve_model_paths(dir_path, model):
