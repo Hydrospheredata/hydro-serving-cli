@@ -8,12 +8,12 @@ def config_to_dict(obj):
     res = {
         'kind': "Config",
         'clusters': list(obj.clusters),
-        'current-cluster': obj.current_cluster
+        'current_cluster': obj.current_cluster
     }
     return res
 
 
 def parse_config(in_dict):
     clusters = in_dict['clusters']
-    current_cluster = in_dict['current-cluster']
+    current_cluster = in_dict['current_cluster']
     return ClusterConfig(current_cluster, clusters)
