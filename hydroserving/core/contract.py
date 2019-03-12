@@ -1,5 +1,4 @@
 import os
-import logging
 from numbers import Number
 
 from google.protobuf import text_format
@@ -7,7 +6,9 @@ from hydro_serving_grpc import ModelContract, TensorShapeProto, ModelField, Mode
     DT_INVALID, DT_STRING, DT_BOOL, \
     DT_HALF, DT_FLOAT, DT_DOUBLE, DT_INT8, DT_INT16, \
     DT_INT32, DT_INT64, DT_UINT8, DT_UINT16, DT_UINT32, \
-    DT_UINT64, DT_QINT8, DT_QINT16, DT_QINT32, DT_QUINT8, DT_QUINT16, DT_VARIANT, DataType, DT_COMPLEX64, DT_COMPLEX128
+    DT_UINT64, DT_QINT8, DT_QINT16, DT_QINT32, DT_QUINT8, \
+    DT_QUINT16, DT_VARIANT, DataType, DT_COMPLEX64, DT_COMPLEX128, \
+    DataProfileType
 
 
 def contract_to_dict(contract):
@@ -19,7 +20,6 @@ def contract_to_dict(contract):
     for signature in contract.signatures:
         signatures.append(signature_to_dict(signature))
     result_dict = {
-        "modelName": contract.model_name,
         "signatures": signatures
     }
     return result_dict
@@ -47,6 +47,7 @@ def field_to_dict(field):
         raise TypeError("field is not ModelField")
     result_dict = {
         "name": field.name,
+        "profile": field.profile
     }
     if field.shape is not None:
         result_dict["shape"] = shape_to_dict(field.shape)
@@ -201,7 +202,6 @@ def contract_from_dict(data_dict):
         )
         signatures.append(cur_sig)
     contract = ModelContract(
-        model_name="model",
         signatures=signatures
     )
     return contract
@@ -211,6 +211,10 @@ def field_from_dict(name, data_dict):
     shape = data_dict.get("shape")
     dtype = data_dict.get("type")
     subfields = data_dict.get("fields")
+    profile = data_dict.get("profile", "NONE")
+
+    if profile not in DataProfileType.keys():
+        profile = "NONE"
 
     result_dtype = None
     result_subfields = None
@@ -232,13 +236,15 @@ def field_from_dict(name, data_dict):
         result_field = ModelField(
             name=name,
             shape=shape_to_proto(shape),
-            dtype=result_dtype
+            dtype=result_dtype,
+            profile=profile
         )
     elif result_subfields is not None:
         result_field = ModelField(
             name=name,
             shape=shape_to_proto(shape),
-            subfields=ModelField.Subfield(data=result_subfields)
+            subfields=ModelField.Subfield(data=result_subfields),
+            profile=profile
         )
     else:
         raise ValueError("Invalid field. Neither dtype nor subfields are present in dict", name, data_dict)
