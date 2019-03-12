@@ -1,4 +1,5 @@
 import os
+import logging
 from numbers import Number
 
 from google.protobuf import text_format
@@ -47,7 +48,7 @@ def field_to_dict(field):
         raise TypeError("field is not ModelField")
     result_dict = {
         "name": field.name,
-        "profile": field.profile
+        "profile": DataProfileType.Name(field.profile)
     }
     if field.shape is not None:
         result_dict["shape"] = shape_to_dict(field.shape)
@@ -211,9 +212,11 @@ def field_from_dict(name, data_dict):
     shape = data_dict.get("shape")
     dtype = data_dict.get("type")
     subfields = data_dict.get("fields")
-    profile = data_dict.get("profile", "NONE")
+    raw_profile = data_dict.get("profile", "NONE")
+    profile = raw_profile.upper()
 
     if profile not in DataProfileType.keys():
+        logging.warning("Unknown data profile '%s' for field '%s'. Using 'NONE' instead.", raw_profile, name)
         profile = "NONE"
 
     result_dtype = None
