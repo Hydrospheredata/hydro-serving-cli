@@ -29,7 +29,6 @@ def parse_singular_app(in_dict):
 def parse_singular(in_dict):
     return {
         'modelVersion': in_dict['model'],
-        'signatureName': in_dict['signature'],
         'weight': 100
     }
 
@@ -45,7 +44,6 @@ def parse_model_variant_list(in_list):
 def parse_model_variant(in_dict):
     return {
         'modelVersion': in_dict['model'],
-        'signatureName': in_dict['signature'],
         'weight': in_dict['weight']
     }
 

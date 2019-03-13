@@ -6,15 +6,14 @@ payload:
   - "calculator/requirements.txt"
 install-command: "pip install -r requirements.txt"
 contract:
-  sum:
-    inputs:
-      a:
-        shape: scalar
-        type: float64
-      b:
-        shape: scalar
-        type: float64
-    outputs:
-      c:
-        shape: scalar
-        type: float64
+  inputs:
+    a:
+      shape: scalar
+      type: float64
+    b:
+      shape: scalar
+      type: float64
+  outputs:
+    c:
+      shape: scalar
+      type: float64

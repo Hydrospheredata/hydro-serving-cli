@@ -17,11 +17,9 @@ def contract_to_dict(contract):
         return None
     if not isinstance(contract, ModelContract):
         raise TypeError("contract is not ModelContract")
-    signatures = []
-    for signature in contract.signatures:
-        signatures.append(signature_to_dict(signature))
+    signature = signature_to_dict(contract.predict)
     result_dict = {
-        "signatures": signatures
+        "predict": signature
     }
     return result_dict
 
@@ -186,24 +184,21 @@ def shape_to_proto(user_shape):
 def contract_from_dict(data_dict):
     if data_dict is None:
         return None
-    signatures = []
-    for sig_name, value in data_dict.items():
-        inputs = []
-        outputs = []
-        for in_key, in_value in value["inputs"].items():
-            input = field_from_dict(in_key, in_value)
-            inputs.append(input)
-        for out_key, out_value in value["outputs"].items():
-            output = field_from_dict(out_key, out_value)
-            outputs.append(output)
-        cur_sig = ModelSignature(
-            signature_name=sig_name,
-            inputs=inputs,
-            outputs=outputs
-        )
-        signatures.append(cur_sig)
+    inputs = []
+    outputs = []
+    for in_key, in_value in data_dict["inputs"].items():
+        input = field_from_dict(in_key, in_value)
+        inputs.append(input)
+    for out_key, out_value in data_dict["outputs"].items():
+        output = field_from_dict(out_key, out_value)
+        outputs.append(output)
+    signature = ModelSignature(
+        signature_name="Predict",
+        inputs=inputs,
+        outputs=outputs
+    )
     contract = ModelContract(
-        signatures=signatures
+        predict=signature
     )
     return contract
 

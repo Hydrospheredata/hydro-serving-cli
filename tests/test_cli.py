@@ -155,7 +155,6 @@ class CLITests(unittest.TestCase):
                 req = json.loads(request.text)
                 variant1 = req["executionGraph"]["stages"][0]["modelVariants"][0]
                 self.assertEqual(variant1["modelVersionId"], 1)
-                self.assertEqual(variant1["signatureName"], "claims")
                 self.assertEqual(variant1["weight"], 100)
                 self.assertEqual(req["name"], "apply-demo-claims-app")
 
@@ -219,17 +218,14 @@ class CLITests(unittest.TestCase):
                 print(req)
                 variant1 = req["executionGraph"]["stages"][0]["modelVariants"][0]
                 assert variant1["modelVersionId"] == 1
-                assert variant1["signatureName"] == "claims"
                 assert variant1["weight"] == 100
 
                 variant2 = req["executionGraph"]["stages"][1]["modelVariants"][0]
                 assert variant2["modelVersionId"] == 2
-                assert variant2["signatureName"] == "claims"
                 assert variant2["weight"] == 80
 
                 variant3 = req["executionGraph"]["stages"][1]["modelVariants"][1]
                 assert variant3["modelVersionId"] == 3
-                assert variant3["signatureName"] == "claims"
                 assert variant3["weight"] == 20
                 assert req["name"] == "claims-pipeline-app"
 
@@ -274,7 +270,6 @@ class CLITests(unittest.TestCase):
                 req = json.loads(request.text)
                 variant = req["executionGraph"]["stages"][0]["modelVariants"][0]
                 assert variant["modelVersionId"] == 1
-                assert variant["signatureName"] == "claims"
                 assert variant["weight"] == 100
                 assert req["name"] == "apply-demo-claims-app"
                 assert req["id"] == 1

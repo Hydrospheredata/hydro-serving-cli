@@ -45,7 +45,7 @@ class ApplicationService:
                 mv = self.model_service.find_version(names[0], int(names[1]))
                 if not mv:
                     raise ValueError("Can't find model version {}".format(variant))
-                r = model_variant(mv['id'], variant["signatureName"], variant["weight"])
+                r = model_variant(mv['id'], variant["weight"])
                 variants.append(r)
             stages.append({
                 "modelVariants": variants
