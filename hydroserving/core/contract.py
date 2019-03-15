@@ -184,6 +184,7 @@ def shape_to_proto(user_shape):
 def contract_from_dict(data_dict):
     if data_dict is None:
         return None
+    name = data_dict.get("name", "Predict")
     inputs = []
     outputs = []
     for in_key, in_value in data_dict["inputs"].items():
@@ -193,7 +194,7 @@ def contract_from_dict(data_dict):
         output = field_from_dict(out_key, out_value)
         outputs.append(output)
     signature = ModelSignature(
-        signature_name="Predict",
+        signature_name=name,
         inputs=inputs,
         outputs=outputs
     )
