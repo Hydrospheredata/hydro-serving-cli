@@ -62,17 +62,6 @@ These files can contain definition of a resource defined below:
 
 The model definition is the same as in `serving.yaml` file.
 
-#### Runtime
-
-Example of runtime definition:
-
-```yaml
-kind: Runtime
-name: hydrosphere/serving-runtime-tensorflow
-version: 1.7.0-latest
-model-type: tensorflow:1.7.0
-```
-
 #### Environment
 
 Example of environment definition:
