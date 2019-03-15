@@ -32,23 +32,24 @@ When you use `hs upload`, the tool looks for `serving.yaml` file in current dir.
 ```yaml
 kind: Model
 name: "example_model"
-model-type: "tensorflow:1.3.0"
+install-command: "pip install requirements.txt"  # if you need to run additional command before deployment
+runtime: "hydrosphere/serving-runtime-python:3.6-latest"
 payload:
   - "saved_model.pb"
   - "variables/"
   
 contract:
-  detect:  # the name of signature
-    inputs:  # signature input fields
-      image_b64:
-        type: string
-    outputs:  # signature output fields
-      scores:
-        shape: [-1]
-        type: double
-      classes:
-        shape: [-1]
-        type: string
+  name: detect  # the name of signature
+  inputs:  # signature input fields
+    image_b64:
+      type: string
+  outputs:  # signature output fields
+    scores:
+      shape: [-1]
+      type: double
+    classes:
+      shape: [-1]
+      type: string
 ```
 
 ### hs apply
