@@ -185,11 +185,13 @@ def contract_from_dict(data_dict):
     if data_dict is None:
         return None
     signatures = []
+    profiles = {}
     for sig_name, value in data_dict.items():
         inputs = []
         outputs = []
         for in_key, in_value in value["inputs"].items():
             input = field_from_dict(in_key, in_value)
+            profiles[in_key] = in_value.get("profile", "none")
             inputs.append(input)
         for out_key, out_value in value["outputs"].items():
             output = field_from_dict(out_key, out_value)
@@ -204,7 +206,7 @@ def contract_from_dict(data_dict):
         model_name="model",
         signatures=signatures
     )
-    return contract
+    return contract, profiles
 
 
 def field_from_dict(name, data_dict):
