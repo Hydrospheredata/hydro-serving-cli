@@ -8,10 +8,9 @@ class ApplicationStatus(Enum):
     Failed = "Failed"
 
 
-def model_variant(model_version_id, signature_name, weight=100):
+def model_variant(model_version_id, weight=100):
     return {
         'modelVersionId': model_version_id,
-        'signatureName': signature_name,
         'weight': weight
     }
 

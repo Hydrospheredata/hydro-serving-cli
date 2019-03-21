@@ -1,6 +1,6 @@
-[![PyPI version](https://badge.fury.io/py/hs.svg)](https://badge.fury.io/py/hs)
-
 # hydro-serving-cli
+
+[![PyPI version](https://badge.fury.io/py/hs.svg)](https://badge.fury.io/py/hs)
 
 CLI tool for [hydro-serving](https://github.com/Hydrospheredata/hydro-serving).
 
@@ -16,6 +16,7 @@ pip install hs
 
 Since 0.1.0 the tool uses configurable endpoints called cluster:
 They can be managed with:
+
 - `hs cluster` - shows default cluster
 - `hs cluster add --name local --server http://localhost` - creates entry with name `local`
 and address `http://localhost`.
@@ -32,23 +33,44 @@ When you use `hs upload`, the tool looks for `serving.yaml` file in current dir.
 ```yaml
 kind: Model
 name: "example_model"
-model-type: "tensorflow:1.3.0"
+install-command: "pip install requirements.txt"  # if you need to run additional command before deployment
+runtime: "hydrosphere/serving-runtime-python:3.6-latest"
 payload:
   - "saved_model.pb"
   - "variables/"
+
+monitoring:
+  - name: ks
+    kind: KSMetricSpec
+    config:
+      input: client_profile_42
+    with-health: true
+  - name: gan
+    kind: GANMetricSpec
+    with-health: true
+    config:
+      input: feature
+      application: claims-gan-app
+  - name: autoencoder
+    kind: AEMetricSpec
+    with-health: true
+    config:
+      application: claims-autoencoder-app
+      input: feature
+      threshold: 69
   
 contract:
-  detect:  # the name of signature
-    inputs:  # signature input fields
-      image_b64:
-        type: string
-    outputs:  # signature output fields
-      scores:
-        shape: [-1]
-        type: double
-      classes:
-        shape: [-1]
-        type: string
+  name: detect  # the name of signature
+  inputs:  # signature input fields
+    image_b64:
+      type: string
+  outputs:  # signature output fields
+    scores:
+      shape: [-1]
+      type: double
+    classes:
+      shape: [-1]
+      type: string
 ```
 
 ### hs apply
@@ -61,17 +83,6 @@ These files can contain definition of a resource defined below:
 #### Model
 
 The model definition is the same as in `serving.yaml` file.
-
-#### Runtime
-
-Example of runtime definition:
-
-```yaml
-kind: Runtime
-name: hydrosphere/serving-runtime-tensorflow
-version: 1.7.0-latest
-model-type: tensorflow:1.7.0
-```
 
 #### Environment
 
@@ -95,14 +106,7 @@ For the sake of simplicity CLI provides simplified structures for major use case
 kind: Application
 name: demo-app
 singular:
-  monitoring:
-    - name: ks
-      input: user_profile
-      type: Kolmogorov-Smirnov
-      healthcheck:
-        enabled: true
   model: demo_model:2
-  runtime: hydrosphere/serving-runtime-python:3.6-latest
 ```
 
 - Pipeline app
@@ -112,23 +116,9 @@ kind: Application
 name: demo-pipeline-app
 
 pipeline:
-  - signature: normalize
-    model: demo-preprocessing:1
-    runtime: hydrosphere/serving-runtime-python:3.6-latest
-    environment: cpu
-  - signature: predict
-    monitoring:
-      - name: ks
-        input: feature_42
-        type: Kolmogorov-Smirnov
-        healthcheck:
-          enabled: true
-    modelservices:
-      - model: demo-model:1
-        runtime: hydrosphere/serving-runtime-python:3.6-latest
-        environment: xeon
-        weight: 80
-      - model: demo-model:2
-        runtime: hydrosphere/serving-runtime-python:3.6-latest
-        weight: 20
+  - - model: claims-preprocessing:1
+  - - model: claims-model:1
+      weight: 80
+    - model: claims-model:2
+      weight: 20
 ```

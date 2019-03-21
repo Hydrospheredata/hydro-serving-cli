@@ -3,4 +3,3 @@ name: apply-demo-claims-app
 
 singular:
   model: apply-demo-claims-model:2
-  signature: claims

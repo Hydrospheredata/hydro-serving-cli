@@ -9,19 +9,18 @@ class VersionStatus(Enum):
 
 
 class UploadMetadata:
-    def __init__(self, name, contract, host_selector, runtime, install_command, metadata, profile_types):
+    def __init__(self, name, contract, host_selector, runtime, install_command, metadata):
         self.contract = contract
         self.hostSelectorName = host_selector
         self.runtime = runtime
         self.name = name
         self.installCommand = install_command
         self.metadata = metadata
-        self.profileTypes = profile_types
 
 
 class Model:
     def __init__(self, name, host_selector, runtime, contract, payload,
-                 training_data_file, install_command, monitoring, metadata, profile_types):
+                 training_data_file, install_command, monitoring, metadata):
         self.name = name
         self.host_selector = host_selector
         self.runtime = runtime
@@ -31,7 +30,6 @@ class Model:
         self.install_command = install_command
         self.monitoring = monitoring
         self.metadata = metadata
-        self.profile_types = profile_types
 
     def validate(self):
         if not isinstance(self.name, str):
