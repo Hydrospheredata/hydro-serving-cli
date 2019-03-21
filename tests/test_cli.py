@@ -89,6 +89,7 @@ class CLITests(unittest.TestCase):
                 metadata = json.loads(fields['metadata'])
                 m = metadata["metadata"]
                 print(metadata)
+                assert metadata["profileTypes"]['client_profile'] == 'text'
                 assert metadata["name"] == "apply-demo-claims-model"
                 assert metadata["hostSelectorName"] is None
                 assert m["author"] == "cool-data-stan"

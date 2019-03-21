@@ -19,6 +19,7 @@ def contract_to_dict(contract):
         raise TypeError("contract is not ModelContract")
     signature = signature_to_dict(contract.predict)
     result_dict = {
+        "modelName": contract.model_name,
         "predict": signature
     }
     return result_dict
@@ -199,6 +200,7 @@ def contract_from_dict(data_dict):
         outputs=outputs
     )
     contract = ModelContract(
+        model_name="model",
         predict=signature
     )
     return contract

@@ -88,7 +88,8 @@ def upload_model_async(model_api, model, tar):
         contract=contract_to_dict(model.contract),
         runtime=model.runtime.__dict__,
         install_command=model.install_command,
-        metadata=model.metadata
+        metadata=model.metadata,
+        profile_types=model.profile_types
     )
 
     result = model_api.upload(tar, metadata)
