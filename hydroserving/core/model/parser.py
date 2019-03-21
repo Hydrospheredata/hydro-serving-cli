@@ -7,7 +7,7 @@ from hydroserving.core.monitoring.parser import parse_monitoring_params
 def parse_model(in_dict):
     if in_dict is None:
         return None
-    contract, profile = contract_from_dict(in_dict.get("contract"))
+    contract = contract_from_dict(in_dict.get("contract"))
     model = Model(
         name=in_dict.get("name"),
         contract=contract,
@@ -18,7 +18,6 @@ def parse_model(in_dict):
         host_selector=in_dict.get("host-selector"),
         monitoring=parse_monitoring_params(in_dict.get("monitoring")),
         metadata=in_dict.get("metadata", {}),
-        profile_types=profile
     )
     model.validate()
     return model
