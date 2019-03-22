@@ -30,7 +30,7 @@ def push(obj, model_version, filename, is_async):
         mv_id = mv["id"]
     obj.monitoring_service.start_data_processing(mv_id, filename)
     logging.info("Data profile for {} will be available: {}/models/{}/{}".format(
-        model_version, url, mv["model"]["id"], mv["modelVersion"]))
+        model_version, url.remote_addr, mv["model"]["id"], mv["id"]))
 
 
 @profile.command(context_settings=CONTEXT_SETTINGS)
