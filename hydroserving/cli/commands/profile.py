@@ -16,7 +16,7 @@ def profile():
               required=True,
               help=PROFILE_MODEL_VERSION_HELP)
 @click.argument('filename',
-                type=click.File())
+                type=click.File(mode='rb'))
 @click.option('--async', 'is_async', is_flag=True, default=False)
 @click.pass_obj
 def push(obj, model_version, filename, is_async):
