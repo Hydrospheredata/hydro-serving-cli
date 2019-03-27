@@ -65,3 +65,14 @@ def rm(obj, cluster_name):
     else:
         logging.error("There is no '{}' cluster".format(cluster_name))
         raise SystemExit(-1)
+
+
+@cluster.command()
+@click.pass_obj
+def buildinfo(obj):
+    from tabulate import tabulate
+    res = obj.config_service.get_cluster_info()
+    logging.info("Cluster build information:")
+    logging.debug(res)
+    logging.info(tabulate(res, headers="keys", tablefmt="github"))
+

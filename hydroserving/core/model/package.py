@@ -6,8 +6,8 @@ import tarfile
 
 from hydroserving.config.settings import TARGET_FOLDER
 from hydroserving.core.contract import contract_to_dict
-from hydroserving.integrations.dvc_extractor import collect_dvc_info, dvc_to_dict
-from hydroserving.integrations.git_extractor import collect_git_info, git_to_dict
+from hydroserving.integrations.dvc import collect_dvc_info, dvc_to_dict
+from hydroserving.integrations.git import collect_git_info, git_to_dict
 from hydroserving.core.image import DockerImage
 from hydroserving.core.model.entities import Model
 from hydroserving.core.model.parser import parse_model
@@ -76,8 +76,6 @@ def ensure_model(dir_path, name, runtime, host_selector, path_to_training_data):
     logging.debug("Serving YAML definitions: %s", serving_files)
     if len(serving_files) > 1:
         logging.warning("Multiple serving files. Using %s", serving_file)
-
-    logging.debug("Chosen YAML file: %s", serving_file)
 
     model = None
     if serving_file is not None:

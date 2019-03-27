@@ -17,7 +17,19 @@ def parse_model(in_dict):
         runtime=DockerImage.parse_fullname(in_dict["runtime"]),
         host_selector=in_dict.get("host-selector"),
         monitoring=parse_monitoring_params(in_dict.get("monitoring")),
-        metadata=in_dict.get("metadata", {}),
+        metadata=parse_metadata(in_dict.get("metadata"))
     )
     model.validate()
     return model
+
+
+def parse_metadata(in_dict):
+    if in_dict is None:
+        return {}
+    res = {}
+    for key, val in in_dict.items():
+        if not isinstance(val, str):
+            res[key] = str(val)
+        else:
+            res[key] = val
+    return res

@@ -9,6 +9,12 @@ from hydroserving.config.settings import CONFIG_FILE
 from hydroserving.http.remote_connection import RemoteConnection
 from hydroserving.util.yamlutil import yaml_file, write_yaml
 
+CLUSTER_COMPONENTS_INFO = [
+    "/api/buildinfo",
+    "/gateway/buildinfo",
+    "/monitoring/buildinfo"
+]
+
 
 class ConfigService:
     """
@@ -98,3 +104,19 @@ class ConfigService:
         if current_cluster:
             return RemoteConnection(current_cluster['cluster']['server'])
         return None
+
+    def get_cluster_info(self):
+        conn = self.get_connection()
+        statuses = []
+        for url in CLUSTER_COMPONENTS_INFO:
+            res = {"url": url}
+            try:
+                resp = conn.get(url)
+                if resp.ok:
+                    res.update(resp.json())
+                else:
+                    res["name"] = "Not available"
+            except Exception as ex:
+                res["name"] = "Invalid response: {}".format(repr(ex))
+            statuses.append(res)
+        return statuses
