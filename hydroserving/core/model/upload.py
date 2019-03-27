@@ -114,13 +114,18 @@ def upload_model(model_service, monitoring_service, model, model_path,
         logging.info("Training data is here. Preparing push to the profiler service.")
         model_version = mv['id']
         try:
-            with open(model.training_data_file, "rb") as f:
-                push_uid = push_training_data_async(
-                    monitoring_service,
-                    model_version,
-                    f
-                )
-                logging.info("Training data push id: %s", push_uid)
+            if model.training_data_file.startswith("s3://"):
+                logging.info("S3 training path detected.")
+                push_uid = monitoring_service.push_s3_csv(model_version, model.training_data_file)
+            else:
+                logging.info("Local training path detected.")
+                with open(model.training_data_file, "rb") as f:
+                    push_uid = push_training_data_async(
+                        monitoring_service,
+                        model_version,
+                        f
+                    )
+            logging.info("Training data push id: %s", push_uid)
         except RuntimeError as ex:
             logging.error(ex)
             logging.error("Training data upload failed. Please use `hs profile push` command to try again.")

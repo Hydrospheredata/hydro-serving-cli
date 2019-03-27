@@ -142,6 +142,13 @@ class MonitoringService:
     def list_metric_specs(self):
         return self.connection.get("/monitoring/metricspec").json()
 
+    def push_s3_csv(self, model_version_id, s3_path):
+        res = self.connection.post_json(
+            "/monitoring/profiles/batch/{}".format(model_version_id),
+            data={"path": s3_path}
+        )
+        return res.text  # 200 OK "ok"
+
     def start_data_processing(self, model_version_id, data_file, chunk_size=420420):
         logging.info("Uploading training data file %s with chunk_size=%s", data_file.name, chunk_size)
         gen = read_in_chunks(data_file, chunk_size=chunk_size)

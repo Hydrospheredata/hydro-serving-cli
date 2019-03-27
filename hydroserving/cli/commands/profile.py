@@ -15,11 +15,16 @@ def profile():
 @click.option('--model-version',
               required=True,
               help=PROFILE_MODEL_VERSION_HELP)
-@click.argument('filename',
-                type=click.File(mode='rb'))
+@click.option('--filename',
+              type=click.File(mode='rb'),
+              required=False
+              )
+@click.option('--s3path',
+              type=click.STRING,
+              required=False)
 @click.option('--async', 'is_async', is_flag=True, default=False)
 @click.pass_obj
-def push(obj, model_version, filename, is_async):
+def push(obj, model_version, filename, s3path, is_async):
     url = obj.config_service.get_connection()
     if model_version == "~~~":  # only for debugging
         mv = {"model": {"id": 1}, "modelVersion": 1}
@@ -28,7 +33,15 @@ def push(obj, model_version, filename, is_async):
         model, version = model_version.split(":")
         mv = obj.model_service.find_version(model, int(version))
         mv_id = mv["id"]
-    obj.monitoring_service.start_data_processing(mv_id, filename)
+    if s3path:
+        logging.info("S3 training path detected.")
+        resp = obj.monitoring_service.push_s3_csv(mv_id, s3path)
+        logging.debug(resp)
+    elif filename:
+        resp = obj.monitoring_service.start_data_processing(mv_id, filename)
+        logging.debug(resp)
+    else:
+        raise click.ClickException("Neither S3 nor file was defined.")
     logging.info("Data profile for {} will be available: {}/models/{}/{}".format(
         model_version, url.remote_addr, mv["model"]["id"], mv["id"]))
 
