@@ -67,6 +67,21 @@ class ModelService:
             return res.json()
         return None
 
+    def find_model(self, model_name):
+        """
+
+        Args:
+            model_name:
+        Returns:
+
+        """
+        models = self.list_models()
+        if models:
+            for m in models:
+                if m['name'] == model_name:
+                    return m
+        return None
+
     def apply(self, model, path, no_training_data=False, ignore_monitoring=False):
         """
 
@@ -90,3 +105,9 @@ class ModelService:
             ignore_monitoring=ignore_monitoring
         )
         return result
+
+    def delete(self, model_id):
+        res = self.connection.delete("/api/v2/model/{}".format(model_id))
+        if res.ok:
+            return res.json()
+        return None

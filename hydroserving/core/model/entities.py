@@ -1,6 +1,8 @@
 from enum import Enum
 from hydro_serving_grpc import ModelContract
 
+from hydroserving.core.image import DockerImage
+
 
 class VersionStatus(Enum):
     Assembling = "Assembling"
@@ -35,8 +37,8 @@ class Model:
         if not isinstance(self.name, str):
             raise InvalidModelException("name is not a string", self.__dict__)
 
-        if self.runtime is None:
-            raise InvalidModelException("runtime cannot be None", self.__dict__)
+        if self.runtime is None or not isinstance(self.runtime, DockerImage):
+            raise InvalidModelException("runtime is invalid: {}".format(self.runtime), self.__dict__)
 
         if self.contract is not None and not isinstance(self.contract, ModelContract):
             raise InvalidModelException("contract is not a ModelContract", self.__dict__)

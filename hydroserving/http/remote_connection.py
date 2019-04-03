@@ -1,13 +1,12 @@
 import logging
+import click
 from urllib.parse import urljoin
 
 import requests
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 
-from hydroserving.util.dictutil import remove_none
 
-
-class BackendException(RuntimeError):
+class BackendException(click.ClickException):
     def __init__(self, details):
         message = "Server returned an error: " + str(details)
         super().__init__(message)

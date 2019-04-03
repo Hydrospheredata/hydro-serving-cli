@@ -71,7 +71,10 @@ class ApplicationService:
         Returns:
             list of dict:
         """
-        return self.connection.get("/api/v2/application").json()
+        resp = self.connection.get("/api/v2/application")
+        if resp.ok:
+            return resp.json()
+        return None
 
     def find(self, app_name):
         """
@@ -80,6 +83,12 @@ class ApplicationService:
             app_name (str):
         """
         resp = self.connection.get("/api/v2/application/{}".format(app_name))
+        if resp.ok:
+            return resp.json()
+        return None
+
+    def delete(self, app_name):
+        resp = self.connection.delete("/api/v2/application/{}".format(app_name))
         if resp.ok:
             return resp.json()
         return None

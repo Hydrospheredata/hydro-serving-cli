@@ -47,9 +47,15 @@ def push(obj, model_version, filename, s3path, is_async):
 
 
 @profile.command(context_settings=CONTEXT_SETTINGS)
-@click.argument('model-version-id',
+@click.argument('model-version',
                 required=True)
 @click.pass_obj
-def status(obj, model_version_id):
-    res = obj.monitoring_service.get_data_processing_status(model_version_id)
+def status(obj, model_version):
+    model, version = model_version.split(":")
+    mv = obj.model_service.find_version(model, int(version))
+    if not mv:
+        raise click.ClickException("Model {} is not found".format(model_version))
+    mv_id = mv['id']
+    res = obj.monitoring_service.get_data_processing_status(mv_id)
+    logging.info("Looking for profiling status for model id=%s name=%s version=%s", mv_id, model, version)
     logging.info("Data profiling status: %s", res)
