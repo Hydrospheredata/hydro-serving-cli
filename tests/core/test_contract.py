@@ -1,6 +1,7 @@
 import unittest
 
-from hydro_serving_grpc import TensorShapeProto, DT_INT8, ModelField, DT_DOUBLE, DT_UINT32, DT_FLOAT
+from hydro_serving_grpc import TensorShapeProto, DT_INT8, DT_UINT32, DT_FLOAT
+from hydro_serving_grpc.contract import ModelField
 
 from hydroserving.core.contract import shape_to_proto, field_from_dict
 

@@ -1,5 +1,5 @@
 from enum import Enum
-from hydro_serving_grpc import ModelContract
+from hydro_serving_grpc.contract import ModelContract
 
 from hydroserving.core.image import DockerImage
 
