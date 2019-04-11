@@ -32,6 +32,15 @@ def rf_metric_spec(input, application, threshold):
         "threshold": threshold
     }
 
+def image_ae_metric_spec(application, threshold):
+    if not isinstance(application, str):
+        raise TypeError("Invalid app_name: {}".format(application))
+    if threshold and not (isinstance(threshold, float) or isinstance(threshold, int)):
+        raise TypeError("Invalid threshold: {}".format(threshold))
+    return {
+        "applicationName": application,
+        "threshold": threshold
+    }
 
 def ae_metric_spec(input, application, threshold):
     if not isinstance(input, str):
@@ -87,11 +96,11 @@ def error_rate_metric_spec(interval, threshold):
         "threshold": threshold
     }
 
-
 METRIC_KINDS = {
     "KSMetricSpec": ks_metric_spec,
     "RFMetricSpec": rf_metric_spec,
     "AEMetricSpec": ae_metric_spec,
+    "ImageAEMetricSpec": image_ae_metric_spec,
     "GANMetricSpec": gan_metric_spec,
     "LatencyMetricSpec": latency_metric_spec,
     "CounterMetricSpec": counter_metric_spec,
