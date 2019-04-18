@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
-with open("version") as v:
-    version = v.read()
+with open("version", 'r') as v:
+    version = v.read().strip()
 
 setup(
     name='hs',
