@@ -23,7 +23,7 @@ def cluster(ctx):
 def use(obj, cluster_name):
     res = obj.config_service.select_cluster(cluster_name)
     if res is not None:
-        logging.info("Switched to cluster '{}'".format(cluster_name))
+        logging.info("Switched to cluster '{}'".format(res))
     else:
         logging.error("Can't find cluster '{}'".format(cluster_name))
         raise SystemExit(-1)

@@ -4,16 +4,15 @@ import pprint
 import shutil
 import tarfile
 
+from click import ClickException
+
 from hydroserving.config.settings import TARGET_FOLDER
 from hydroserving.core.contract import contract_to_dict
+from hydroserving.core.model.entities import Model
 from hydroserving.integrations.dvc import collect_dvc_info, dvc_to_dict
 from hydroserving.integrations.git import collect_git_info, git_to_dict
-from hydroserving.core.image import DockerImage
-from hydroserving.core.model.entities import Model
-from hydroserving.core.model.parser import parse_model
-from hydroserving.util.fileutil import resolve_list_of_globs, get_yamls
 from hydroserving.util.dictutil import extract_dict
-from hydroserving.util.yamlutil import yaml_file
+from hydroserving.util.fileutil import resolve_list_of_globs
 
 
 def resolve_model_payload(model):
@@ -54,59 +53,19 @@ def assemble_model(model, model_path):
     return tar_path
 
 
-def ensure_model(dir_path, name, runtime, host_selector, path_to_training_data):
+def enrich_and_normalize(dir_path, model):
     """
 
     Args:
-        host_selector (str):
-        runtime (str):
+        model (Model):
         dir_path (str):
-        name (str):
-        path_to_training_data (str or None):
 
     Returns:
         Model:
     """
-    serving_files = [
-        file
-        for file in get_yamls(dir_path)
-        if os.path.splitext(os.path.basename(file))[0] == "serving"
-    ]
-    serving_file = serving_files[0] if serving_files else None
-    logging.debug("Serving YAML definitions: %s", serving_files)
-    if len(serving_files) > 1:
-        logging.warning("Multiple serving files. Using %s", serving_file)
-
-    model = None
-    if serving_file is not None:
-        with open(serving_file, 'r') as f:
-            doc = yaml_file(f)
-            model = parse_model(doc)
-            if name is not None:
-                model.name = name
-            if runtime is not None:
-                model.runtime = DockerImage.parse_fullname(runtime)
-            if host_selector is not None:
-                model.host_selector = host_selector
-            if path_to_training_data is not None:
-                model.training_data_file = path_to_training_data
-
-    if model is None:
-        if name is None:
-            name = os.path.basename(os.getcwd())
-        if runtime is None:
-            raise ValueError("Runtime is not defined. Please use YAML config or CLI argument to set it.")
-        model = Model(
-            name=name,
-            contract=None,
-            runtime=DockerImage.parse_fullname(runtime),
-            host_selector=host_selector,
-            payload=[os.path.join(dir_path, "*")],
-            training_data_file=path_to_training_data,
-            install_command=None,
-            monitoring=None,
-            metadata={}
-        )
+    if os.path.isfile(dir_path):
+        dir_path = os.path.dirname(dir_path)
+        logging.debug("Applying file. Dirname {}".format(dir_path))
     resolve_model_paths(dir_path, model)
     gitinfo = collect_git_info(dir_path, search_parent_directories=True)
     if gitinfo:
@@ -145,6 +104,9 @@ def resolve_model_paths(dir_path, model):
         )
         if not os.path.isabs(normalized):
             normalized = os.path.normpath(os.path.join(dir_path, normalized))
+        logging.debug("Payload {} is resolved as {}".format(p, normalized))
+        if not os.path.exists(normalized):
+            raise ClickException("Payload path {} doesn't exist".format(p))
         abs_payload_paths.append(normalized)
 
     logging.debug("Resolving payload paths. dir=%s, payload=%s, resolved=%s",

@@ -66,11 +66,11 @@ class ApplyService:
                     for yaml_file in sorted(get_yamls(abs_file)):
                         logging.info("Reading {} ...".format(os.path.basename(yaml_file)))
                         with open(yaml_file, 'r') as f:
-                            results[file] = yaml_file_stream(f)
+                            results[abs_file] = yaml_file_stream(f)
                 elif is_yaml(file):
                     logging.info("Reading {} ...".format(os.path.basename(file)))
                     with open(file, 'r') as f:
-                        results[os.path.dirname(file)] = yaml_file_stream(f)
+                        results[os.path.dirname(abs_file)] = yaml_file_stream(f)
                 else:
                     raise UnknownFile(file)
 

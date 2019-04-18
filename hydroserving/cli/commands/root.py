@@ -1,17 +1,21 @@
 import json
+import logging
 import os
 
 import click
 import requests
+from click import ClickException
 from yaml.parser import ParserError
 from yaml.scanner import ScannerError
-import logging
 
 from hydroserving.cli.commands.hs import hs_cli
 from hydroserving.cli.help import CONTEXT_SETTINGS, UPLOAD_HELP, APPLY_HELP, PROFILE_FILENAME_HELP
+from hydroserving.core.image import DockerImage
 from hydroserving.core.model.entities import InvalidModelException
-from hydroserving.core.model.package import assemble_model, ensure_model
-from hydroserving.core.model.upload import upload_model, ModelBuildError
+from hydroserving.core.model.parser import parse_model
+from hydroserving.core.model.upload import ModelBuildError
+from hydroserving.util.fileutil import get_yamls
+from hydroserving.util.yamlutil import yaml_file
 
 
 @hs_cli.command(help=UPLOAD_HELP, context_settings=CONTEXT_SETTINGS)
@@ -51,14 +55,40 @@ from hydroserving.core.model.upload import upload_model, ModelBuildError
 def upload(obj, name, runtime, host_selector, training_data, dir, no_training_data, ignore_monitoring, is_async):
     dir = os.path.abspath(dir)
     try:
-        model_metadata = ensure_model(dir, name, runtime, host_selector, training_data)
-        logging.info("Assembling model payload")
-        tar = assemble_model(model_metadata, dir)
-        current_cluster = obj.config_service.current_cluster()
-        logging.info("Uploading payload to cluster '{}' at {}".format(
-            current_cluster['name'], current_cluster['cluster']['server']))
-        result = upload_model(obj.model_service, obj.monitoring_service, model_metadata,
-                              tar, is_async, no_training_data, ignore_monitoring)
+        serving_files = [
+            file
+            for file in get_yamls(dir)
+            if os.path.splitext(os.path.basename(file))[0] == "serving"
+        ]
+        serving_file = serving_files[0] if serving_files else None
+        if len(serving_files) > 1:
+            logging.warning("Multiple serving files detected: {}".format(list(serving_files)))
+            logging.warning("Using %s", serving_file)
+        if serving_file:
+            with open(serving_file, 'r') as f:
+                parsed = yaml_file(f)
+                if parsed.get('kind', 'None') != 'Model':
+                    raise ClickException("Resource defined in {} is not a Model".format(serving_file))
+                if name is not None:
+                    parsed['name'] = name
+                if runtime is not None:
+                    parsed['runtime'] = DockerImage.parse_fullname(runtime)
+                if host_selector is not None:
+                    parsed['host_selector'] = host_selector
+                if training_data is not None:
+                    parsed['training_data_file'] = training_data
+        else:
+            if name is None:
+                name = os.path.basename(os.getcwd())
+            parsed = {
+                'name': name,
+                'runtime': DockerImage.parse_fullname(runtime),
+                'host_selector': host_selector,
+                'payload': [os.path.join(dir, "*")],
+                'training_data_file': training_data,
+            }
+        model = parse_model(parsed)
+        result = obj.model_service.apply(model, dir, no_training_data, ignore_monitoring)
         logging.info("Success:")
         click.echo(json.dumps(result))
     except ModelBuildError as err:

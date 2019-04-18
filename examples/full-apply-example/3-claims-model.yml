@@ -1,7 +1,7 @@
 kind: Model
 name: apply-demo-claims-model
 payload:
-  - /path/to/model
+  - ./   # mocked path to real model files
 runtime: hydrosphere/serving-runtime-python:3.6-latest
 # host-selector: xeon-cpu
 #training-data: s3://bucket/object.csv

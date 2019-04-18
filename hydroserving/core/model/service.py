@@ -1,7 +1,7 @@
 import json
 
 from hydroserving.core.model.entities import UploadMetadata
-from hydroserving.core.model.package import assemble_model
+from hydroserving.core.model.package import assemble_model, enrich_and_normalize
 from hydroserving.core.model.upload import upload_model
 
 
@@ -94,6 +94,7 @@ class ModelService:
         Returns:
 
         """
+        model = enrich_and_normalize(path, model)
         tar = assemble_model(model, path)
         result = upload_model(
             model_service=self,
