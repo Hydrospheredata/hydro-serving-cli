@@ -3,6 +3,7 @@ import os
 import pprint
 import shutil
 import tarfile
+import glob
 
 from click import ClickException
 
@@ -12,16 +13,6 @@ from hydroserving.core.model.entities import Model
 from hydroserving.integrations.dvc import collect_dvc_info, dvc_to_dict
 from hydroserving.integrations.git import collect_git_info, git_to_dict
 from hydroserving.util.dictutil import extract_dict
-from hydroserving.util.fileutil import resolve_list_of_globs
-
-
-def resolve_model_payload(model):
-    result_paths = []
-    files = resolve_list_of_globs(model.payload)
-    for file in files:
-        logging.debug("Payload item detected: %s", file)
-        result_paths.append(file)
-    return result_paths
 
 
 def assemble_model(model, model_path):
@@ -40,13 +31,11 @@ def assemble_model(model, model_path):
         shutil.rmtree(hs_model_dir)
     os.makedirs(hs_model_dir)
 
-    files = resolve_model_payload(model)
-    logger.info("Files to assemble: %s", files)
     tar_name = "{}.tar.gz".format(model.name)
     tar_path = os.path.join(hs_model_dir, tar_name)
     logging.debug("Creating archive: %s", tar_path)
     with tarfile.open(tar_path, "w:gz") as tar:
-        for entry in files:
+        for entry in model.payload:
             entry_name = os.path.basename(entry)
             logger.debug("Archiving %s as %s", entry, entry_name)
             tar.add(entry, arcname=entry_name)
@@ -104,15 +93,14 @@ def resolve_model_paths(dir_path, model):
         )
         if not os.path.isabs(normalized):
             normalized = os.path.normpath(os.path.join(dir_path, normalized))
+        unglobbed = glob.glob(normalized)
+        for path in unglobbed:
+            abs_payload_paths.append(path)
         logging.debug("Payload {} is resolved as {}".format(p, normalized))
-        if not os.path.exists(normalized):
-            raise ClickException("Payload path {} doesn't exist".format(p))
-        abs_payload_paths.append(normalized)
 
-    logging.debug("Resolving payload paths. dir=%s, payload=%s, resolved=%s",
-                  dir_path,
-                  model.payload,
-                  abs_payload_paths)
+    for p in abs_payload_paths:
+        if not os.path.exists(p):
+            raise ClickException("Model payload path {} doesn't exist".format(p))
 
     model.payload = abs_payload_paths
     return model

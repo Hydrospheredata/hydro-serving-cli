@@ -72,17 +72,18 @@ def upload(obj, name, runtime, host_selector, training_data, dir, no_training_da
                 if name is not None:
                     parsed['name'] = name
                 if runtime is not None:
-                    parsed['runtime'] = DockerImage.parse_fullname(runtime)
+                    parsed['runtime'] = runtime
                 if host_selector is not None:
                     parsed['host_selector'] = host_selector
                 if training_data is not None:
                     parsed['training_data_file'] = training_data
         else:
+            logging.info("Not using any resource definitions. Will try to infer metadata from current folder.")
             if name is None:
                 name = os.path.basename(os.getcwd())
             parsed = {
                 'name': name,
-                'runtime': DockerImage.parse_fullname(runtime),
+                'runtime': runtime,
                 'host_selector': host_selector,
                 'payload': [os.path.join(dir, "*")],
                 'training_data_file': training_data,

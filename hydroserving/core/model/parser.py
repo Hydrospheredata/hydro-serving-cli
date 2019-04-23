@@ -1,3 +1,5 @@
+from click import ClickException
+
 from hydroserving.core.contract import contract_from_dict
 from hydroserving.core.image import DockerImage
 from hydroserving.core.model.entities import Model
@@ -8,6 +10,8 @@ def parse_model(in_dict):
     if in_dict is None:
         return None
     contract = contract_from_dict(in_dict.get("contract"))
+    if not in_dict['runtime']:
+        raise ClickException("'runtime' field is not defined")
     model = Model(
         name=in_dict.get("name"),
         contract=contract,

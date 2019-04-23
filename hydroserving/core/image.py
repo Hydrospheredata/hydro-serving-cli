@@ -1,3 +1,6 @@
+from click import ClickException
+
+
 class DockerImage:
     def __init__(self, name, tag):
         self.tag = tag
@@ -10,5 +13,5 @@ class DockerImage:
     def parse_fullname(image):
         segments = image.split(":")
         if len(segments) != 2:
-            raise ValueError("Incorrect image {}".format(image))
+            raise ClickException("Incorrect runtime image {} (needs to be in format 'name:version')".format(image))
         return DockerImage(segments[0], segments[1])

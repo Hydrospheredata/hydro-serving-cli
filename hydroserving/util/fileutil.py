@@ -7,29 +7,6 @@ import shutil
 import glob
 
 
-def resolve_list_of_globs(globs):
-    """
-    Iterates over payload paths and recursively retrieves visible files
-
-    Args:
-        globs (list of str):
-
-    Returns:
-        dict: key - parent path of file, value - files within parent component
-
-    """
-    paths = []
-    for glob_path in globs:
-        expanded = os.path.expanduser(glob_path)
-        unglobbed = glob.glob(expanded)
-        for path in unglobbed:
-            if os.path.exists(path):
-                paths.append(path)
-            else:
-                raise ValueError("Path {} doesn't exist".format(path))
-    return paths
-
-
 def copy_to_target(src_path, package_path):
     """
     Copies file or directory from src_path to package_path,
