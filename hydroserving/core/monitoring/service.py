@@ -24,27 +24,23 @@ def rf_metric_spec(input, application, threshold=None):
         raise TypeError("Invalid input: {}".format(input))
     if not isinstance(application, str):
         raise TypeError("Invalid app_name: {}".format(application))
-    if threshold and not isinstance(threshold, float):
-        raise TypeError("Invalid threshold: {}".format(input))
     res = {
         "input": input,
         "applicationName": application,
     }
     if threshold:
-        res["threshold"] = threshold
+        res["threshold"] = float(threshold)
     return res
 
 
 def image_ae_metric_spec(application, threshold=None):
     if not isinstance(application, str):
         raise TypeError("Invalid app_name: {}".format(application))
-    if threshold and not (isinstance(threshold, float) or isinstance(threshold, int)):
-        raise TypeError("Invalid threshold: {}".format(threshold))
     res = {
         "applicationName": application,
     }
     if threshold:
-        res["threshold"] = threshold
+        res["threshold"] = float(threshold)
     return res
 
 
@@ -53,14 +49,12 @@ def ae_metric_spec(input, application, threshold=None):
         raise TypeError("Invalid input: {}".format(input))
     if not isinstance(application, str):
         raise TypeError("Invalid app_name: {}".format(application))
-    if threshold and not (isinstance(threshold, float) or isinstance(threshold, int)):
-        raise TypeError("Invalid threshold: {}".format(threshold))
     res = {
         "input": input,
         "applicationName": application,
     }
     if threshold:
-        res["threshold"] = threshold
+        res["threshold"] = float(threshold)
     return res
 
 
@@ -78,13 +72,11 @@ def gan_metric_spec(input, application):
 def latency_metric_spec(interval, threshold=None):
     if not isinstance(interval, int):
         raise TypeError("Invalid interval: {}".format(interval))
-    if threshold and not isinstance(threshold, float):
-        raise TypeError("Invalid threshold: {}".format(threshold))
     res = {
         "interval": interval,
     }
     if threshold:
-        res["threshold"] = threshold
+        res["threshold"] = float(threshold)
     return res
 
 
@@ -99,13 +91,11 @@ def counter_metric_spec(interval):
 def error_rate_metric_spec(interval, threshold=None):
     if not isinstance(interval, int):
         raise TypeError("Invalid interval: {}".format(interval))
-    if threshold and not isinstance(threshold, float):
-        raise TypeError("Invalid threshold: {}".format(threshold))
     res = {
         "interval": interval,
     }
     if threshold:
-        res["threshold"] = threshold
+        res["threshold"] = float(threshold)
     return res
 
 
@@ -121,16 +111,18 @@ METRIC_KINDS = {
 }
 
 
-def metric_spec_config_factory(kind, **kwargs):
+def metric_spec_config_factory(kind, **config_params):
     ctor = METRIC_KINDS.get(kind, None)
     if ctor:
-        if kwargs:
+        if config_params:
             try:
-                return ctor(**kwargs)
+                return ctor(**config_params)
             except Exception as ex:
                 raise ValueError("Invalid '{}' config: {}".format(kind, ex))
         raise ValueError("No metric spec args provided")
-    raise ValueError("Unknown metric spec kind: {}".format(kind))
+    else:
+        logging.warning("Using custom metric spec: {}. Config will be passed as-is and validated in monitoring service.".format(kind))
+        return config_params
 
 
 def metric_spec_factory(name, model_version_id, with_health, kind, **config_args):

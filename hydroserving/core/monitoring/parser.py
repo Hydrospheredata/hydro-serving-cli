@@ -18,7 +18,7 @@ def parse_monitoring_params(in_dict):
                 "name": item["name"],
                 "withHealth": item.get("with-health", False),
                 "kind": item["kind"],
-                "config": metric_spec_config_factory(item["kind"], **item["config"])
+                "config": metric_spec_config_factory(item["kind"], **item.get("config", {}))
             }
         )
     return result
