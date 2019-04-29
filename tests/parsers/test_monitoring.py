@@ -26,8 +26,7 @@ class MonitoringParserSpec(unittest.TestCase):
         result = parse_monitoring_params(monitoring_config)
         print(json.dumps(result[0]))
         self.assertTrue(result[0]['withHealth'])
-        self.assertFalse("threshold" in result[0]['config'])
-
+        self.assertEqual(result[0]['config']['threshold'], 10)
 
     def test_custom_metric(self):
         yaml_doc = """
