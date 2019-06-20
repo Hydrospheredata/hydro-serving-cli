@@ -15,6 +15,9 @@ class ModelService:
         self.connection = connection
         self.monitoring_service = monitoring_service
 
+    def get_logs(self, model_version_id):
+        return self.connection.sse("/api/v2/model/version/{}/logs".format(model_version_id))
+
     def list_models(self):
         """
 

@@ -133,7 +133,10 @@ def upload_model(model_service, monitoring_service, model, model_path,
     if is_async:
         return mv
 
-    logging.info("Waiting for a model build to complete...")
+    logging.info("Build logs:")
+    for l in model_service.get_logs(mv['id']):
+        logging.info(l.data)
+
     build_status = await_upload(model_service, mv)
 
     return build_status

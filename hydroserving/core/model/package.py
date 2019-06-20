@@ -4,6 +4,7 @@ import pprint
 import shutil
 import tarfile
 import glob
+import tabulate
 
 from click import ClickException
 
@@ -68,11 +69,51 @@ def enrich_and_normalize(dir_path, model):
 
     meta_dict = extract_dict(model)
     meta_dict['contract'] = contract_to_dict(meta_dict['contract'])
-    logging.info("Model definition composed:")
-    logging.info(pprint.pformat(meta_dict, compact=True, ))
+    runtime = meta_dict.get('runtime')
+    logging.info("====Parsed model definition====")
+    logging.info("Name: " + str(meta_dict.get('name')))
+    logging.info("Runtime: " + str(runtime.get('name') + ":" + runtime.get('tag')))
+    logging.info("Install command: " + str(meta_dict.get('install_command')))
+    logging.info("Host selector: " + str(meta_dict.get('host_selector')))
+    logging.info("Training data: " + str(meta_dict.get('training_data_file')))
+    if (meta_dict.get('contract')):
+        logging.info("Signature name: " + str(meta_dict['contract']['predict']['signatureName']))
+
+        logging.info("Inputs:")
+        inputs_view = contract_view(meta_dict['contract']['predict']['inputs'])
+        logging.info(tabulate.tabulate(inputs_view, headers="keys", tablefmt="github"))
+
+        logging.info("Outputs:")
+        outputs_view = contract_view(meta_dict['contract']['predict']['outputs'])
+        logging.info(tabulate.tabulate(outputs_view, headers="keys", tablefmt="github"))
+    else:
+        logging.info("No contract")
+    logging.info("Monitoring:")
+    logging.info("    " + str(meta_dict.get('monitoring')))
+    logging.info("Metadata:")
+    for k,v in meta_dict['metadata'].items():
+        logging.info("    {}: {}".format(k, v))
+    logging.info("Payload:")
+    for f in meta_dict['payload']:
+        logging.info("    " + str(f))
+    logging.info("===============================")
     model.validate()
     return model
 
+def contract_view(fields):
+    outputs_view = []
+    for i in fields:
+        shape_view = list(map(lambda x: x['size'], i['shape']['dim']))
+        if not shape_view:
+            shape_view = 'scalar'
+        v = {
+            'name': i['name'],
+            'shape': shape_view,
+            'type': i['dtype'],
+            'profile': i['profile']
+        }
+        outputs_view.append(v)
+    return outputs_view
 
 def resolve_model_paths(dir_path, model):
     """
