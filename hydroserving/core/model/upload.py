@@ -140,7 +140,7 @@ def upload_model(model_service, monitoring_service, model, model_path,
             logging.info(l.data)
         logging.info(SEGMENT_DIVIDER)
     else:
-        logging.warn("Build logs are not available")
+        logging.warning("Build logs are not available")
     build_status = await_upload(model_service, mv)
 
     return build_status
