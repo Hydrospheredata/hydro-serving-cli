@@ -133,10 +133,14 @@ def upload_model(model_service, monitoring_service, model, model_path,
     if is_async:
         return mv
 
-    logging.info("Build logs:")
-    for l in model_service.get_logs(mv['id']):
-        logging.info(l.data)
-    logging.info(SEGMENT_DIVIDER)
+    logs = model_service.get_logs(mv['id'])
+    if logs:
+        logging.info("Build logs:")
+        for l in logs:
+            logging.info(l.data)
+        logging.info(SEGMENT_DIVIDER)
+    else:
+        logging.warn("Build logs are not available")
     build_status = await_upload(model_service, mv)
 
     return build_status
