@@ -8,7 +8,7 @@ import tabulate
 
 from click import ClickException
 
-from hydroserving.config.settings import TARGET_FOLDER
+from hydroserving.config.settings import TARGET_FOLDER, SEGMENT_DIVIDER
 from hydroserving.core.contract import contract_to_dict
 from hydroserving.core.model.entities import Model
 from hydroserving.integrations.dvc import collect_dvc_info, dvc_to_dict
@@ -70,7 +70,7 @@ def enrich_and_normalize(dir_path, model):
     meta_dict = extract_dict(model)
     meta_dict['contract'] = contract_to_dict(meta_dict['contract'])
     runtime = meta_dict.get('runtime')
-    logging.info("====Parsed model definition====")
+    logging.info("Parsed model definition")
     logging.info("Name: " + str(meta_dict.get('name')))
     logging.info("Runtime: " + str(runtime.get('name') + ":" + runtime.get('tag')))
     logging.info("Install command: " + str(meta_dict.get('install_command')))
@@ -96,7 +96,7 @@ def enrich_and_normalize(dir_path, model):
     logging.info("Payload:")
     for f in meta_dict['payload']:
         logging.info("    " + str(f))
-    logging.info("===============================")
+    logging.info(SEGMENT_DIVIDER)
     model.validate()
     return model
 
