@@ -61,4 +61,4 @@ def logs(obj, model_name):
     if not logs:
         raise click.ClickException("No logs found")
     for l in logs:
-        logging.info(l)
+        logging.info(l.data)
