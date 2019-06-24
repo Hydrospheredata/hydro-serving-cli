@@ -6,7 +6,15 @@ class ServableService:
         return self.conn.get("/api/v2/servable").json()
 
     def create(self, model_name, model_version):
-        pass
+        msg = {
+            'modelName': model_name,
+            'version': model_version
+        }
+        res = self.conn.post_json('/api/v2/servable', msg)
+        if res.ok:
+            return res.json()
+        else:
+            raise Exception(res.content)
 
     def delete(self, servable_name):
         res = self.conn.delete("/api/v2/servable/{}".format(servable_name))

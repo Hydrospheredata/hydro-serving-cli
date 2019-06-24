@@ -61,7 +61,11 @@ class RemoteConnection:
         """
         composed = self.compose_url(url)
         result = requests.get(composed, stream=True)
-        return sseclient.SSEClient(result).events()
+        result = RemoteConnection.postprocess_response(result)
+        if result.ok:
+            return sseclient.SSEClient(result).events()
+        else: 
+            return None
 
     def delete(self, url):
         """

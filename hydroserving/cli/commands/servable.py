@@ -24,8 +24,6 @@ def list(obj):
             model = version.get('model')
             suffix = m.get('nameSuffix')
             servable_name = "{}-{}-{}".format(model.get('name'), version.get('modelVersion'), suffix).replace('_', '-')
-            runtime = version.get('runtime')
-            runtime_name = "{}:{}".format(runtime.get('name'), runtime.get('tag'))
             status_obj = m.get('status')
             status = status_obj.get('status')
             status_msg = status_obj.get('msg')
@@ -40,10 +38,25 @@ def list(obj):
         raise SystemExit(-1)
 
 @servable.command(context_settings=CONTEXT_SETTINGS)
+@click.argument('model-name', required=True)
+@click.pass_obj
+def deploy(obj, model_name):
+    (name, version) = model_name.split(':')
+    version = int(version)
+    mv = obj.model_service.find_version(name, version)
+    if not mv:
+        raise click.ClickException("Model {} not found".format(model_name))
+    try:
+        res = obj.servable_service.create(name, version)
+    except Exception as e:
+        raise click.ClickException("Can't deploy servable because there are internal errors: {}".format(e))
+    logging.info(res)
+
+@servable.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('servable-name',
                 required=True)
 @click.pass_obj
-def delete(obj, servable_name):
+def rm(obj, servable_name):
     s = obj.servable_service.get(servable_name)
     if s:
         deleted = obj.servable_service.delete(servable_name)
