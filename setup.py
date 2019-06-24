@@ -21,7 +21,8 @@ setup(
         "requests~=2.21",
         "requests-toolbelt==0.8.0",
         "gitpython~=2.1",
-        "tabulate~=0.8"
+        "tabulate~=0.8",
+        "sseclient-py ~=1.7"
     ],
     setup_requires=[
         'pytest-runner'

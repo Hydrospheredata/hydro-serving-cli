@@ -5,3 +5,5 @@ HOME_PATH_EXPANDED = os.path.expanduser(HOME_PATH)
 CONFIG_FILE = "config.yaml"
 
 TARGET_FOLDER = ".hs"
+
+SEGMENT_DIVIDER = "================================"

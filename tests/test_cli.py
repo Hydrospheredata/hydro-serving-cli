@@ -57,6 +57,10 @@ class CLITests(unittest.TestCase):
                     }
                 ).encode("utf-8")
                 return resp
+            elif request.path_url == '/api/v2/model/version/1/logs':
+                resp = requests.Response()
+                resp.status_code = 404
+                return resp
             return None
 
         with requests_mock.Mocker() as req_mock:
@@ -120,6 +124,10 @@ class CLITests(unittest.TestCase):
                 resp = requests.Response()
                 resp.status_code = 200
                 resp._content = request.text.encode("utf-8")
+            elif request.path_url == '/api/v2/model/version/1/logs':
+                resp = requests.Response()
+                resp.status_code = 404
+                return resp
             return resp
 
         with requests_mock.Mocker() as req_mock:

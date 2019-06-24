@@ -3,6 +3,7 @@ import click
 from urllib.parse import urljoin
 
 import requests
+import sseclient
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 
@@ -53,6 +54,18 @@ class RemoteConnection:
         composed = self.compose_url(url)
         result = requests.get(composed)
         return RemoteConnection.postprocess_response(result)
+
+    def sse(self, url):
+        """
+        Sends GET request and returns streaming SSE data
+        """
+        composed = self.compose_url(url)
+        result = requests.get(composed, stream=True)
+        result = RemoteConnection.postprocess_response(result)
+        if result.ok:
+            return sseclient.SSEClient(result).events()
+        else: 
+            return None
 
     def delete(self, url):
         """

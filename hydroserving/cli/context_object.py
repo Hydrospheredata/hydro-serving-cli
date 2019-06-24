@@ -5,6 +5,7 @@ from hydroserving.core.application.service import ApplicationService
 from hydroserving.core.host_selector.host_selector import HostSelectorService
 from hydroserving.core.model.service import ModelService
 from hydroserving.core.monitoring.service import MonitoringService
+from hydroserving.core.servable.service import ServableService
 
 
 class ContextObject:
@@ -21,6 +22,7 @@ class ContextObject:
         self.model_service = ModelService(conn, self.monitoring_service)
         self.selector_service = HostSelectorService(conn)
         self.application_service = ApplicationService(conn, self.model_service)
+        self.servable_service = ServableService(conn)
 
         self.apply_service = ApplyService(
             self.model_service,
