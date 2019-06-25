@@ -36,7 +36,7 @@ class CLITests(unittest.TestCase):
                 print(metadata)
                 assert metadata["name"] == "example_script"
                 assert metadata["installCommand"] == "pip install -r requirements.txt"
-                assert metadata["hostSelectorName"] is None
+                assert metadata["hostSelectorName"] == "super-gpu"
                 resp = requests.Response()
                 resp.status_code = 200
                 resp._content = json.dumps(
@@ -94,7 +94,7 @@ class CLITests(unittest.TestCase):
                 m = metadata["metadata"]
                 print(metadata)
                 assert metadata["name"] == "apply-demo-claims-model"
-                assert metadata["hostSelectorName"] is None
+                assert metadata["hostSelectorName"] == "xeon-cpu"
                 assert m["author"] == "cool-data-stan"
                 resp = requests.Response()
                 resp.status_code = 200

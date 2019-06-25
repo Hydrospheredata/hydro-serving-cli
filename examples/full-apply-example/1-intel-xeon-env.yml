@@ -1,4 +1,5 @@
 version: 2
 kind: HostSelector
 name: xeon-cpu
-selector: "" # Host selector string
+node_selector:
+  xeon-cpu: "true"
