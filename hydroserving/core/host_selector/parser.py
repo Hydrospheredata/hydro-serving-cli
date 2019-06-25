@@ -6,5 +6,5 @@ def parse_host_selector(in_dict):
         return None
     return HostSelector(
         name=in_dict.get("name"),
-        selector=in_dict.get("selector")
+        node_selector=in_dict.get("nodeSelector")
     )
