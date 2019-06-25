@@ -42,7 +42,7 @@ class HostSelectorService:
         }
         response = self.connection.post_json("/api/v2/hostSelector", data)
         try:
-            if response.ok:
+            if not response.ok:
                 raise RuntimeError("")
             return response.json()
         except:
@@ -54,4 +54,4 @@ class HostSelectorService:
         if found_env is not None:
             logging.warning("%s environment already exists", env.name)
             return None
-        return self.create(env.name, env.selector)
+        return self.create(env.name, env.node_selector)
