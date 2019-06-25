@@ -84,14 +84,14 @@ These files can contain definition of a resource defined below:
 
 The model definition is the same as in `serving.yaml` file.
 
-#### Environment
+#### HostSelector
 
-Example of environment definition:
+Example of a selector definition:
 
 ```yaml
-kind: Environment
+kind: HostSelector
 name: xeon-cpu
-selector: "/* INSTANCE SELECTOR */"
+node_selector: "/* INSTANCE SELECTOR */"
 ```
 
 Note that selector is a string that defines platform specific filter on instances.
