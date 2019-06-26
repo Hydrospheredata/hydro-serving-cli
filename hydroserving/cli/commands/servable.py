@@ -68,3 +68,18 @@ def rm(obj, servable_name):
     else:
         logging.error("Servable {} doesn't exist".format(servable_name))
         raise SystemExit(-1)
+
+
+@servable.command(context_settings=CONTEXT_SETTINGS)
+@click.argument('servable-name', required=True)
+@click.option('--follow', '-f', required=False, default=False, type=bool, is_flag=True)
+@click.pass_obj
+def logs(obj, servable_name, follow):
+    iterator = obj.servable_service.logs(servable_name, follow)
+    if iterator:
+        for line in iterator:
+            if line:
+                logging.info(line)
+    else:
+        logging.error("Cannot fetch logs for %s", (servable_name,))
+        raise SystemExit(-1)
