@@ -29,3 +29,11 @@ class ServableService:
             return res.json()
         else:
             return None
+
+    def logs(self, servable_name, follow):
+        suffix = "?follow=true" if follow else ""
+        res = self.conn.get_stream(("/api/v2/servable/{}/logs" + suffix).format(servable_name))
+        if res.ok:
+            return res.iter_lines(decode_unicode=True)
+        else:
+            return None

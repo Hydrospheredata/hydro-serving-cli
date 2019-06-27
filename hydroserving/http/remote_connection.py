@@ -55,6 +55,15 @@ class RemoteConnection:
         result = requests.get(composed)
         return RemoteConnection.postprocess_response(result)
 
+    def get_stream(self, url):
+        """
+        Sends GET requests to the given `url` and return stream
+        Returns (requests.Response)
+        """
+        composed = self.compose_url(url)
+        result = requests.get(composed, stream=True, timeout=(60, 3600))
+        return RemoteConnection.postprocess_response(result)
+
     def sse(self, url):
         """
         Sends GET request and returns streaming SSE data
