@@ -20,10 +20,12 @@ def list(obj):
     if servables:
         servables_view = []
         for m in servables:
+            servable_name = m.get('fullName')
             version = m.get('modelVersion')
             model = version.get('model')
-            suffix = m.get('nameSuffix')
-            servable_name = "{}-{}-{}".format(model.get('name'), version.get('modelVersion'), suffix).replace('_', '-')
+            if not servable_name:
+                suffix = m.get('nameSuffix')
+                servable_name = "{}-{}-{}".format(model.get('name'), version.get('modelVersion'), suffix).replace('_', '-')
             status_obj = m.get('status')
             status = status_obj.get('status')
             status_msg = status_obj.get('msg')
