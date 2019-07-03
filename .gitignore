@@ -1,5 +1,6 @@
 *.iml
 .hs
+.idea
 .vscode
 test-report.xml
 .pypirc
