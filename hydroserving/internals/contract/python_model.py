@@ -16,7 +16,11 @@ def entrypoint(func):
     input_names = [x.name for x in func._serving_inputs]
     for a in func_args:
         if not a in input_names:
-            raise ContractError("Missing contract for argument '{}'".format(a))
+            raise ContractError("Missing description of argument '{}'".format(a))
+
+    for i in input_names:
+        if not i in func_args:
+            raise ContractError("Description of non-existent argument '{}'".format(i))
 
     func._serving_signature = ctr.ModelSignature(
             signature_name = func.__name__,
