@@ -80,6 +80,12 @@ def is_yaml(path):
     ext = os.path.splitext(path)[1]
     return os.path.isfile(path) and (ext in (".yml", ".yaml"))
 
+def get_python_files(path):
+    return [
+        file
+        for file in get_visible_files(path)
+        if os.path.isfile(file) and (os.path.splitext(file)[1] == ".py")
+    ]
 
 def get_yamls(path):
     """
