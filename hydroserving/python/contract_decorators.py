@@ -7,11 +7,17 @@ from hydroserving.python.server import PythonRuntime
 from functools import wraps
 import os
 import inspect
+import grpc
+import hydro_serving_grpc as hsg
 
 # PYTHON MODEL DECORATORS
 
 class ContractError(Exception):
     pass
+
+def create_client(channel):
+    stub = hsg.PredictionServiceStub(channel)
+    return stub.Predict
 
 def entrypoint(func):
     func_sig = inspect.signature(func)
@@ -36,6 +42,7 @@ def entrypoint(func):
     )
 
     func._serving_server = PythonRuntime(func)
+    func._serving_client = create_client
     return func
 
 def inputs(**fields):

@@ -11,7 +11,7 @@ import hydro_serving_grpc as hs
 from hydro_serving_grpc.tf.api import PredictionServiceServicer
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
-PORT = os.getenv("APP_PORT", "9090")
+PORT = os.getenv("APP_PORT", "9091")
 
 logging.basicConfig(level=logging.INFO)
 
@@ -51,6 +51,7 @@ class PythonRuntimeService(PredictionServiceServicer):
         self.logger = logging.getLogger("PythonRuntimeService")
         self.status_message = "Preparing to import entrypoint"
         self.error = None
+        self.func = func
         try:
             self.signature = func._serving_signature
             self.status = "SERVING"
