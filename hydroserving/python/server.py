@@ -11,10 +11,6 @@ import hydro_serving_grpc as hs
 from hydro_serving_grpc.tf.api import PredictionServiceServicer
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
-PORT = os.getenv("APP_PORT", "9091")
-
-logging.basicConfig(level=logging.INFO)
-
 
 # python runtime
 class PythonRuntime:
@@ -25,7 +21,20 @@ class PythonRuntime:
         self.servicer = PythonRuntimeService(self.func)
         self.logger = logging.getLogger("python-runtime")
 
-    def start(self, port="9090", max_workers=10, max_message_size=256*1024*1024):
+    def start(self, port=None, max_workers=10, max_message_size=256*1024*1024):
+        
+        if not port:
+            port = os.getenv("APP_PORT")
+            if port:
+                logging.info("Using APP_PORT port {}".format(port))
+            else:
+                port = 9090
+                logging.info("Using default port {}".format(port))
+        else:
+            logging.info("Using overriden port {}".format(port))
+
+        logging.basicConfig(level=logging.INFO)
+
         options = [(cygrpc.ChannelArgKey.max_send_message_length, max_message_size),
                    (cygrpc.ChannelArgKey.max_receive_message_length, max_message_size)]
         self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=max_workers), options=options)
