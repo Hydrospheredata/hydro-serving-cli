@@ -6,7 +6,7 @@ import logging
 from hydroserving.cli.context import CONTEXT_SETTINGS
 from hydroserving.cli.help import VERBOSE_HELP
 from hydroserving.cli.context_object import ContextObject
-
+from hydroserving.util.log_handler import StdoutLogHandler
 
 @click.group(context_settings=CONTEXT_SETTINGS)
 @click.version_option(message="%(prog)s version %(version)s")
@@ -20,6 +20,10 @@ from hydroserving.cli.context_object import ContextObject
 @click.pass_context
 def hs_cli(ctx, verbose, cluster):
     click_log.basic_config(logging.root)
+    # custom handler to print output into stdout
+    log_handler = StdoutLogHandler()
+    log_handler.formatter = click_log.ColorFormatter()
+    logging.root.handlers = [log_handler]
     if verbose:
         logging.root.setLevel(logging.DEBUG)
     else:

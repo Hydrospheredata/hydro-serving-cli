@@ -4,6 +4,7 @@ Functions for handling async/sync upload logic.
 import logging
 import time
 
+from hydroserving.config.settings import SEGMENT_DIVIDER
 from hydroserving.core.contract import contract_to_dict
 from hydroserving.core.model.entities import UploadMetadata, VersionStatus
 from hydroserving.core.monitoring.service import DataProfileStatus
@@ -79,9 +80,8 @@ def upload_model_async(model_api, model, tar):
     Returns:
         dict:
     """
-    logger = logging.getLogger()
-    logger.debug("Uploading model to %s", model_api.connection.remote_addr)
-
+    logging.info("Uploading model to %s", model_api.connection.remote_addr)
+    logging.info(SEGMENT_DIVIDER)
     metadata = UploadMetadata(
         name=model.name,
         host_selector=model.host_selector,
@@ -133,7 +133,14 @@ def upload_model(model_service, monitoring_service, model, model_path,
     if is_async:
         return mv
 
-    logging.info("Waiting for a model build to complete...")
+    logs = model_service.get_logs(mv['id'])
+    if logs:
+        logging.info("Build logs:")
+        for l in logs:
+            logging.info(l.data)
+        logging.info(SEGMENT_DIVIDER)
+    else:
+        logging.warning("Build logs are not available")
     build_status = await_upload(model_service, mv)
 
     return build_status

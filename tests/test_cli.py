@@ -36,7 +36,7 @@ class CLITests(unittest.TestCase):
                 print(metadata)
                 assert metadata["name"] == "example_script"
                 assert metadata["installCommand"] == "pip install -r requirements.txt"
-                assert metadata["hostSelectorName"] is None
+                assert metadata["hostSelectorName"] == "super-gpu"
                 resp = requests.Response()
                 resp.status_code = 200
                 resp._content = json.dumps(
@@ -56,6 +56,10 @@ class CLITests(unittest.TestCase):
                         "status": "KEK"
                     }
                 ).encode("utf-8")
+                return resp
+            elif request.path_url == '/api/v2/model/version/1/logs':
+                resp = requests.Response()
+                resp.status_code = 404
                 return resp
             return None
 
@@ -90,7 +94,7 @@ class CLITests(unittest.TestCase):
                 m = metadata["metadata"]
                 print(metadata)
                 assert metadata["name"] == "apply-demo-claims-model"
-                assert metadata["hostSelectorName"] is None
+                assert metadata["hostSelectorName"] == "xeon-cpu"
                 assert m["author"] == "cool-data-stan"
                 resp = requests.Response()
                 resp.status_code = 200
@@ -120,6 +124,10 @@ class CLITests(unittest.TestCase):
                 resp = requests.Response()
                 resp.status_code = 200
                 resp._content = request.text.encode("utf-8")
+            elif request.path_url == '/api/v2/model/version/1/logs':
+                resp = requests.Response()
+                resp.status_code = 404
+                return resp
             return resp
 
         with requests_mock.Mocker() as req_mock:
