@@ -14,7 +14,7 @@ from hydroserving.core.image import DockerImage
 from hydroserving.core.model.entities import InvalidModelException
 from hydroserving.core.model.parser import parse_model
 from hydroserving.core.model.upload import ModelBuildError
-from hydroserving.util.fileutil import get_yamls
+from hydroserving.util.fileutil import get_yamls, get_python_files
 from hydroserving.util.yamlutil import yaml_file
 
 
@@ -55,16 +55,31 @@ from hydroserving.util.yamlutil import yaml_file
 def upload(obj, name, runtime, host_selector, training_data, dir, no_training_data, ignore_monitoring, is_async):
     dir = os.path.abspath(dir)
     try:
+        python_files = [
+            file 
+            for file in get_python_files(dir)
+            if os.path.splitext(os.path.basename(file))[0] == "serving"
+        ]
+        python_file = python_files[0] if python_files else None
         serving_files = [
             file
             for file in get_yamls(dir)
             if os.path.splitext(os.path.basename(file))[0] == "serving"
         ]
         serving_file = serving_files[0] if serving_files else None
-        if len(serving_files) > 1:
-            logging.warning("Multiple serving files detected: {}".format(list(serving_files)))
-            logging.warning("Using %s", serving_file)
-        if serving_file:
+        if python_file:
+            import sys
+            import pathlib
+            import importlib
+            sys.path.append(dir)
+            module_name = pathlib.Path(python_file).stem
+            try:
+                importlib.import_module(module_name) # runs setup() on import
+            except Exception as e:
+                logging.error("Error occured while trying to read serving.py", exc_info=e)
+                raise click.ClickException("Error occured while trying to read serving.py")
+            return 0
+        elif serving_file:
             with open(serving_file, 'r') as f:
                 parsed = yaml_file(f)
                 if parsed.get('kind', 'None') != 'Model':
@@ -110,7 +125,6 @@ def upload(obj, name, runtime, host_selector, training_data, dir, no_training_da
     except RuntimeError as err:
         logging.error("Unexpected error")
         logging.info(err)
-        logging.info(err.__traceback__)
 
 
 @hs_cli.command(help=APPLY_HELP, context_settings=CONTEXT_SETTINGS)
