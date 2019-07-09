@@ -83,6 +83,7 @@ class PythonRuntimeService(PredictionServiceServicer):
                 context.abort(grpc.StatusCode.INTERNAL, repr(ex))
 
     def Status(self, request, context):
+        logging.info("STATUS REQUEST {} {}".format(self.status, self.status_message))
         return hs.tf.api.StatusResponse(
             status=self.status,
             message=self.status_message
