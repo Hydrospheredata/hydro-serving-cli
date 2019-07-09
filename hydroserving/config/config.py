@@ -23,7 +23,7 @@ class ConfigService:
     Works with configuration yaml files under `home_path` directory
     """
 
-    def __init__(self, home_path, overridden_cluster=None):
+    def __init__(self, home_path='~/.hs-home', overridden_cluster=None):
         self.home_path = home_path
         self.config_path = os.path.join(home_path, CONFIG_FILE)
         self.overriden_cluster = overridden_cluster

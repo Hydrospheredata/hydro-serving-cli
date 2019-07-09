@@ -5,7 +5,6 @@ import click_log
 import logging
 from hydroserving.cli.context import CONTEXT_SETTINGS
 from hydroserving.cli.help import VERBOSE_HELP
-from hydroserving.config.settings import HOME_PATH_EXPANDED
 from hydroserving.cli.context_object import ContextObject
 
 
@@ -26,15 +25,12 @@ def hs_cli(ctx, verbose, cluster):
     else:
         logging.root.setLevel(logging.INFO)
 
-    if not os.path.isdir(HOME_PATH_EXPANDED):
-        logging.debug("Didn't find {} folder. Creating...".format(HOME_PATH_EXPANDED))
-        os.mkdir(HOME_PATH_EXPANDED)
     try:
         if cluster:
             logging.debug("Overriding current cluster with {}".format(cluster))
-            ctx.obj = ContextObject.with_config_path(HOME_PATH_EXPANDED, overridden_cluster=cluster)
+            ctx.obj = ContextObject.with_config_path(overridden_cluster=cluster)
         else:
-            ctx.obj = ContextObject.with_config_path(HOME_PATH_EXPANDED)
+            ctx.obj = ContextObject.with_config_path()
     except Exception as err:
         logging.error("Error occurred while preparing cluster: {}".format(err))
         raise SystemExit(-1)

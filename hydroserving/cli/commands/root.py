@@ -78,6 +78,7 @@ def upload(obj, name, runtime, host_selector, training_data, dir, no_training_da
             except Exception as e:
                 logging.error("Error occured while trying to read serving.py", exc_info=e)
                 raise click.ClickException("Error occured while trying to read serving.py")
+            return 0
         elif serving_file:
             with open(serving_file, 'r') as f:
                 parsed = yaml_file(f)
