@@ -79,9 +79,9 @@ def rm(obj, servable_name):
 def logs(obj, servable_name, follow):
     iterator = obj.servable_service.logs(servable_name, follow)
     if iterator:
-        for line in iterator:
-            if line:
-                logging.info(line)
+        for event in iterator:
+            if event:
+                logging.info(event.data)
     else:
         logging.error("Cannot fetch logs for %s", (servable_name,))
         raise SystemExit(-1)
