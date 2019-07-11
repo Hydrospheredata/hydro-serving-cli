@@ -1,3 +1,6 @@
+import sseclient
+
+
 class ServableService:
     def __init__(self, conn):
         self.conn = conn
@@ -32,8 +35,4 @@ class ServableService:
 
     def logs(self, servable_name, follow):
         suffix = "?follow=true" if follow else ""
-        res = self.conn.get_stream(("/api/v2/servable/{}/logs" + suffix).format(servable_name))
-        if res.ok:
-            return res.iter_lines(decode_unicode=True)
-        else:
-            return None
+        return self.conn.sse(("/api/v2/servable/{}/logs" + suffix).format(servable_name))
