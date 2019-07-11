@@ -8,6 +8,7 @@ from hydroserving.python.types import *
 from hydroserving.cli.context_object import ContextObject
 from hydroserving.core.model.entities import UploadMetadata
 from hydroserving.core.contract import contract_to_dict
+from subprocess import call
 
 
 class ModelDefinitionError(Exception):
@@ -48,8 +49,10 @@ def setup(
     generate_setup(name, requirements, entry_point)
     if cmd == 'upload':
         upload(name, requirements, entry_point, contract, host_selector, runtime, metadata)
+    elif cmd == 'start':
+        func._serving_server.start()
     else:
-        install(name, requirements, entry_point)
+        print('No command supplied')
 
 def generate_setup(name, requirements,entrypoint):
     src = """
@@ -77,30 +80,13 @@ recursive-include . *
     with open('MANIFEST.in', 'w') as f:
         f.write(manifest_src)
 
-def install(name, requirements,entrypoint):
-    print("INSTALL")
-    pkgs = setuptools.find_packages()
-    print("SETUP PKGS", pkgs)
-    setuptools.setup(
-        name=name,
-        packages=pkgs,
-        include_package_data=True,
-        install_requires=requirements,
-        entry_points='''
-            [console_scripts]
-            {name}={entrypoint}._serving_server.start
-        '''.format(name=name, entrypoint=entrypoint),
-        script_args = ['install'] # pass setup arguments as in `python setup.py install`
-    )
 
 def upload(name, requirements, entrypoint, contract, host_selector, runtime, metadata):
     print("UPLOAD")
-    pkgs = setuptools.find_packages()
-    print("SETUP PKGS", pkgs)
     # create tar.gz source distribution
     setuptools.setup(
         name=name,
-        packages=pkgs,
+        packages=setuptools.find_packages(),
         include_package_data=True,
         install_requires=requirements,
         entry_points='''

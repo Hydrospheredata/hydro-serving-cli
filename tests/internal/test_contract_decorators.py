@@ -1,7 +1,7 @@
 import unittest
 import hydroserving.python as hs
 
-@hs.entrypoint
+@hs.entrypoint()
 @hs.inputs(
     a = hs.Scalar(hs.int32),
     b = hs.Scalar(hs.int32),
@@ -12,9 +12,9 @@ def model_scalar(a, b):
         's': a + b
     }
 
-@hs.entrypoint
-@hs.inputs(v = hs.Array(hs.double, shape=[-1]))
-@hs.outputs(s = hs.Scalar(hs.double))
+@hs.entrypoint()
+@hs.inputs(v = hs.Array(hs.float64, shape=[-1]))
+@hs.outputs(s = hs.Scalar(hs.float64))
 def model_vec(v):
     return {
         's': len(v)
