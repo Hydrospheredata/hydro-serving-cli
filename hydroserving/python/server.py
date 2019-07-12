@@ -75,12 +75,12 @@ class PythonRuntimeService(PredictionServiceServicer):
                 "func_main is not imported due to error: {}".format(str(self.error))
             )
         else:
-            self.logger.info("Received inference request: {}".format(request)[:256])
+            logging.info("Received inference request: {}".format(request)[:256])
             try:
                 raw_inputs = request.inputs
                 inputs = {k: v.from_request(k, raw_inputs) for k,v in self.func._serving_inputs.items()}
                 result = self.func(**inputs)
-                outputs = {k: v.to_response(k, raw_inputs) for k,v in self.func._serving_outputs.items()}
+                outputs = {k: v.to_response(k, result) for k,v in self.func._serving_outputs.items()}
 
                 logging.info("Answer: {}".format(outputs)[:256])
                 return hs.PredictResponse(outputs=outputs)

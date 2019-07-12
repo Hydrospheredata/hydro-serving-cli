@@ -22,7 +22,6 @@ class Scalar(Field):
 
     def from_request(self, name, v):
         data = v[name]
-
         result = data.__getattribute__(HS_DTYPE_TO_ARG_NAME[self.dtype])[0]
         if data.dtype == hsg.DT_STRING:
             result = result.decode('utf-8')
@@ -31,6 +30,7 @@ class Scalar(Field):
     def to_response(self, name, v):
         data = v[name]
         if self.dtype == hsg.DT_STRING:
+            print("RESPONSE DATA", data)
             data = data.encode('utf-8')
         kwargs = {
             HS_DTYPE_TO_ARG_NAME[self.dtype]: [data],

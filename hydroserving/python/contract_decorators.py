@@ -43,8 +43,7 @@ def entrypoint(on_init=None):
             predict = func._serving_signature
         )
 
-        if on_init:
-            func._serving_init = on_init
+        func._serving_init = on_init
 
         func._serving_server = PythonRuntime(func)
         func._serving_client = create_client
