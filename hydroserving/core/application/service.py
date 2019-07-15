@@ -1,4 +1,5 @@
 import logging
+import time
 
 from hydroserving.core.application.entities import model_variant
 
@@ -19,7 +20,8 @@ class ApplicationService:
         logging.debug("Applying Application %s", app)
         app_request = self._convert_mv_names(app)
 
-        found_app = self.find(app_request['name'])
+        app_name = app_request['name']
+        found_app = self.find(app_name)
         if found_app is None:
             logging.debug("Creating application: %s", app_request)
             result = self.create(app_request)
@@ -31,7 +33,14 @@ class ApplicationService:
         logging.debug("Server app response")
         logging.debug(result)
 
-        return result
+        while True:
+            result = self.find(app_name)
+            status = result['status']
+            if status == 'Ready':
+                return result
+            elif status == 'Failed':
+                raise RuntimeError("Application build failed: {}".format(result))
+            time.sleep(5)
 
     def _convert_mv_names(self, request):
         graph = request.execution_graph

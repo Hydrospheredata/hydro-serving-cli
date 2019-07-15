@@ -142,6 +142,7 @@ class CLITests(unittest.TestCase):
 
 
     def test_application_singular_apply(self):
+        t = 1
         def _upload_matcher(request):
             resp = None
             if request.path_url == "/api/v2/model/version/apply-demo-claims-model/2":
@@ -156,9 +157,26 @@ class CLITests(unittest.TestCase):
                     }
                 ).encode("utf-8")
             elif request.path_url == "/api/v2/application/apply-demo-claims-app" and request.method == "GET":
-                resp = requests.Response()
-                resp.status_code = 404
-                resp._content = json.dumps([]).encode("utf-8")
+                nonlocal t
+                if t == 1:
+                    resp = requests.Response()
+                    resp.status_code = 404
+                    resp._content = json.dumps({}).encode("utf-8")
+                elif t == 2:
+                    resp = requests.Response()
+                    resp.status_code = 200
+                    resp._content = json.dumps({
+                        'id': 1,
+                        'status': 'Assembling'
+                    }).encode("utf-8")
+                else:
+                    resp = requests.Response()
+                    resp.status_code = 200
+                    resp._content = json.dumps({
+                        'id': 1,
+                        'status': 'Ready'
+                    }).encode("utf-8") 
+                t = t + 1
             elif request.path_url == "/api/v2/application" and request.method == "POST":
                 req = json.loads(request.text)
                 variant1 = req["executionGraph"]["stages"][0]["modelVariants"][0]
@@ -182,6 +200,7 @@ class CLITests(unittest.TestCase):
 
 
     def test_application_pipeline_apply(self):
+        t = 1
         def _upload_matcher(request):
             resp = None
             if request.path_url == '/api/v2/model/version/claims-preprocessing/1':
@@ -218,9 +237,19 @@ class CLITests(unittest.TestCase):
                     }
                 ).encode("utf-8")
             elif request.path_url == '/api/v2/application/claims-pipeline-app' and request.method == "GET":
-                resp = requests.Response()
-                resp.status_code = 404
-                resp._content = json.dumps({}).encode("utf-8")
+                nonlocal t
+                if t == 1:
+                    resp = requests.Response()
+                    resp.status_code = 404
+                    resp._content = json.dumps({}).encode("utf-8")
+                else:
+                    resp = requests.Response()
+                    resp.status_code = 200
+                    resp._content = json.dumps({
+                        'id': 1,
+                        'status': 'Ready'
+                    }).encode('utf-8')
+                t = t + 1
             elif request.path_url == '/api/v2/application' and request.method == "POST":
                 req = json.loads(request.text)
                 print(req)
@@ -272,7 +301,8 @@ class CLITests(unittest.TestCase):
                 resp = requests.Response()
                 resp.status_code = 200
                 resp._content = json.dumps({
-                    "id": 1
+                    "id": 1,
+                    "status": "Ready"
                 }).encode("utf-8")
             elif request.path_url == "/api/v2/application" and request.method == "PUT":
                 req = json.loads(request.text)
