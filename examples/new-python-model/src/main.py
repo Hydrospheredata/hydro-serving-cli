@@ -1,12 +1,17 @@
 import hydroserving.python as hp
 
-@hp.entrypoint
+
+def init():
+    print("Initializing model")
+
+    
+@hp.entrypoint(on_init=init)
 @hp.inputs(
     a = hp.Scalar('int32', profile="NUMERICAL"),
     b = hp.Scalar('int32', profile="NONE")
 )
 @hp.outputs(
-    s = hs.Scalar('int32', profile="NUMERICAL")
+    s = hp.Scalar('int32', profile="NUMERICAL")
 )
 def sum(a, b):
     return {
