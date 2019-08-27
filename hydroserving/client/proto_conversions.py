@@ -1,9 +1,10 @@
-import numpy as np
+from typing import Tuple
 
+import numpy as np
 from hydro_serving_grpc import DT_STRING, DT_BOOL, \
     DT_HALF, DT_FLOAT, DT_DOUBLE, DT_INT8, DT_INT16, \
     DT_INT32, DT_INT64, DT_UINT8, DT_UINT16, DT_UINT32, \
-    DT_UINT64, DT_COMPLEX64, DT_COMPLEX128
+    DT_UINT64, DT_COMPLEX64, DT_COMPLEX128, DataType, TensorShapeProto
 
 NP_TO_HS_DTYPE = {
     np.int8: DT_INT8,
@@ -29,30 +30,6 @@ NP_TO_HS_DTYPE = {
 
 HS_TO_NP_DTYPE = dict([(v, k) for k, v in NP_TO_HS_DTYPE.items()])
 
-HS_DTYPE_TO_STR = {
-    DT_STRING: "DT_STRING",
-    DT_BOOL: "DT_BOOL",
-
-    DT_HALF: "DT_FLOAT16",
-    DT_FLOAT: "DT_FLOAT32",
-    DT_DOUBLE: "DT_DOUBLE",
-
-    DT_INT8: "DT_INT8",
-    DT_INT16: "DT_INT16",
-    DT_INT32: "DT_INT32",
-    DT_INT64: "DT_INT64",
-
-    DT_UINT8: "DT_UINT8",
-    DT_UINT16: "DT_UINT16",
-    DT_UINT32: "DT_UINT32",
-    DT_UINT64: "DT_UINT64",
-
-    DT_COMPLEX64: "DT_COMPLEX64",
-    DT_COMPLEX128: "DT_COMPLEX128"
-}
-
-STR_TO_HS_DTYPE = dict([(v, k) for k, v in HS_DTYPE_TO_STR.items()])
-
 NP_DTYPE_TO_ARG_NAME = {
     np.float16: "half_val",
     np.float32: "float_val",
@@ -74,5 +51,25 @@ NP_DTYPE_TO_ARG_NAME = {
     np.object: None,
     np.str: "string_val",
     np.void: None
-
 }
+
+
+def proto2np_dtype(dt: DataType):
+    return HS_TO_NP_DTYPE[dt]
+
+
+def np2proto_dtype(dt: np.dtype):
+    return NP_TO_HS_DTYPE[dt]
+
+
+def proto2np_shape(tsp: TensorShapeProto):
+    if tsp is None or len(tsp.dim) == 0:
+        return tuple()
+    else:
+        shape = tuple([int(s.size) for s in tsp.dim])
+    return shape
+
+
+def np2proto_shape(np_shape: Tuple):
+    shape = TensorShapeProto(dim=[TensorShapeProto.Dim(size=x) for x in np_shape])
+    return shape

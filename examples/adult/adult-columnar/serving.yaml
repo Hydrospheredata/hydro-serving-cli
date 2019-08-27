@@ -1,0 +1,51 @@
+kind: Model
+name: "adult_columnar"
+payload:
+  - "src/"
+  - "requirements.txt"
+  - "random-forest-adult.joblib"
+runtime: "hydrosphere/serving-runtime-python-3.6:0.1.2-rc0"
+install-command: "pip install -r requirements.txt"
+contract:
+  name: "predict"
+  inputs:
+    "Age":
+      shape: [-1, 1]
+      type: int64
+    "Workclass":
+      shape: [-1, 1]
+      type: int64
+    "Education":
+      shape: [-1, 1]
+      type: int64
+    "Marital Status":
+      shape: [-1, 1]
+      type: int64
+    "Occupation":
+      shape: [-1, 1]
+      type: int64
+    "Relationship":
+      shape: [-1, 1]
+      type: int64
+    "Race":
+      shape: [-1, 1]
+      type: int64
+    "Sex":
+      shape: [-1, 1]
+      type: int64
+    "Capital Gain":
+      shape: [-1, 1]
+      type: int64
+    "Capital Loss":
+      shape: [-1, 1]
+      type: int64
+    "Hours per week":
+      shape: [-1, 1]
+      type: int64
+    "Country":
+      shape: [-1, 1]
+      type: int64
+  outputs:
+    classes:
+      shape: [-1, 1]
+      type: int64

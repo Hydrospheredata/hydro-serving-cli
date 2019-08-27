@@ -1,17 +1,26 @@
 from typing import Dict, Tuple
+
 import hydro_serving_grpc as hs_grpc
+import numpy as np
 import pandas as pd
 import yaml
+from hydro_serving_grpc.contract import ModelContract
 
-from google.protobuf.json_format import MessageToDict
+from .proto_conversions import NP_TO_HS_DTYPE, NP_DTYPE_TO_ARG_NAME, proto2np_dtype, np2proto_dtype, proto2np_shape, np2proto_shape
+from ..core.contract import DTYPE_TO_NAMES as HS_DTYPE_TO_NAME, NAME_TO_DTYPES as NAME_TO_HS_DTYPE
+
+
+class AlwaysTrueObj(object):
+    def __eq__(self, other):
+        return True
+
+
+AnyDimSize = AlwaysTrueObj()
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
 except ImportError:
     from yaml import Loader, Dumper
-
-from .type_conversions import HS_TO_NP_DTYPE, NP_TO_HS_DTYPE, NP_DTYPE_TO_ARG_NAME, STR_TO_HS_DTYPE, HS_DTYPE_TO_STR
-import numpy as np
 
 
 class ContractViolationException(Exception):
@@ -23,12 +32,71 @@ class ContractViolationException(Exception):
 
 class HSContract:
     """
+    Python wrapper around proto object of ModelContract.
     HydroServingContract contains useful info about input/output
-    tensors and verifies passed dictionary for compliance with contract
+    tensors and verifies passed dictionary for compliance with contract.
     """
 
+    def __init__(self, model_name, signature_name, inputs, outputs):
+
+        self.model_name = model_name
+
+        self.signature_name = signature_name
+
+        self.output_names = [t['name'] for t in outputs]
+        self.output_shapes = dict([(t['name'], t['shape']) for t in outputs])
+        self.output_dtypes = dict([(t['name'], t['dtype']) for t in outputs])
+        self.output_profiles = dict([(t['name'], t['profile']) for t in outputs])
+
+        self.input_names = [t['name'] for t in inputs]
+        self.input_shapes = dict([(t['name'], t['shape']) for t in inputs])
+        self.input_dtypes = dict([(t['name'], t['dtype']) for t in inputs])
+        self.input_profiles = dict([(t['name'], t['profile']) for t in inputs])
+
     def __str__(self) -> str:
-        return f"Input tensors = {self.input_names}; Output tensors = {self.output_names} "
+        return "Input tensors = {}; Output tensors = {}".format(self.input_names, self.output_names)
+
+    @property
+    def proto(self):
+        tensor_inputs = []
+        for input_tensor_name in self.input_names:
+            _dtype = np2proto_dtype(self.input_dtypes[input_tensor_name])
+            _shape = np2proto_shape(self.input_shapes[input_tensor_name])
+            _profile = self.input_profiles[input_tensor_name]
+
+            tensor = hs_grpc.contract.ModelField(name=input_tensor_name, shape=_shape, dtype=_dtype)
+            tensor_inputs.append(tensor)
+
+        tensor_outputs = []
+        for output_tensor_name in self.output_names:
+            _dtype = np2proto_dtype(self.output_dtypes[output_tensor_name])
+            _shape = np2proto_shape(self.output_shapes[output_tensor_name])
+            _profile = self.output_profiles[output_tensor_name]
+            tensor = hs_grpc.contract.ModelField(name=output_tensor_name, shape=_shape, dtype=_dtype)
+            tensor_outputs.append(tensor)
+
+        signature = hs_grpc.contract.ModelSignature(signature_name=self.signature_name,
+                                                    inputs=tensor_inputs, outputs=tensor_outputs)
+        contract_proto = ModelContract(model_name=self.model_name, predict=signature)
+        return contract_proto
+
+    @classmethod
+    def from_proto(cls, contract_proto: ModelContract):
+        inputs = []
+        for input_tensor in contract_proto.predict.inputs:
+            inputs.append({"name": input_tensor.name,
+                           "shape": proto2np_shape(input_tensor.shape),
+                           "dtype": proto2np_dtype(input_tensor.dtype),
+                           "profile": input_tensor.profile})
+
+        outputs = []
+        for output_tensor in contract_proto.predict.outputs:
+            outputs.append({"name": output_tensor.name,
+                            "shape": proto2np_shape(output_tensor.shape),
+                            "dtype": proto2np_dtype(output_tensor.dtype),
+                            "profile": output_tensor.profile})
+
+        return cls(contract_proto.model_name, contract_proto.predict.signature_name, inputs, outputs)
 
     @classmethod
     def from_df(cls, input_df: pd.DataFrame):
@@ -37,132 +105,106 @@ class HSContract:
         :param input_df:
         :return:
         """
+
+        model_name = getattr(input_df, "name", "random_model_name")
+        signature_name = "predict"
+
         inputs = []
         for name, dtype in zip(input_df.columns, input_df.dtypes):
             inputs.append({"name": name,
-                           "dtype": dtype,
-                           "shape": (-1, 1)})
+                           "dtype": dtype.type,
+                           "shape": (-1, 1),
+                           "profile": None})
 
         outputs = []
 
-        contract_dict = {"inputs": inputs,
-                         "outputs": outputs}
-        return cls(contract_dict)
+        return cls(model_name, signature_name, inputs, outputs)
 
     @classmethod
-    def from_proto(cls, model_version_proto):
+    def load(cls, fp):
         """
-        Contract HSContract from proto definition of model
-        :param model_version_proto:
+        Load contract from YAML file
+        :param fp:
         :return:
         """
-        model_proto_dict = MessageToDict(model_version_proto, preserving_proto_field_name=True)
-        proto_contract_dict: Dict = model_proto_dict['contract']['predict']
-        contract_dict = {}
+        yaml_contract = yaml.load(fp, Loader)
+        inputs = []
+        for input_tensor_name, props in yaml_contract['contract']['inputs'].items():
 
-        input_tensors = []
-        for t in proto_contract_dict['inputs']:
-            name = t['name']
-            shape = tuple([int(s['size']) for s in t['shape'].get('dim', [])])
-            dtype = HS_TO_NP_DTYPE[STR_TO_HS_DTYPE[t['dtype']]]
-            input_tensors.append({"name": name,
-                                  "shape": shape,
-                                  "dtype": dtype})
-        contract_dict['inputs'] = input_tensors
+            if props['type'] in NAME_TO_HS_DTYPE:
+                dtype = proto2np_dtype(NAME_TO_HS_DTYPE[props['type']])
+            else:
+                dtype = proto2np_dtype(hs_grpc.DataType.Value(props['type']))
 
-        output_tensors = []
-        for t in proto_contract_dict['outputs']:
-            name = t['name']
-            shape = tuple([int(s['size']) for s in t['shape'].get('dim', [])])
-            dtype = HS_TO_NP_DTYPE[STR_TO_HS_DTYPE[t['dtype']]]
-            output_tensors.append({"name": name,
-                                   "shape": shape,
-                                   "dtype": dtype})
-        contract_dict['outputs'] = output_tensors
+            profile = props.get('profile', "NONE")
 
-        return HSContract(contract_dict)
+            if props['shape'] == "scalar":
+                shape = tuple()
+            else:
+                shape = tuple(props['shape'])
 
-    def dump(self, f):
+            inputs.append({"shape": shape, "dtype": dtype, "profile": profile, "name": input_tensor_name})
+
+        outputs = []
+        for output_tensor_name, props in yaml_contract['contract']['outputs'].items():
+
+            if props['type'] in NAME_TO_HS_DTYPE:
+                dtype = proto2np_dtype(NAME_TO_HS_DTYPE[props['type']])
+            else:
+                dtype = proto2np_dtype(hs_grpc.DataType.Value(props['type']))
+
+            profile = props.get('profile', "NONE")
+
+            if props['shape'] == "scalar":
+                shape = tuple()
+            else:
+                shape = tuple(props['shape'])
+
+            outputs.append({"shape": shape, "dtype": dtype, "profile": profile, "name": output_tensor_name})
+
+        return cls(yaml_contract['name'], yaml_contract['contract'].get('name', "predict"), inputs, outputs)
+
+    def dump(self, fp):
         """
         Dump current contract into YAML file
-        :param f:
-        :return:
         """
-        contract = self.contract_dict
-
-        def tensor_dict_to_yaml(t_dict):
-            dtype = HS_DTYPE_TO_STR[NP_TO_HS_DTYPE[t_dict['dtype']]]
-            shape = list(t_dict['shape'])
-            if not shape:
-                shape = "scalar"
-            return t_dict['name'], {"shape": shape, "type": dtype}
 
         yaml_contract = {"kind": "Model",
                          "payload": ["src/", "requirements.txt"],
                          "runtime": "hydrosphere/serving-runtime-python-3.6:0.1.2-rc0",
                          "install-command": "pip install -r requirements.txt"}
         inputs = {}
-        outputs = {}
 
-        for t in contract['inputs']:
-            n, d = tensor_dict_to_yaml(t)
-            inputs[n] = d
-        for t in contract['outputs']:
-            n, d = tensor_dict_to_yaml(t)
-            outputs[n] = d
+        for input_tensor_name in self.input_names:
+            dtype = HS_DTYPE_TO_NAME[NP_TO_HS_DTYPE[self.input_dtypes[input_tensor_name]]]
+            profile = self.input_profiles[input_tensor_name]
+            shape = list(self.input_shapes[input_tensor_name])
+            if not shape:
+                shape = "scalar"
+            inputs[input_tensor_name] = {"shape": shape, "type": dtype}
+            if not profile:
+                inputs[input_tensor_name]["profile"] = profile
+
+        outputs = {}
+        for output_tensor_name in self.output_names:
+            dtype = HS_DTYPE_TO_NAME[NP_TO_HS_DTYPE[self.output_dtypes[output_tensor_name]]]
+            profile = self.output_profiles[output_tensor_name]
+            shape = list(self.output_shapes[output_tensor_name])
+            if not shape:
+                shape = 'scalar'
+            outputs[output_tensor_name] = {"shape": shape, "type": dtype}
+            if not profile:
+                outputs[output_tensor_name]["profile"] = profile
 
         yaml_contract['contract'] = {}
+        yaml_contract['name'] = self.model_name
+        yaml_contract['contract']['name'] = self.signature_name
         yaml_contract['contract']['inputs'] = inputs
         yaml_contract['contract']['outputs'] = outputs
 
-        yaml.dump(yaml_contract, f, allow_unicode=True, default_flow_style=None)
+        yaml.dump(yaml_contract, fp, allow_unicode=True, default_flow_style=None)
 
-    @classmethod
-    def load(cls, file):
-        """
-        Load contract from YAML file
-        :param file:
-        :return:
-        """
-        yaml_contract = yaml.load(file, Loader=Loader)
-
-        def yaml_to_tensor_dict(t_name, t_dict):
-            if t_dict['shape'] == 'scalar':
-                shape = tuple()
-            else:
-                shape = tuple(t_dict['shape'])
-            return {"name": t_name,
-                    "dtype": HS_TO_NP_DTYPE[STR_TO_HS_DTYPE[t_dict['type']]],
-                    "shape": shape}
-
-        contract_dict = {}
-        inputs = []
-        outputs = []
-        for k, v in yaml_contract['contract']['inputs'].items():
-            inputs.append(yaml_to_tensor_dict(k, v))
-            pass
-        for k, v in yaml_contract['contract']['outputs'].items():
-            outputs.append(yaml_to_tensor_dict(k, v))
-
-        contract_dict['inputs'] = inputs
-        contract_dict['outputs'] = outputs
-        return cls(contract_dict)
-
-    def __init__(self, contract_dict):
-        self.contract_dict = contract_dict
-        outputs = self.contract_dict['outputs']
-        inputs = self.contract_dict['inputs']
-
-        self.output_names = [x['name'] for x in outputs]
-        self.output_shapes = dict([(x['name'], x['shape']) for x in outputs])
-        self.output_dtypes = dict([(x['name'], x['dtype']) for x in outputs])
-        self.number_of_output_tensors = len(outputs)
-
-        self.input_names = [x['name'] for x in inputs]
-        self.input_shapes = dict([(x['name'], x['shape']) for x in inputs])
-        self.input_is_scalar = dict([(k, v == tuple([])) for k, v in self.input_shapes.items()])
-        self.input_dtypes = dict([(x['name'], x['dtype']) for x in inputs])
-        self.number_of_input_tensors = len(inputs)
+    # Request-Response Conversions
 
     def verify_input_dict(self, x: Dict[str, np.array]) -> (bool, str):
         """
@@ -181,9 +223,9 @@ class HSContract:
             missing_fields = input_names.difference(tensor_names)
             extra_fields = tensor_names.difference(input_names)
             if missing_fields:
-                tensor_names_error_message += f"Missing tensors: {missing_fields}\n "
+                tensor_names_error_message += "Missing tensors: {}\n ".format(missing_fields)
             if extra_fields:
-                tensor_names_error_message += f"Extra tensors: {extra_fields}.\n"
+                tensor_names_error_message += "Extra tensors: {}.\n".format(extra_fields)
             error_message += tensor_names_error_message
 
         # Check for tensor shapes and dtypes
@@ -192,21 +234,18 @@ class HSContract:
         for tensor_name in self.input_names:
             if not HSContract.shape_compliant(self.input_shapes[tensor_name], x[tensor_name].shape):
                 valid = False
-                tensor_shapes_error_message += f"Tensor \"{tensor_name}\" is {x[tensor_name].shape}," \
-                    f" expected {self.input_shapes[tensor_name]}\n"
+                tensor_shapes_error_message += "Tensor \"{}\" is {},expected {}".format(tensor_name, x[tensor_name].shape,
+                                                                                        self.input_shapes[tensor_name])
 
             if not HSContract.dtype_compliant(self.input_dtypes[tensor_name], x[tensor_name].dtype):
                 valid = False
-                tensor_dtypes_error_message += f" Tensor \"{tensor_name}\" is {x[tensor_name].shape}," \
-                    f" expected {self.input_shapes[tensor_name]}"
+                tensor_dtypes_error_message += "Tensor \"{}\" is {},expected {}".format(tensor_name, x[tensor_name].dtype,
+                                                                                        self.input_dtypes[tensor_name])
 
         error_message += tensor_shapes_error_message
-        error_message += tensor_shapes_error_message
+        error_message += tensor_dtypes_error_message
 
         return valid, error_message
-
-    def make_tensor_shape_proto(self, name):
-        return hs_grpc.TensorShapeProto(dim=[hs_grpc.TensorShapeProto.Dim(size=x) for x in self.input_shapes[name]])
 
     def get_payload_arg_name(self, tensor_name):
         """
@@ -215,8 +254,7 @@ class HSContract:
         :param tensor_name:
         :return:
         """
-        np_dtype = self.input_dtypes[tensor_name]
-        return NP_DTYPE_TO_ARG_NAME[np_dtype]
+        return NP_DTYPE_TO_ARG_NAME[self.input_dtypes[tensor_name]]
 
     def make_proto(self, input_dict: Dict[str, np.array]) -> Dict[str, hs_grpc.TensorProto]:
         """
@@ -226,11 +264,11 @@ class HSContract:
         :return:
         """
         input_proto_dict = dict()
-        for k, v in input_dict.items():
-            kwargs = {self.get_payload_arg_name(k): v.flatten(),
-                      "dtype": NP_TO_HS_DTYPE[self.input_dtypes[k]],
-                      "tensor_shape": self.make_tensor_shape_proto(k)}
-            input_proto_dict[k] = hs_grpc.TensorProto(**kwargs)
+        for tensor_name, tensor_values in input_dict.items():
+            kwargs = {self.get_payload_arg_name(tensor_name): tensor_values.flatten(),
+                      "dtype": NP_TO_HS_DTYPE[self.input_dtypes[tensor_name]],
+                      "tensor_shape": np2proto_shape(self.input_shapes[tensor_name])}
+            input_proto_dict[tensor_name] = hs_grpc.TensorProto(**kwargs)
 
         return input_proto_dict
 
@@ -241,53 +279,41 @@ class HSContract:
 
     @staticmethod
     def shape_compliant(contract_shape: Tuple, tensor_shape: Tuple) -> bool:
-        if len(tensor_shape) == 0:
+        if len(contract_shape) == 0:
             # scalar input can be used in following scenarios
-            return contract_shape == (-1, 1) or contract_shape == (1,) or contract_shape == tuple()
+            if tensor_shape == tuple():
+                return True
+            else:
+                return max(tensor_shape) == 1  # All dimensions are equal to 1
+
         if len(contract_shape) == len(tensor_shape):
-            return all([s1 == -1 or s1 == s2 for s1, s2 in zip(contract_shape, tensor_shape)])
+            possible_contract_shape = tuple([AnyDimSize if s == -1 else s for s in contract_shape])
+            return possible_contract_shape == tensor_shape
         else:
             return False
 
-    def decode_request(self, proto):
+    @staticmethod
+    def decode_list_of_tensors(fields):
         """
-        Transform imput proto dict into dictionary with np.arrays. We trust gateway to return us only
+        Transform imput fields dict into dictionary with np.arrays. We trust gateway to return us only
         valid input, so we do not check contract compliance
         """
-        input_dict = {}
-        for k, v in MessageToDict(proto, preserving_proto_field_name=True)['inputs'].items():
-            dtype = HS_TO_NP_DTYPE[STR_TO_HS_DTYPE[v['dtype']]]
-            value = proto.inputs[k].__getattribute__(NP_DTYPE_TO_ARG_NAME[dtype])
-            if v['tensor_shape']:
-                shape = [int(s['size']) for s in v['tensor_shape']['dim']]
+        d = {}
+        for tensor_name, field in fields.items():
+            dtype = proto2np_dtype(field.dtype)
+            value = field.__getattribute__(NP_DTYPE_TO_ARG_NAME[dtype])
+            shape = proto2np_shape(field.tensor_shape)
+
+            if shape != tuple():
                 value = np.array(value, dtype=dtype).reshape(shape)
             else:
                 value = np.array(value, dtype=dtype).item()
 
-            input_dict[k] = value
+            d[tensor_name] = value
 
-        return input_dict
+        return d
 
-    def decode_response(self, proto: hs_grpc.tf.api.predict_pb2.PredictResponse) -> Dict[str, np.array]:
-        """
-        Transform PredictResponse proto into dictionary with np.arrays. We trust gateway to return us only
-        valid output, so we do not check contract compliance
-        """
-        output_dict = {}
-        for k, v in MessageToDict(proto, preserving_proto_field_name=True)['outputs'].items():
-            dtype = HS_TO_NP_DTYPE[STR_TO_HS_DTYPE[v['dtype']]]
-            value = proto.outputs[k].__getattribute__(NP_DTYPE_TO_ARG_NAME[dtype])
-            if v['tensor_shape']:
-                shape = [int(s['size']) for s in v['tensor_shape']['dim']]
-                value = np.array(value, dtype=dtype).reshape(shape)
-            else:
-                value = np.array(value, dtype=dtype).item()
-
-            output_dict[k] = value
-
-        return output_dict
-
-    def __check_for_python_builtins(self, d: Dict) -> Dict:
+    def __check_for_python_scalars(self, d: Dict) -> Dict:
         """
         Checks for python builtin dtypes in scalar fields of input dict
         and transforms them into suitable versions of np.dtype. If no
@@ -296,22 +322,22 @@ class HSContract:
         :return: output dict, without python built-in scalar dtypes
         """
         new_dict = {}
-        for k, v in d.items():
-            if self.input_is_scalar[k]:
-                if v in (0, 1):
+        for name, val in d.items():
+            if self.input_shapes[name] == tuple():
+                if val in (0, 1):
                     # Minimum scalar dtype for 0 or 1 is `uint8`, but it
                     # cannot be casted into `bool` safely. So, we detect
                     # for bool scalars by hand.
                     min_input_dtype = np.bool
                 else:
-                    min_input_dtype = np.min_scalar_type(v)
+                    min_input_dtype = np.min_scalar_type(val)
 
-                if np.can_cast(min_input_dtype, self.input_dtypes[k]):
-                    new_dict[k] = self.input_dtypes[k](v)
+                if np.can_cast(min_input_dtype, self.input_dtypes[name]):
+                    new_dict[name] = self.input_dtypes[name](val)
                 else:
-                    raise ValueError(f"Can not cast {k} from {min_input_dtype} to {self.input_dtypes[k]}")
+                    raise ValueError("Can not cast {} from {} to {}".format(name, min_input_dtype, self.input_dtypes[name]))
             else:
-                new_dict[k] = v
+                new_dict[name] = val
         return new_dict
 
     def make_input_dict(self, x, kwargs) -> Dict[str, np.array]:
@@ -320,7 +346,8 @@ class HSContract:
         must be provided exclusively either as single argument x or by kwargs.
         :param self:
         :param x: Input which will be decoded implicitly into Dict[str, np.array]
-        :type x: Union[pd.Series, Dict, pd.DataFrame, np.array]
+        :type x: Union[Dict, pd.DataFrame, np.array]
+        :type x: Union[Dict, pd.DataFrame, np.array]
         :param kwargs: Dictionary with tensors split according to tensor names, as specified in contract
         :type kwargs: Dict[str, np.array]
         :return:
@@ -332,13 +359,11 @@ class HSContract:
             raise ValueError("No data is passed")
 
         if len(self.input_names) == 1:
-            return self.__make_input_dict_from_single_tensor(x, kwargs)
+            return self.make_input_dict_from_single_tensor(x, kwargs)
 
         if type(x) is dict:
-            x = self.__check_for_python_builtins(x)
+            x = self.__check_for_python_scalars(x)
             input_dict = x
-        elif type(x) is pd.Series:
-            input_dict = dict(x)
         elif type(x) is pd.DataFrame:
             input_dict = dict(x)
             # Reshape into columnar form
@@ -346,13 +371,13 @@ class HSContract:
         elif type(x) is np.ndarray:
             raise NotImplementedError("Implicit conversion of single np.array in multi-tensor contracts is not supported")
         elif x is None:
-            kwargs = self.__check_for_python_builtins(kwargs)
+            kwargs = self.__check_for_python_scalars(kwargs)
             input_dict = kwargs
         else:
-            raise ValueError(f"Conversion failed. Expected [pandas.DataFrame, numpy.array, pandas.Series, dict], got {type(x)}")
+            raise ValueError("Conversion failed. Expected [pandas.DataFrame, numpy.array, dict], got {}".format(type(x)))
         return input_dict
 
-    def __make_input_dict_from_single_tensor(self, x, kwargs) -> Dict[str, np.array]:
+    def make_input_dict_from_single_tensor(self, x, kwargs) -> Dict[str, np.array]:
         """
         Similar to `make_input_dict`, but transforms input into input_dict without need of tensor name.
         Tensor name is used implicitly, since contract has only single tensor.
@@ -362,7 +387,7 @@ class HSContract:
         :return:
         """
         if len(kwargs) > 1:
-            raise ValueError(f"Too much arguments. Contract has only singe tensor \'{self.output_names[0]}\'")
+            raise ValueError("Too much arguments. Contract has only singe tensor \'{}\'".format(self.output_names[0]))
 
         input_name = self.input_names[0]
         if len(kwargs) == 1:
@@ -370,5 +395,5 @@ class HSContract:
         else:
             input_tensor = x
 
-        input_dict = {input_name: input_tensor}
+        input_dict = {input_name: np.array(input_tensor)}
         return input_dict

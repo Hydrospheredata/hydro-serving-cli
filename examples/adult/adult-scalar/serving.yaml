@@ -1,0 +1,51 @@
+kind: Model
+name: "adult_scalar"
+payload:
+  - "src/"
+  - "requirements.txt"
+  - "random-forest-adult.joblib"
+runtime: "hydrosphere/serving-runtime-python-3.6:0.1.2-rc0"
+install-command: "pip install -r requirements.txt"
+contract:
+  name: "predict"
+  inputs:
+    "Age":
+      shape: scalar
+      type: int64
+    "Workclass":
+      shape: scalar
+      type: int64
+    "Education":
+      shape: scalar
+      type: int64
+    "Marital Status":
+      shape: scalar
+      type: int64
+    "Occupation":
+      shape: scalar
+      type: int64
+    "Relationship":
+      shape: scalar
+      type: int64
+    "Race":
+      shape: scalar
+      type: int64
+    "Sex":
+      shape: scalar
+      type: int64
+    "Capital Gain":
+      shape: scalar
+      type: int64
+    "Capital Loss":
+      shape: scalar
+      type: int64
+    "Hours per week":
+      shape: scalar
+      type: int64
+    "Country":
+      shape: scalar
+      type: int64
+  outputs:
+    classes:
+      shape: scalar
+      type: int64
