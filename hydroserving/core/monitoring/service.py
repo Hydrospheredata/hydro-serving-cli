@@ -108,9 +108,9 @@ def custom_model_metric_spec(application, operator, threshold):
         "==": "Eq", 
         "!=": "NotEq", 
         ">": "Greater", 
-        "<": "Lower", 
+        "<": "Less", 
         ">=": "GreaterEq", 
-        "<=": "LowerEq", 
+        "<=": "LessEq", 
     }
 
     allowed_flat = list(chain(*allowed.items()))
