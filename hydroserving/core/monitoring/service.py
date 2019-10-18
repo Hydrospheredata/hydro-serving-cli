@@ -1,5 +1,6 @@
 import logging
 from enum import Enum
+from itertools import chain
 
 from hydroserving.util.fileutil import read_in_chunks
 
@@ -99,6 +100,37 @@ def error_rate_metric_spec(interval, threshold=None):
     return res
 
 
+def custom_model_metric_spec(application, operator, threshold):
+    if not isinstance(application, str):
+        raise TypeError("Invalid app_name: {}".format(application))
+    
+    allowed = {
+        "==": "Eq", 
+        "!=": "NotEq", 
+        ">": "Greater", 
+        "<": "Lower", 
+        ">=": "GreaterEq", 
+        "<=": "LowerEq", 
+    }
+
+    allowed_flat = list(chain(*allowed.items()))
+    if not isinstance(operator, str) or operator not in allowed_flat:
+        raise TypeError(
+            (
+                "Invalid comparison operator: {}\n"
+                "Available options are {}"
+            ).format(operator, allowed_flat)
+        )
+
+    operator = allowed[operator] if operator in allowed.keys() else operator
+    return {
+        "applicationName": application,
+        "thresholdCmpOperator": {
+            "kind": operator
+        },
+        "threshold": float(threshold)
+    }
+
 METRIC_KINDS = {
     "KSMetricSpec": ks_metric_spec,
     "RFMetricSpec": rf_metric_spec,
@@ -107,7 +139,8 @@ METRIC_KINDS = {
     "GANMetricSpec": gan_metric_spec,
     "LatencyMetricSpec": latency_metric_spec,
     "CounterMetricSpec": counter_metric_spec,
-    "ErrorRateMetricSpec": error_rate_metric_spec
+    "ErrorRateMetricSpec": error_rate_metric_spec,
+    "CustomModelMetricSpec": custom_model_metric_spec,
 }
 
 
