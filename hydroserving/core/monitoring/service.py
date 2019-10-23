@@ -113,20 +113,20 @@ def custom_model_metric_spec(application, operator, threshold):
         "<=": "LessEq", 
     }
 
-    allowed_flat = list(chain(*allowed.items()))
-    if not isinstance(operator, str) or operator not in allowed_flat:
-        raise TypeError(
-            (
-                "Invalid comparison operator: {}\n"
-                "Available options are {}"
-            ).format(operator, allowed_flat)
-        )
+    if not isinstance(operator, str):
+        raise TypeError("Invalid comparison operator type: {}".format(type(operator)))
 
-    operator = allowed[operator] if operator in allowed.keys() else operator
+    value = allowed.get(operator)
+    if not value:
+        if value not in allowed.values():
+            raise TypeError("Invalid comparison operator: {}".format(operator))
+        else:
+            value = operator
+
     return {
         "applicationName": application,
         "thresholdCmpOperator": {
-            "kind": operator
+            "kind": value
         },
         "threshold": float(threshold)
     }
