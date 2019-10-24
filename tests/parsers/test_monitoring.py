@@ -32,11 +32,18 @@ class MonitoringParserSpec(unittest.TestCase):
         yaml_doc = """
         monitoring:
           - name: TestMetric
-            kind: Accuracy
+            kind: CustomModelMetricSpec
             with-health: true
+            config: 
+              application: adult-scalar
+              operator: "<="
+              threshold: 0.7
         """
         monitoring_config = yaml.load(yaml_doc)['monitoring']
         result = parse_monitoring_params(monitoring_config)
         print(json.dumps(result[0]))
         self.assertTrue(result[0]['withHealth'])
-        self.assertFalse("threshold" in result[0]['config'])
+        self.assertEqual(
+            set(result[0]['config'].keys()), 
+            set(['applicationName', 'thresholdCmpOperator', 'threshold'])
+        )
