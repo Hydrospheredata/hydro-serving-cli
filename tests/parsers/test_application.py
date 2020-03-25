@@ -8,7 +8,7 @@ FILES_PATH = os.path.abspath('./examples/full-apply-example')
 
 class TestApplicationFile(unittest.TestCase):
     def test_simple_app(self):
-        with open(os.path.join(FILES_PATH, '5-claims-app.yml')) as f:
+        with open(os.path.join(FILES_PATH, '4-claims-app.yml')) as f:
             d = yaml_file(f)
         print(d)
         app = parse_application(d)
@@ -16,7 +16,7 @@ class TestApplicationFile(unittest.TestCase):
         self.assertIsNotNone(app)
 
     def test_pipeline_app(self):
-        with open(os.path.join(FILES_PATH, '6-claims-pipeline-app.yml')) as f:
+        with open(os.path.join(FILES_PATH, '5-claims-pipeline-app.yml')) as f:
             d = yaml_file(f)
         print(d)
         app = parse_application(d)
