@@ -97,13 +97,24 @@ def upload_model_async(model_api, model, tar):
 
 def upload_model(model_service, monitoring_service, model, model_path,
                  is_async, ignore_training_data, ignore_monitoring):
-    mv = upload_model_async(model_service, model, model_path)
-
     is_monitorable = not ignore_monitoring and model.monitoring
     if is_monitorable:
+        for param in model.monitoring:
+            monitor_name = param['config']['monitoringModelName']
+            monitor_version = param['config']['monitoringModelVersion']
+            monitor_model = model_service.find_version(monitor_name, monitor_version)
+            if monitor_model:
+                del param['config']['monitoringModelName']
+                del param['config']['monitoringModelVersion']
+                param['config']['modelVersionId'] = monitor_model['id']
+            else:
+                raise RuntimeError("Can't upload model. Monitoring model {} {} is not found".format(monitor_name, monitor_version))
+
+    mv = upload_model_async(model_service, model, model_path)
+
+    if is_monitorable:
         logging.info("Monitoring config is here. Preparing config for monitoring service.")
-        monitoring_params = model.monitoring
-        for param in monitoring_params:
+        for param in model.monitoring:
             param["modelVersionId"] = mv["id"]
             logging.info("Creating monitoring %s", param)
             result = monitoring_service.create_metric_spec(param)

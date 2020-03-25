@@ -3,47 +3,36 @@ import json
 
 import yaml
 
-from hydroserving.core.monitoring.parser import parse_monitoring_params
+from hydroserving.core.monitoring.service import parse_monitoring_params
 
 
 class MonitoringParserSpec(unittest.TestCase):
-    def test_health_flag(self):
-        # name: Latency
-        # kind: LatencyMetricSpec
-        # with-health: false
-        # config:
-        # “interval”: 15
-        yaml_doc = """
-        monitoring:
-          - name: Latency
-            kind: LatencyMetricSpec
-            with-health: true
-            config:
-              interval: 15
-              threshold: 10
-        """
-        monitoring_config = yaml.load(yaml_doc)['monitoring']
-        result = parse_monitoring_params(monitoring_config)
-        print(json.dumps(result[0]))
-        self.assertTrue(result[0]['withHealth'])
-        self.assertEqual(result[0]['config']['threshold'], 10)
-
-    def test_custom_metric(self):
+    def test_correct_custom_metric(self):
         yaml_doc = """
         monitoring:
           - name: TestMetric
-            kind: CustomModelMetricSpec
-            with-health: true
             config: 
-              application: adult-scalar
+              monitoring-model: adult-scalar:12
               operator: "<="
               threshold: 0.7
         """
         monitoring_config = yaml.load(yaml_doc)['monitoring']
         result = parse_monitoring_params(monitoring_config)
         print(json.dumps(result[0]))
-        self.assertTrue(result[0]['withHealth'])
         self.assertEqual(
-            set(result[0]['config'].keys()), 
-            set(['applicationName', 'thresholdCmpOperator', 'threshold'])
+            set(result[0]['config'].keys()),
+            {'monitoringModelVersion', 'monitoringModelName', 'thresholdCmpOperator', 'threshold'}
         )
+
+    @unittest.expectedFailure
+    def test_incorrect_name_custom_metric(self):
+        yaml_doc = """
+        monitoring:
+          - name: TestMetric
+            config: 
+              monitoring-model: adult-scalar
+              operator: "<="
+              threshold: 0.7
+        """
+        monitoring_config = yaml.load(yaml_doc)['monitoring']
+        result = parse_monitoring_params(monitoring_config)

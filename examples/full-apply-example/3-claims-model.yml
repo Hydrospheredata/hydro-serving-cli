@@ -26,21 +26,8 @@ contract:
       profile: real
 
 monitoring:
-  - name: ks
-    kind: KSMetricSpec
+  - name: cool-metric
     config:
-      input: client_profile_42
-    with-health: true
-  - name: gan
-    kind: GANMetricSpec
-    with-health: true
-    config:
-      input: feature
-      application: claims-gan-app
-  - name: autoencoder
-    kind: AEMetricSpec
-    with-health: true
-    config:
-      application: claims-autoencoder-app
-      input: feature
-      threshold: 69
+      monitoring-model: apply-demo-claims-autoencoder:1
+      threshold: 12
+      operator: "<="

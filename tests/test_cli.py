@@ -117,10 +117,22 @@ class CLITests(unittest.TestCase):
                         "status": "Released"
                     }
                 ).encode("utf-8")
-            elif request.path_url == "/monitoring/metricspec" and request.method == "POST":
+            elif request.path_url == '/api/v2/model/version/apply-demo-claims-autoencoder/1':
+                resp = requests.Response()
+                resp.status_code = 200
+                resp._content = json.dumps(
+                    {
+                        "id": 1337,
+                        "model": {"name": "apply-demo-claims-autoencoder"},
+                        "modelVersion": 1,
+                        "status": "Released"
+                    }
+                ).encode("utf-8")
+            elif request.path_url == "/api/v2/monitoring/metricspec" and request.method == "POST":
                 d = json.loads(request.text)
                 print(d)
                 assert d["modelVersionId"] == 1
+                assert d["config"]["modelVersionId"] == 1337
                 resp = requests.Response()
                 resp.status_code = 200
                 resp._content = request.text.encode("utf-8")
@@ -196,7 +208,7 @@ class CLITests(unittest.TestCase):
             model_api = ModelService(connection, monitoring_service)
             application_api = ApplicationService(connection, model_api)
             apply_service = ApplyService(model_api, None, application_api)
-            result = apply_service.apply(["./examples/full-apply-example/5-claims-app.yml"])
+            result = apply_service.apply(["./examples/full-apply-example/4-claims-app.yml"])
 
 
     def test_application_pipeline_apply(self):
@@ -280,7 +292,7 @@ class CLITests(unittest.TestCase):
             model_api = ModelService(connection, monitoring_service)
             application_api = ApplicationService(connection, model_api)
             apply_service = ApplyService(model_api, None, application_api)
-            result = apply_service.apply(["./examples/full-apply-example/6-claims-pipeline-app.yml"])
+            result = apply_service.apply(["./examples/full-apply-example/5-claims-pipeline-app.yml"])
 
 
     def test_application_update_apply(self):
@@ -323,7 +335,7 @@ class CLITests(unittest.TestCase):
             model_api = ModelService(connection, monitoring_service)
             application_api = ApplicationService(connection, model_api)
             apply_service = ApplyService(model_api, None, application_api)
-            result = apply_service.apply(["./examples/full-apply-example/5-claims-app.yml"])
+            result = apply_service.apply(["./examples/full-apply-example/4-claims-app.yml"])
 
 
     def test_host_selector_new_apply(self):
