@@ -89,10 +89,10 @@ class MonitoringService:
         Args:
             create_request (EntryAggregationSpecification):
         """
-        return self.connection.post_json("/monitoring/metricspec", create_request).json()
+        return self.connection.post_json("/api/v2/monitoring/metricspec", create_request).json()
 
     def list_metric_specs(self):
-        return self.connection.get("/monitoring/metricspec").json()
+        return self.connection.get("/api/v2/monitoring/metricspec").json()
 
     def push_s3_csv(self, model_version_id, s3_path):
         res = self.connection.post_json(

@@ -128,7 +128,7 @@ class CLITests(unittest.TestCase):
                         "status": "Released"
                     }
                 ).encode("utf-8")
-            elif request.path_url == "/monitoring/metricspec" and request.method == "POST":
+            elif request.path_url == "/api/v2/monitoring/metricspec" and request.method == "POST":
                 d = json.loads(request.text)
                 print(d)
                 assert d["modelVersionId"] == 1
