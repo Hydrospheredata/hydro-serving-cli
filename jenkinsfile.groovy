@@ -21,6 +21,7 @@ def buildFunction={
         python3 -m venv venv &&
         source venv/bin/activate
         
+        pip install wheel~=0.34.2 &&
         pip install setuptools==39.0.1 &&
         make PYTHON=python wheel &&
         make PYTHON=python3 test &&
