@@ -17,10 +17,15 @@ def buildAndPublishReleaseFunction={
 }
 
 def buildFunction={
-    sh "sudo pip3 install --upgrade pip"
-    sh "sudo pip3 install setuptools==39.0.1"
-    sh "make PYTHON=python3 wheel"
-    sh "make PYTHON=python3 test"
+    sh """#!/bin/bash
+        python3 -m venv venv &&
+        source venv/bin/activate
+        
+        pip install setuptools==39.0.1 &&
+        make PYTHON=python wheel &&
+        make PYTHON=python3 test &&
+        deactivate
+    """
 }
 
 def collectTestResults = {
