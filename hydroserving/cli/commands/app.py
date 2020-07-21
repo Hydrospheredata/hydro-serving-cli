@@ -7,6 +7,7 @@ from hydroserving.cli.commands.hs import hs_cli
 from hydroserving.cli.context import CONTEXT_SETTINGS
 from hydroserving.cli.help import PROFILE_HELP, PROFILE_PUSH_HELP, PROFILE_MODEL_VERSION_HELP
 
+from hydrosdk.application import Application
 
 @hs_cli.group(help=PROFILE_HELP)
 def app():
@@ -16,7 +17,7 @@ def app():
 @app.command(context_settings=CONTEXT_SETTINGS)
 @click.pass_obj
 def list(obj):
-    apps = obj.application_service.list()
+    apps = obj.application.list()
     if apps:
         apps_view = []
         for a in apps:
@@ -35,8 +36,8 @@ def list(obj):
                 required=True)
 @click.pass_obj
 def rm(obj, app_name):
-    app = obj.application_service.find(app_name)
+    app = obj.application.find(app_name)
     if not app:
         raise click.ClickException("Application {} is not found".format(app_name))
-    res = obj.application_service.delete(app_name)
+    res = obj.application.delete(app_name)
     logging.info("Application is  deleted: %s", res)
