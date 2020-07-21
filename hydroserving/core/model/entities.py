@@ -22,7 +22,7 @@ class UploadMetadata:
 
 class Model:
     def __init__(self, name, host_selector, runtime, contract, payload,
-                 training_data_file, install_command, monitoring, metadata):
+                 training_data_file, install_command, monitoring, metadata, monitoring_configuration):
         self.name = name
         self.host_selector = host_selector
         self.runtime = runtime
@@ -32,6 +32,7 @@ class Model:
         self.install_command = install_command
         self.monitoring = monitoring
         self.metadata = metadata
+        self.monitoring_configuration = monitoring_configuration
 
     def validate(self):
         if not isinstance(self.name, str):

@@ -4,6 +4,7 @@ from hydroserving.core.contract import contract_from_dict
 from hydroserving.core.image import DockerImage
 from hydroserving.core.model.entities import Model
 from hydroserving.core.monitoring.service import parse_monitoring_params
+from hydroserving.core.monitoring_configuration.parser import parse_monitoring_configuration_selector
 
 
 def parse_model(in_dict):
@@ -21,7 +22,8 @@ def parse_model(in_dict):
         runtime=DockerImage.parse_fullname(in_dict["runtime"]),
         host_selector=in_dict.get("host-selector"),
         monitoring=parse_monitoring_params(in_dict.get("monitoring")),
-        metadata=parse_metadata(in_dict.get("metadata"))
+        metadata=parse_metadata(in_dict.get("metadata")),
+        monitoring_configuration=parse_monitoring_configuration_selector(in_dict.get("monitoring_configuration"))
     )
     model.validate()
     return model

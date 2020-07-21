@@ -3,11 +3,13 @@ import logging
 from hydroserving.config.config import ConfigService
 from hydroserving.core.apply import ApplyService
 from hydroserving.core.application.service import ApplicationService
+from hydroserving.core.monitoring_configuration.monitoring_configuration import MonitoringConfigurationService
 from hydroserving.core.host_selector.host_selector import HostSelectorService
 from hydroserving.core.model.service import ModelService
 from hydroserving.core.monitoring.service import MonitoringService
 from hydroserving.config.settings import HOME_PATH_EXPANDED
 from hydroserving.core.servable.service import ServableService
+from hydrosdk.application import Application
 
 
 class ContextObject:
@@ -23,13 +25,16 @@ class ContextObject:
         self.monitoring_service = MonitoringService(conn)
         self.model_service = ModelService(conn, self.monitoring_service)
         self.selector_service = HostSelectorService(conn)
-        self.application_service = ApplicationService(conn, self.model_service)
+        self.mc_service = MonitoringConfigurationService(conn)
+        # FIXME: wrong type hint below
+        self.application = Application.create(conn, self.model_service)
         self.servable_service = ServableService(conn)
 
         self.apply_service = ApplyService(
             self.model_service,
             self.selector_service,
-            self.application_service,
+            self.application,
+            self.mc_service
         )
 
     @staticmethod
