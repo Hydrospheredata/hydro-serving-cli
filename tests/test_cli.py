@@ -339,7 +339,6 @@ class CLITests(unittest.TestCase):
             application_api = ApplicationService(connection, model_api)
             mc_api = MonitoringConfigurationService(connection)
             apply_service = ApplyService(model_api, None, application_api, mc_api)
-            mc_api = MonitoringConfigurationService(connection)
             result = apply_service.apply(["./examples/full-apply-example/4-claims-app.yml"])
 
 

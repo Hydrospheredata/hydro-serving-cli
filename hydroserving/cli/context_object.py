@@ -9,7 +9,6 @@ from hydroserving.core.model.service import ModelService
 from hydroserving.core.monitoring.service import MonitoringService
 from hydroserving.config.settings import HOME_PATH_EXPANDED
 from hydroserving.core.servable.service import ServableService
-from hydrosdk.application import Application
 
 
 class ContextObject:
