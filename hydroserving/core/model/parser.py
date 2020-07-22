@@ -13,7 +13,7 @@ def parse_model(in_dict):
     contract = contract_from_dict(in_dict.get("contract"))
     if not in_dict['runtime']:
         raise ClickException("'runtime' field is not defined")
-    monitoring_configuration = in_dict.get("monitoring_configuration")
+    monitoring_configuration = in_dict.get("monitoring-configuration")
 
     model = Model(
         name=in_dict.get("name"),
@@ -28,6 +28,7 @@ def parse_model(in_dict):
         monitoring_configuration=parse_monitoring_configuration_selector(monitoring_configuration)
     )
     model.validate()
+
     return model
 
 
