@@ -25,15 +25,14 @@ class ContextObject:
         self.monitoring_service = MonitoringService(conn)
         self.model_service = ModelService(conn, self.monitoring_service)
         self.selector_service = HostSelectorService(conn)
+        self.application_service = ApplicationService(conn, self.model_service)
         self.mc_service = MonitoringConfigurationService(conn)
-        # FIXME: wrong type hint below
-        self.application = Application.create(conn, self.model_service)
         self.servable_service = ServableService(conn)
 
         self.apply_service = ApplyService(
             self.model_service,
             self.selector_service,
-            self.application,
+            self.application_service,
             self.mc_service
         )
 
