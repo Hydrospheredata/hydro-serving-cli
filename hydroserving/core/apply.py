@@ -4,8 +4,6 @@ import sys
 
 from hydroserving.config.parser import parse_config
 from hydroserving.core.application.parser import parse_application
-from hydroserving.core.monitoring_configuration.parser import parse_monitoring_configuration_selector
-from hydroserving.core.monitoring_configuration.monitoring_configuration import MonitoringConfigurationService
 from hydroserving.core.application.service import ApplicationService
 from hydroserving.core.host_selector.parser import parse_host_selector
 from hydroserving.core.model.parser import parse_model
@@ -18,7 +16,6 @@ KIND_TO_PARSER = {
     "Model": parse_model,
     "HostSelector": parse_host_selector,
     "Application": parse_application,
-    "MonitoringConfiguration": parse_monitoring_configuration_selector
 }
 
 
@@ -33,19 +30,17 @@ def parse_generic_dict(in_dict):
 
 
 class ApplyService:
-    def __init__(self, model_service, selector_service, application_service, mc_service):
+    def __init__(self, model_service, selector_service, application_service):
         """
 
         Args:
             application_service (ApplicationService):
             selector_service (HostSelectorService):
             model_service (ModelService):
-            mc_service (MonitoringConfigurationService):
         """
         self.application_service = application_service
         self.selector_service = selector_service
         self.model_service = model_service
-        self.mc_service = mc_service
 
     def apply(self, paths, **kwargs):
         """
@@ -99,9 +94,6 @@ class ApplyService:
             elif kind == 'HostSelector':
                 logging.debug("HostSelector detected")
                 responses.append(self.selector_service.apply(parsed))
-            elif kind == 'MonitoringConfiguration':
-                logging.debug("MonitoringConfiguration detected")
-                responses.append(self.mc_service.apply(parsed))
             else:
                 logging.error("Unknown resource: {}".format(parsed))
                 raise UnknownResource(doc_obj)

@@ -3,7 +3,6 @@ import logging
 from hydroserving.config.config import ConfigService
 from hydroserving.core.apply import ApplyService
 from hydroserving.core.application.service import ApplicationService
-from hydroserving.core.monitoring_configuration.monitoring_configuration import MonitoringConfigurationService
 from hydroserving.core.host_selector.host_selector import HostSelectorService
 from hydroserving.core.model.service import ModelService
 from hydroserving.core.monitoring.service import MonitoringService
@@ -25,14 +24,12 @@ class ContextObject:
         self.model_service = ModelService(conn, self.monitoring_service)
         self.selector_service = HostSelectorService(conn)
         self.application_service = ApplicationService(conn, self.model_service)
-        self.mc_service = MonitoringConfigurationService(conn)
         self.servable_service = ServableService(conn)
 
         self.apply_service = ApplyService(
             self.model_service,
             self.selector_service,
-            self.application_service,
-            self.mc_service
+            self.application_service
         )
 
     @staticmethod

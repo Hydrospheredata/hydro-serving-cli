@@ -13,7 +13,6 @@ from hydroserving.core.model.parser import parse_model
 from hydroserving.core.model.service import ModelService
 from hydroserving.core.model.upload import upload_model
 from hydroserving.core.monitoring.service import MonitoringService
-from hydroserving.core.monitoring_configuration.monitoring_configuration import MonitoringConfigurationService
 from hydroserving.http.remote_connection import RemoteConnection
 from hydroserving.util.yamlutil import yaml_file
 
@@ -208,8 +207,7 @@ class CLITests(unittest.TestCase):
             monitoring_service = MonitoringService(connection)
             model_api = ModelService(connection, monitoring_service)
             application_api = ApplicationService(connection, model_api)
-            mc_api = MonitoringConfigurationService(connection)
-            apply_service = ApplyService(model_api, None, application_api, mc_api)
+            apply_service = ApplyService(model_api, None, application_api)
             result = apply_service.apply(["./examples/full-apply-example/4-claims-app.yml"])
 
 
@@ -293,8 +291,7 @@ class CLITests(unittest.TestCase):
             monitoring_service = MonitoringService(connection)
             model_api = ModelService(connection, monitoring_service)
             application_api = ApplicationService(connection, model_api)
-            mc_api = MonitoringConfigurationService(connection)
-            apply_service = ApplyService(model_api, None, application_api, mc_api)
+            apply_service = ApplyService(model_api, None, application_api)
             result = apply_service.apply(["./examples/full-apply-example/6-claims-pipeline-app.yml"])
 
 
@@ -337,8 +334,7 @@ class CLITests(unittest.TestCase):
             monitoring_service = MonitoringService(connection)
             model_api = ModelService(connection, monitoring_service)
             application_api = ApplicationService(connection, model_api)
-            mc_api = MonitoringConfigurationService(connection)
-            apply_service = ApplyService(model_api, None, application_api, mc_api)
+            apply_service = ApplyService(model_api, None, application_api)
             result = apply_service.apply(["./examples/full-apply-example/4-claims-app.yml"])
 
 
@@ -362,8 +358,7 @@ class CLITests(unittest.TestCase):
             model_api = ModelService(connection, monitoring_service)
             application_api = ApplicationService(connection, model_api)
             selector_api = HostSelectorService(connection)
-            mc_api = MonitoringConfigurationService(connection)
-            apply_service = ApplyService(model_api, selector_api, application_api, mc_api)
+            apply_service = ApplyService(model_api, selector_api, application_api)
             result = apply_service.apply(["./examples/full-apply-example/1-intel-xeon-env.yml"])
 
 
@@ -383,6 +378,5 @@ class CLITests(unittest.TestCase):
             model_api = ModelService(connection, monitoring_service)
             application_api = ApplicationService(connection, model_api)
             selector_api = HostSelectorService(connection)
-            mc_api = MonitoringConfigurationService(connection)
-            apply_service = ApplyService(model_api, selector_api, application_api, mc_api)
+            apply_service = ApplyService(model_api, selector_api, application_api)
             result = apply_service.apply(["./examples/full-apply-example/1-intel-xeon-env.yml"])
