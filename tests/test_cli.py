@@ -147,7 +147,7 @@ class CLITests(unittest.TestCase):
             connection = RemoteConnection("http://localhost")
             monitoring_service = MonitoringService(connection)
             model_api = ModelService(connection, monitoring_service)
-            apply_api = ApplyService(model_api, None, None, None)
+            apply_api = ApplyService(model_api, None, None)
             yaml_path = os.path.join("./examples/full-apply-example/3-claims-model.yml")
             result = apply_api.apply([yaml_path], ignore_monitoring=False, no_training_data=False)
             print(result)
