@@ -50,6 +50,8 @@ from hydroserving.util.yamlutil import yaml_file
               required=False,
               default=False,
               is_flag=True)
+@click.option('--monitoring_configuration',
+              required=False)
 @click.option('--async', 'is_async', is_flag=True, default=False)
 @click.pass_obj
 def upload(obj, name, runtime, host_selector, training_data, dir,

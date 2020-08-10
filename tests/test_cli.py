@@ -292,7 +292,7 @@ class CLITests(unittest.TestCase):
             model_api = ModelService(connection, monitoring_service)
             application_api = ApplicationService(connection, model_api)
             apply_service = ApplyService(model_api, None, application_api)
-            result = apply_service.apply(["./examples/full-apply-example/6-claims-pipeline-app.yml"])
+            result = apply_service.apply(["./examples/full-apply-example/5-claims-pipeline-app.yml"])
 
 
     def test_application_update_apply(self):
