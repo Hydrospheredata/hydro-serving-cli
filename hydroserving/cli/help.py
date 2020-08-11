@@ -114,3 +114,9 @@ Delete an existing host selector
 HOST_SELECTOR_NODE_SELECTOR_HELP = """
 Kubernetes specific nodeSelector ("key:value")
 """
+
+# DeploymentConfiguration help
+
+DEPLOYMENT_CONFIGURATION_LIST_HELP = """List all existing deployment configurations"""
+DEPLOYMENT_CONFIGURATION_HELP = """Hydrosphere DeploymentConfiguration API"""
+DEPLOYMENT_CONFIGURATION_RM_HELP = """Delete an existing deployment configuration"""

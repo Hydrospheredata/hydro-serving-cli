@@ -5,6 +5,9 @@ import sys
 from hydroserving.config.parser import parse_config
 from hydroserving.core.application.parser import parse_application
 from hydroserving.core.application.service import ApplicationService
+from hydroserving.core.deployment_config.parser import parse_deployment_configuration
+from hydroserving.core.deployment_config.service import DeploymentConfigurationService
+from hydroserving.core.host_selector.host_selector import HostSelectorService
 from hydroserving.core.host_selector.parser import parse_host_selector
 from hydroserving.core.model.parser import parse_model
 from hydroserving.core.model.service import ModelService
@@ -15,7 +18,8 @@ KIND_TO_PARSER = {
     "Config": parse_config,
     "Model": parse_model,
     "HostSelector": parse_host_selector,
-    "Application": parse_application
+    "Application": parse_application,
+    "DeploymentConfiguration": parse_deployment_configuration
 }
 
 
@@ -30,7 +34,11 @@ def parse_generic_dict(in_dict):
 
 
 class ApplyService:
-    def __init__(self, model_service, selector_service, application_service):
+    def __init__(self,
+                 model_service: ModelService,
+                 selector_service: HostSelectorService,
+                 application_service: ApplicationService,
+                 deployment_configuration_service: DeploymentConfigurationService):
         """
 
         Args:
@@ -41,6 +49,7 @@ class ApplyService:
         self.application_service = application_service
         self.selector_service = selector_service
         self.model_service = model_service
+        self.deployment_configuration_service = deployment_configuration_service
 
     def apply(self, paths, **kwargs):
         """
@@ -94,6 +103,9 @@ class ApplyService:
             elif kind == 'HostSelector':
                 logging.debug("HostSelector detected")
                 responses.append(self.selector_service.apply(parsed))
+            elif kind == 'DeploymentConfig':
+                logging.debug("DeploymentConfiguration detected")
+                responses.append(self.deployment_configuration_service.apply(parsed))
             else:
                 logging.error("Unknown resource: {}".format(parsed))
                 raise UnknownResource(doc_obj)
