@@ -103,7 +103,7 @@ class ApplyService:
             elif kind == 'HostSelector':
                 logging.debug("HostSelector detected")
                 responses.append(self.selector_service.apply(parsed))
-            elif kind == 'DeploymentConfig':
+            elif kind == 'DeploymentConfiguration':
                 logging.debug("DeploymentConfiguration detected")
                 responses.append(self.deployment_configuration_service.apply(parsed))
             else:

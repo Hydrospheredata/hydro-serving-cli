@@ -1,9 +1,10 @@
 import json
 import os
 import unittest
-from click.testing import CliRunner
+
 import requests
 import requests_mock
+from click.testing import CliRunner
 
 from hydroserving.cli.commands.hs import hs_cli
 from hydroserving.core.application.service import ApplicationService
@@ -152,9 +153,9 @@ class CLITests(unittest.TestCase):
             result = apply_api.apply([yaml_path], ignore_monitoring=False, no_training_data=False)
             print(result)
 
-
     def test_application_singular_apply(self):
         t = 1
+
         def _upload_matcher(request):
             resp = None
             if request.path_url == "/api/v2/model/version/apply-demo-claims-model/2":
@@ -187,7 +188,7 @@ class CLITests(unittest.TestCase):
                     resp._content = json.dumps({
                         'id': 1,
                         'status': 'Ready'
-                    }).encode("utf-8") 
+                    }).encode("utf-8")
                 t = t + 1
             elif request.path_url == "/api/v2/application" and request.method == "POST":
                 req = json.loads(request.text)
@@ -210,9 +211,9 @@ class CLITests(unittest.TestCase):
             apply_service = ApplyService(model_api, None, application_api, None)
             result = apply_service.apply(["./examples/full-apply-example/4-claims-app.yml"])
 
-
     def test_application_pipeline_apply(self):
         t = 1
+
         def _upload_matcher(request):
             resp = None
             if request.path_url == '/api/v2/model/version/claims-preprocessing/1':
@@ -294,7 +295,6 @@ class CLITests(unittest.TestCase):
             apply_service = ApplyService(model_api, None, application_api, None)
             result = apply_service.apply(["./examples/full-apply-example/5-claims-pipeline-app.yml"])
 
-
     def test_application_update_apply(self):
         def _upload_matcher(request):
             resp = None
@@ -337,7 +337,6 @@ class CLITests(unittest.TestCase):
             apply_service = ApplyService(model_api, None, application_api, None)
             result = apply_service.apply(["./examples/full-apply-example/4-claims-app.yml"])
 
-
     def test_host_selector_new_apply(self):
         def _upload_matcher(request):
             resp = None
@@ -360,7 +359,6 @@ class CLITests(unittest.TestCase):
             selector_api = HostSelectorService(connection)
             apply_service = ApplyService(model_api, selector_api, application_api, None)
             result = apply_service.apply(["./examples/full-apply-example/1-intel-xeon-env.yml"])
-
 
     def test_host_selector_existing_apply(self):
         def _upload_matcher(request):

@@ -1,5 +1,6 @@
-import click
 import logging
+
+import click
 
 from hydroserving.cli.commands.hs import hs_cli
 from hydroserving.cli.context import CONTEXT_SETTINGS

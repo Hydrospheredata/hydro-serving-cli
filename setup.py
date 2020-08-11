@@ -14,15 +14,15 @@ setup(
     install_requires=[
         "click~=6.7",
         "click-log~=0.3",
-        "pyyaml~=4.2b4",
+        "pyyaml~=5.3",
         "protobuf~=3.6",
         "kafka-python==1.4.3",
         "hydro-serving-grpc~=2.0",
         "requests~=2.21",
-        "requests-toolbelt==0.8.0",
+        "requests-toolbelt~=0.9",
         "gitpython~=2.1",
         "tabulate~=0.8",
-        "hydrosdk ~= 2.4"
+        "hydrosdk~=2.4",
         "sseclient-py ~=1.7",
         "numpy >= 1.15.0"
     ],

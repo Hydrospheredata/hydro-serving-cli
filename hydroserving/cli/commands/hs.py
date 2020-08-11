@@ -1,12 +1,13 @@
-import os
+import logging
 
 import click
 import click_log
-import logging
+
 from hydroserving.cli.context import CONTEXT_SETTINGS
-from hydroserving.cli.help import VERBOSE_HELP
 from hydroserving.cli.context_object import ContextObject
+from hydroserving.cli.help import VERBOSE_HELP
 from hydroserving.util.log_handler import StdoutLogHandler
+
 
 @click.group(context_settings=CONTEXT_SETTINGS)
 @click.version_option(message="%(prog)s version %(version)s")

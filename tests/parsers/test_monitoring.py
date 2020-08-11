@@ -16,7 +16,7 @@ class MonitoringParserSpec(unittest.TestCase):
               operator: "<="
               threshold: 0.7
         """
-        monitoring_config = yaml.load(yaml_doc)['monitoring']
+        monitoring_config = yaml.load(yaml_doc, Loader=yaml.FullLoader)['monitoring']
         result = parse_monitoring_params(monitoring_config)
         print(json.dumps(result[0]))
         self.assertEqual(
@@ -34,5 +34,5 @@ class MonitoringParserSpec(unittest.TestCase):
               operator: "<="
               threshold: 0.7
         """
-        monitoring_config = yaml.load(yaml_doc)['monitoring']
+        monitoring_config = yaml.load(yaml_doc, Loader=yaml.FullLoader)['monitoring']
         result = parse_monitoring_params(monitoring_config)

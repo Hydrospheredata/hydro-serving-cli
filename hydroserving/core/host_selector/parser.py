@@ -1,7 +1,9 @@
+from typing import Optional
+
 from hydroserving.core.host_selector.host_selector import HostSelector
 
 
-def parse_host_selector(in_dict):
+def parse_host_selector(in_dict) -> Optional[HostSelector]:
     if in_dict is None:
         return None
     return HostSelector(

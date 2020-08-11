@@ -1,3 +1,5 @@
+from typing import Dict, Optional
+
 from click import ClickException
 
 from hydroserving.core.contract import contract_from_dict
@@ -6,7 +8,7 @@ from hydroserving.core.model.entities import Model
 from hydroserving.core.monitoring.service import parse_monitoring_params
 
 
-def parse_model(in_dict):
+def parse_model(in_dict: Dict) -> Optional[Model]:
     if in_dict is None:
         return None
     contract = contract_from_dict(in_dict.get("contract"))

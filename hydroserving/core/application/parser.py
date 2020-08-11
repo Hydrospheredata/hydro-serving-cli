@@ -63,7 +63,7 @@ def parse_pipeline(in_list):
     return {'stages': pipeline_stages}
 
 
-def parse_application(in_dict):
+def parse_application(in_dict) -> ApplicationDef:
     singular_def = in_dict.get("singular")
     pipeline_def = in_dict.get("pipeline")
 
