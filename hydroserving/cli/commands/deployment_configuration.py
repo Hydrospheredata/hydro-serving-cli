@@ -18,7 +18,7 @@ def list(obj):
     logging.info("List of available deployment configurations:")
     deployment_configurations = obj.deployment_configuration_service.list()
     for config in deployment_configurations:
-        click.echo(config)
+        click.echo(f"\t* {config}")
 
 
 @deployment_configuration.command(help=DEPLOYMENT_CONFIGURATION_RM_HELP)
