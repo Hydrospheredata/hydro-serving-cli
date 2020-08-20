@@ -21,7 +21,6 @@ def parse_model(in_dict: Dict) -> Optional[Model]:
         training_data_file=in_dict.get("training-data"),
         install_command=in_dict.get("install-command"),
         runtime=DockerImage.parse_fullname(in_dict["runtime"]),
-        host_selector=in_dict.get("host-selector"),
         monitoring=parse_monitoring_params(in_dict.get("monitoring")),
         metadata=parse_metadata(in_dict.get("metadata"))
     )

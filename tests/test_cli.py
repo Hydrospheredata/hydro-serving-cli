@@ -9,7 +9,6 @@ from click.testing import CliRunner
 from hydroserving.cli.commands.hs import hs_cli
 from hydroserving.core.application.service import ApplicationService
 from hydroserving.core.apply import ApplyService
-from hydroserving.core.host_selector.host_selector import HostSelectorService
 from hydroserving.core.model.parser import parse_model
 from hydroserving.core.model.service import ModelService
 from hydroserving.core.model.upload import upload_model
@@ -37,7 +36,6 @@ class CLITests(unittest.TestCase):
                 print(metadata)
                 assert metadata["name"] == "example_script"
                 assert metadata["installCommand"] == "pip install -r requirements.txt"
-                assert metadata["hostSelectorName"] == "super-gpu"
                 resp = requests.Response()
                 resp.status_code = 200
                 resp._content = json.dumps(
@@ -95,7 +93,6 @@ class CLITests(unittest.TestCase):
                 m = metadata["metadata"]
                 print(metadata)
                 assert metadata["name"] == "apply-demo-claims-model"
-                assert metadata["hostSelectorName"] == "xeon-cpu"
                 assert m["author"] == "cool-data-stan"
                 resp = requests.Response()
                 resp.status_code = 200
@@ -148,7 +145,7 @@ class CLITests(unittest.TestCase):
             connection = RemoteConnection("http://localhost")
             monitoring_service = MonitoringService(connection)
             model_api = ModelService(connection, monitoring_service)
-            apply_api = ApplyService(model_api, None, None, None)
+            apply_api = ApplyService(model_api, None, None)
             yaml_path = os.path.join("./examples/full-apply-example/3-claims-model.yml")
             result = apply_api.apply([yaml_path], ignore_monitoring=False, no_training_data=False)
             print(result)
@@ -208,7 +205,7 @@ class CLITests(unittest.TestCase):
             monitoring_service = MonitoringService(connection)
             model_api = ModelService(connection, monitoring_service)
             application_api = ApplicationService(connection, model_api)
-            apply_service = ApplyService(model_api, None, application_api, None)
+            apply_service = ApplyService(model_api, application_api, None)
             result = apply_service.apply(["./examples/full-apply-example/4-claims-app.yml"])
 
     def test_application_pipeline_apply(self):
@@ -292,7 +289,7 @@ class CLITests(unittest.TestCase):
             monitoring_service = MonitoringService(connection)
             model_api = ModelService(connection, monitoring_service)
             application_api = ApplicationService(connection, model_api)
-            apply_service = ApplyService(model_api, None, application_api, None)
+            apply_service = ApplyService(model_api, application_api, None)
             result = apply_service.apply(["./examples/full-apply-example/5-claims-pipeline-app.yml"])
 
     def test_application_update_apply(self):
@@ -334,47 +331,6 @@ class CLITests(unittest.TestCase):
             monitoring_service = MonitoringService(connection)
             model_api = ModelService(connection, monitoring_service)
             application_api = ApplicationService(connection, model_api)
-            apply_service = ApplyService(model_api, None, application_api, None)
+            apply_service = ApplyService(model_api, application_api, None)
             result = apply_service.apply(["./examples/full-apply-example/4-claims-app.yml"])
 
-    def test_host_selector_new_apply(self):
-        def _upload_matcher(request):
-            resp = None
-            if request.path_url == "/api/v2/hostSelector/xeon-cpu" and request.method == "GET":
-                resp = requests.Response()
-                resp.status_code = 404
-                resp._content = json.dumps({}).encode("utf-8")
-            elif request.path_url == "/api/v2/hostSelector" and request.method == "POST":
-                resp = requests.Response()
-                resp.status_code = 200
-                resp._content = json.dumps({"id": 1}).encode("utf-8")
-            return resp
-
-        with requests_mock.Mocker() as req_mock:
-            req_mock.add_matcher(_upload_matcher)
-            connection = RemoteConnection("http://localhost")
-            monitoring_service = MonitoringService(connection)
-            model_api = ModelService(connection, monitoring_service)
-            application_api = ApplicationService(connection, model_api)
-            selector_api = HostSelectorService(connection)
-            apply_service = ApplyService(model_api, selector_api, application_api, None)
-            result = apply_service.apply(["./examples/full-apply-example/1-intel-xeon-env.yml"])
-
-    def test_host_selector_existing_apply(self):
-        def _upload_matcher(request):
-            resp = None
-            if request.path_url == "/api/v2/hostSelector/xeon-cpu" and request.method == "GET":
-                resp = requests.Response()
-                resp.status_code = 200
-                resp._content = json.dumps({"id": 1}).encode("utf-8")
-            return resp
-
-        with requests_mock.Mocker() as req_mock:
-            req_mock.add_matcher(_upload_matcher)
-            connection = RemoteConnection("http://localhost")
-            monitoring_service = MonitoringService(connection)
-            model_api = ModelService(connection, monitoring_service)
-            application_api = ApplicationService(connection, model_api)
-            selector_api = HostSelectorService(connection)
-            apply_service = ApplyService(model_api, selector_api, application_api, None)
-            result = apply_service.apply(["./examples/full-apply-example/1-intel-xeon-env.yml"])

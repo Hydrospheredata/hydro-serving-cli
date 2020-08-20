@@ -74,7 +74,6 @@ def enrich_and_normalize(dir_path, model):
     logging.info("Name: " + str(meta_dict.get('name')))
     logging.info("Runtime: " + str(runtime.get('name') + ":" + runtime.get('tag')))
     logging.info("Install command: " + str(meta_dict.get('install_command')))
-    logging.info("Host selector: " + str(meta_dict.get('host_selector')))
     logging.info("Training data: " + str(meta_dict.get('training_data_file')))
     if (meta_dict.get('contract')):
         logging.info("Signature name: " + str(meta_dict['contract']['predict']['signatureName']))

@@ -94,26 +94,7 @@ DEV_HELP = """
 Developer tools
 """
 
-# HostSelector help
-HOST_SELECTOR_HELP = """
-Working with host selectors
-"""
 
-HOST_SELECTOR_ADD_HELP = """
-Create new host selector
-"""
-
-HOST_SELECTOR_LIST_HELP = """
-List all host selectors
-"""
-
-HOST_SELECTOR_RM_HELP = """
-Delete an existing host selector
-"""
-
-HOST_SELECTOR_NODE_SELECTOR_HELP = """
-Kubernetes specific nodeSelector ("key:value")
-"""
 
 # DeploymentConfiguration help
 

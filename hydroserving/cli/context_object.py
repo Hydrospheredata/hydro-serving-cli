@@ -6,7 +6,6 @@ from hydroserving.config.settings import HOME_PATH_EXPANDED
 from hydroserving.core.application.service import ApplicationService
 from hydroserving.core.apply import ApplyService
 from hydroserving.core.deployment_config.service import DeploymentConfigurationService
-from hydroserving.core.host_selector.host_selector import HostSelectorService
 from hydroserving.core.model.service import ModelService
 from hydroserving.core.monitoring.service import MonitoringService
 from hydroserving.core.servable.service import ServableService
@@ -24,14 +23,12 @@ class ContextObject:
         conn = config.get_connection()
         self.monitoring_service = MonitoringService(conn)
         self.model_service = ModelService(conn, self.monitoring_service)
-        self.selector_service = HostSelectorService(conn)
         self.application_service = ApplicationService(conn, self.model_service)
         self.servable_service = ServableService(conn)
         self.deployment_configuration_service = DeploymentConfigurationService(conn)
 
         self.apply_service = ApplyService(
             self.model_service,
-            self.selector_service,
             self.application_service,
             self.deployment_configuration_service
         )

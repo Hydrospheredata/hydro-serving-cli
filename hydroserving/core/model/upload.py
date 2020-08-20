@@ -84,7 +84,6 @@ def upload_model_async(model_api, model, tar):
     logging.info(SEGMENT_DIVIDER)
     metadata = UploadMetadata(
         name=model.name,
-        host_selector=model.host_selector,
         contract=contract_to_dict(model.contract),
         runtime=model.runtime.__dict__,
         install_command=model.install_command,
