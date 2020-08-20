@@ -50,12 +50,10 @@ from hydroserving.util.yamlutil import yaml_file
               required=False,
               default=False,
               is_flag=True)
-@click.option('--monitoring_configuration',
-              required=False)
 @click.option('--async', 'is_async', is_flag=True, default=False)
 @click.pass_obj
 def upload(obj, name, runtime, host_selector, training_data, dir,
-           no_training_data, ignore_monitoring, is_async, monitoring_configuration):
+           no_training_data, ignore_monitoring, is_async):
     dir = os.path.abspath(dir)
     try:
         python_files = [
@@ -95,8 +93,7 @@ def upload(obj, name, runtime, host_selector, training_data, dir,
                     parsed['host_selector'] = host_selector
                 if training_data is not None:
                     parsed['training_data_file'] = training_data
-                if monitoring_configuration is not None:
-                    parsed['monitoring_configuration'] = monitoring_configuration
+
         else:
             logging.info("Not using any resource definitions. Will try to infer metadata from current folder.")
             if name is None:
@@ -106,8 +103,7 @@ def upload(obj, name, runtime, host_selector, training_data, dir,
                 'runtime': runtime,
                 'host_selector': host_selector,
                 'payload': [os.path.join(dir, "*")],
-                'training_data_file': training_data,
-                'monitoring_configuration': monitoring_configuration
+                'training_data_file': training_data
             }
         model = parse_model(parsed)
         result = obj.model_service.apply(model, dir, no_training_data, ignore_monitoring)
