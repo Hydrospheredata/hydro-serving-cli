@@ -1,5 +1,6 @@
 from enum import Enum
 from hydro_serving_grpc.contract import ModelContract
+from hydroserving.core.monitoring_configuration.monitoring_configuration import MonitoringConfiguration
 
 from hydroserving.core.image import DockerImage
 
@@ -11,7 +12,7 @@ class VersionStatus(Enum):
 
 
 class UploadMetadata:
-    def __init__(self, name, contract, host_selector, runtime, install_command, metadata):
+    def __init__(self, name, contract, host_selector, runtime, install_command, metadata, monitoring_configuration: MonitoringConfiguration):
         self.contract = contract
         self.hostSelectorName = host_selector
         self.runtime = runtime
@@ -19,10 +20,14 @@ class UploadMetadata:
         self.installCommand = install_command
         self.metadata = metadata
 
+        if not monitoring_configuration:
+            monitoring_configuration = MonitoringConfiguration()
+        self.monitoring_configuration = monitoring_configuration.__dict__
+
 
 class Model:
     def __init__(self, name, host_selector, runtime, contract, payload,
-                 training_data_file, install_command, monitoring, metadata, monitoring_configuration):
+                 training_data_file, install_command, monitoring, metadata, monitoring_configuration: MonitoringConfiguration):
         self.name = name
         self.host_selector = host_selector
         self.runtime = runtime

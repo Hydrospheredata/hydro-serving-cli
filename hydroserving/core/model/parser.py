@@ -7,13 +7,13 @@ from hydroserving.core.monitoring.service import parse_monitoring_params
 from hydroserving.core.monitoring_configuration.parser import parse_monitoring_configuration_selector
 
 
-def parse_model(in_dict):
+def parse_model(in_dict: dict):
     if in_dict is None:
         return None
     contract = contract_from_dict(in_dict.get("contract"))
     if not in_dict['runtime']:
         raise ClickException("'runtime' field is not defined")
-    monitoring_configuration = in_dict.get("monitoring-configuration")
+    monitoring_configuration = in_dict.get("monitoring_configuration")
 
     model = Model(
         name=in_dict.get("name"),

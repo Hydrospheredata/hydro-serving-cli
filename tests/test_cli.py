@@ -4,6 +4,7 @@ import unittest
 from click.testing import CliRunner
 import requests
 import requests_mock
+from hydroserving.core.monitoring_configuration.monitoring_configuration import MonitoringConfiguration
 
 from hydroserving.cli.commands.hs import hs_cli
 from hydroserving.core.application.service import ApplicationService
@@ -33,7 +34,7 @@ class CLITests(unittest.TestCase):
                 assert 'metadata' in fields
                 assert 'payload' in fields
                 metadata = json.loads(fields['metadata'])
-                print(metadata)
+                assert metadata['monitoring_configuration'] == MonitoringConfiguration().__dict__
                 assert metadata["name"] == "example_script"
                 assert metadata["installCommand"] == "pip install -r requirements.txt"
                 assert metadata["hostSelectorName"] == "super-gpu"
@@ -93,6 +94,7 @@ class CLITests(unittest.TestCase):
                 metadata = json.loads(fields['metadata'])
                 m = metadata["metadata"]
                 print(metadata)
+                assert metadata['monitoring_configuration'] == MonitoringConfiguration().__dict__
                 assert metadata["name"] == "apply-demo-claims-model"
                 assert metadata["hostSelectorName"] == "xeon-cpu"
                 assert m["author"] == "cool-data-stan"

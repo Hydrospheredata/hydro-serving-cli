@@ -19,3 +19,5 @@ contract:
     c:
       shape: scalar
       type: float64
+monitoring_configuration:
+  batch-size: 100
