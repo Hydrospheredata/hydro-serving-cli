@@ -15,7 +15,7 @@ KIND_TO_PARSER = {
     "Config": parse_config,
     "Model": parse_model,
     "HostSelector": parse_host_selector,
-    "Application": parse_application
+    "Application": parse_application,
 }
 
 

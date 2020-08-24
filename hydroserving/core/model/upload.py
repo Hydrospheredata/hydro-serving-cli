@@ -6,7 +6,7 @@ import time
 
 from hydroserving.config.settings import SEGMENT_DIVIDER
 from hydroserving.core.contract import contract_to_dict
-from hydroserving.core.model.entities import UploadMetadata, VersionStatus
+from hydroserving.core.model.entities import UploadMetadata, VersionStatus, Model
 from hydroserving.core.monitoring.service import DataProfileStatus
 from hydroserving.util.fileutil import read_in_chunks
 
@@ -69,7 +69,7 @@ def push_training_data(profile_api, model_version_id, filename, is_async):
     return await_training_data(profile_api, uid)
 
 
-def upload_model_async(model_api, model, tar):
+def upload_model_async(model_api, model: Model, tar: str):
     """
 
     Args:
@@ -82,6 +82,7 @@ def upload_model_async(model_api, model, tar):
     """
     logging.info("Uploading model to %s", model_api.connection.remote_addr)
     logging.info(SEGMENT_DIVIDER)
+
     metadata = UploadMetadata(
         name=model.name,
         host_selector=model.host_selector,
@@ -89,6 +90,7 @@ def upload_model_async(model_api, model, tar):
         runtime=model.runtime.__dict__,
         install_command=model.install_command,
         metadata=model.metadata,
+        monitoring_configuration=model.monitoring_configuration.__dict__
     )
 
     result = model_api.upload(tar, metadata)

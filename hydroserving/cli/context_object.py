@@ -29,7 +29,7 @@ class ContextObject:
         self.apply_service = ApplyService(
             self.model_service,
             self.selector_service,
-            self.application_service,
+            self.application_service
         )
 
     @staticmethod
