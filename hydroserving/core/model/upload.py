@@ -90,7 +90,7 @@ def upload_model_async(model_api, model: Model, tar: str):
         runtime=model.runtime.__dict__,
         install_command=model.install_command,
         metadata=model.metadata,
-        monitoring_configuration = model.monitoring_configuration
+        monitoring_configuration=model.monitoring_configuration.__dict__
     )
 
     result = model_api.upload(tar, metadata)
