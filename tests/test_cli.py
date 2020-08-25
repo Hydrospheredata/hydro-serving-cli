@@ -333,4 +333,3 @@ class CLITests(unittest.TestCase):
             application_api = ApplicationService(connection, model_api)
             apply_service = ApplyService(model_api, application_api, None)
             result = apply_service.apply(["./examples/full-apply-example/4-claims-app.yml"])
-
