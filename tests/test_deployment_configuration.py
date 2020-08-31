@@ -28,6 +28,8 @@ class DeploymentConfigurationTests(unittest.TestCase):
             connection = RemoteConnection("http://localhost")
             service = DeploymentConfigurationService(connection)
             apply_api = ApplyService(None, None, deployment_configuration_service=service)
-            yaml_path = os.path.join("resources/deployment_configuration.yaml")
+
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            yaml_path = os.path.join(current_dir, 'resources/deployment_configuration.yaml')
             result = apply_api.apply([yaml_path])
             print(result)

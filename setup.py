@@ -22,7 +22,7 @@ setup(
         "requests-toolbelt~=0.9",
         "gitpython~=2.1",
         "tabulate~=0.8",
-        "hydrosdk~= 2.4",
+        "hydrosdk == 2.4.0rc2",
         "sseclient-py ~=1.7",
         "numpy >= 1.15.0"
     ],

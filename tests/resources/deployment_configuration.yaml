@@ -9,14 +9,14 @@ deployment:
 container:
   resources:
     limits:
-      cpu: '4'
-      memory: 4g
+      cpu: 500m
+      memory: 4G
     requests:
-      cpu: '2'
-      memory: 2g
+      cpu: 250m
+      memory: 2G
 pod:
   nodeSelector:
-    im: a map
+    im: a_map
     foo: bar
   affinity:
     nodeAffinity:

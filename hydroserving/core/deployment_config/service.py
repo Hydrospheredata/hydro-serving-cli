@@ -1,3 +1,5 @@
+import logging
+
 from hydrosdk.cluster import Cluster
 from hydrosdk.deployment_configuration import DeploymentConfiguration
 
@@ -14,7 +16,12 @@ class DeploymentConfigurationService:
 
     def apply(self, deployment_configuration: DeploymentConfiguration):
         data = deployment_configuration.to_camel_case_dict()
-        self.connection.post_json("/api/v2/deployment_configuration", data)
+        r = self.connection.post_json("/api/v2/deployment_configuration", data)
+        if r.ok:
+            return f"Successfully uploaded {deployment_configuration}"
+        else:
+            logging.info(f"Error while uploading {deployment_configuration}:\n\tResponse [{r.status_code}], {r.json()}")
+            return f"Failed uploading {deployment_configuration}."
 
     def delete(self, deployment_configuration_name):
         return DeploymentConfiguration.delete(self.cluster, deployment_configuration_name)
