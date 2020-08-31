@@ -10,7 +10,6 @@ from yaml.scanner import ScannerError
 
 from hydroserving.cli.commands.hs import hs_cli
 from hydroserving.cli.help import CONTEXT_SETTINGS, UPLOAD_HELP, APPLY_HELP, PROFILE_FILENAME_HELP
-from hydroserving.core.image import DockerImage
 from hydroserving.core.model.entities import InvalidModelException
 from hydroserving.core.model.parser import parse_model
 from hydroserving.core.model.upload import ModelBuildError
@@ -53,7 +52,7 @@ def upload(obj, name, runtime, training_data, dir, no_training_data, ignore_moni
     dir = os.path.abspath(dir)
     try:
         python_files = [
-            file 
+            file
             for file in get_python_files(dir)
             if os.path.splitext(os.path.basename(file))[0] == "serving"
         ]
@@ -71,7 +70,7 @@ def upload(obj, name, runtime, training_data, dir, no_training_data, ignore_moni
             sys.path.append(dir)
             module_name = pathlib.Path(python_file).stem
             try:
-                importlib.import_module(module_name) # runs setup() on import
+                importlib.import_module(module_name)  # runs setup() on import
             except Exception as e:
                 logging.error("Error occured while trying to read serving.py", exc_info=e)
                 raise click.ClickException("Error occured while trying to read serving.py")
@@ -87,6 +86,7 @@ def upload(obj, name, runtime, training_data, dir, no_training_data, ignore_moni
                     parsed['runtime'] = runtime
                 if training_data is not None:
                     parsed['training_data_file'] = training_data
+
         else:
             logging.info("Not using any resource definitions. Will try to infer metadata from current folder.")
             if name is None:
@@ -95,7 +95,7 @@ def upload(obj, name, runtime, training_data, dir, no_training_data, ignore_moni
                 'name': name,
                 'runtime': runtime,
                 'payload': [os.path.join(dir, "*")],
-                'training_data_file': training_data,
+                'training_data_file': training_data
             }
         model = parse_model(parsed)
         result = obj.model_service.apply(model, dir, no_training_data, ignore_monitoring)
