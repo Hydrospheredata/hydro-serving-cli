@@ -1,11 +1,11 @@
-import click
 import logging
 
+import click
 from tabulate import tabulate
 
 from hydroserving.cli.commands.hs import hs_cli
 from hydroserving.cli.context import CONTEXT_SETTINGS
-from hydroserving.cli.help import PROFILE_HELP, PROFILE_PUSH_HELP, PROFILE_MODEL_VERSION_HELP
+from hydroserving.cli.help import PROFILE_HELP
 
 
 @hs_cli.group(help=PROFILE_HELP)
@@ -30,7 +30,7 @@ def list(obj):
                 'runtime': "{}:{}".format(runtime.get('name'), runtime.get('tag')),
                 'apps': m.get('applications')
             })
-        logging.info(tabulate(sorted(versions_view, key = lambda x: (x['name'], x['#'])), headers="keys", tablefmt="github"))
+        logging.info(tabulate(sorted(versions_view, key=lambda x: (x['name'], x['#'])), headers="keys", tablefmt="github"))
     else:
         logging.warning("Can't get model version list: %s", models)
         raise SystemExit(-1)
@@ -47,6 +47,7 @@ def rm(obj, model_name):
     mv_id = mv['id']
     res = obj.model_service.delete(mv_id)
     logging.info("Model and it's versions are deleted: %s", res)
+
 
 @model.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('model-name', required=True)

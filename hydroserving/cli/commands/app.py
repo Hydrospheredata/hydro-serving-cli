@@ -1,11 +1,11 @@
-import click
 import logging
 
+import click
 from tabulate import tabulate
 
 from hydroserving.cli.commands.hs import hs_cli
 from hydroserving.cli.context import CONTEXT_SETTINGS
-from hydroserving.cli.help import PROFILE_HELP, PROFILE_PUSH_HELP, PROFILE_MODEL_VERSION_HELP
+from hydroserving.cli.help import PROFILE_HELP
 
 
 @hs_cli.group(help=PROFILE_HELP)

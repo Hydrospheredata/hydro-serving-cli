@@ -1,7 +1,6 @@
 kind: Model
 name: "example_script"
 runtime: hydrosphere/serving-runtime-python-3.6:dev
-host-selector: "super-gpu" # need it create this first, fails otherwise
 payload:
   - "calculator/src/"
   - "calculator/requirements.txt"

@@ -10,7 +10,6 @@ from yaml.scanner import ScannerError
 
 from hydroserving.cli.commands.hs import hs_cli
 from hydroserving.cli.help import CONTEXT_SETTINGS, UPLOAD_HELP, APPLY_HELP, PROFILE_FILENAME_HELP
-from hydroserving.core.image import DockerImage
 from hydroserving.core.model.entities import InvalidModelException
 from hydroserving.core.model.parser import parse_model
 from hydroserving.core.model.upload import ModelBuildError
@@ -22,9 +21,6 @@ from hydroserving.util.yamlutil import yaml_file
 @click.option('--name',
               required=False)
 @click.option('--runtime',
-              default=None,
-              required=False)
-@click.option('--host-selector',
               default=None,
               required=False)
 @click.option('--training-data',
@@ -52,12 +48,11 @@ from hydroserving.util.yamlutil import yaml_file
               is_flag=True)
 @click.option('--async', 'is_async', is_flag=True, default=False)
 @click.pass_obj
-def upload(obj, name, runtime, host_selector, training_data, dir,
-           no_training_data, ignore_monitoring, is_async):
+def upload(obj, name, runtime, training_data, dir, no_training_data, ignore_monitoring, is_async):
     dir = os.path.abspath(dir)
     try:
         python_files = [
-            file 
+            file
             for file in get_python_files(dir)
             if os.path.splitext(os.path.basename(file))[0] == "serving"
         ]
@@ -75,7 +70,7 @@ def upload(obj, name, runtime, host_selector, training_data, dir,
             sys.path.append(dir)
             module_name = pathlib.Path(python_file).stem
             try:
-                importlib.import_module(module_name) # runs setup() on import
+                importlib.import_module(module_name)  # runs setup() on import
             except Exception as e:
                 logging.error("Error occured while trying to read serving.py", exc_info=e)
                 raise click.ClickException("Error occured while trying to read serving.py")
@@ -89,8 +84,6 @@ def upload(obj, name, runtime, host_selector, training_data, dir,
                     parsed['name'] = name
                 if runtime is not None:
                     parsed['runtime'] = runtime
-                if host_selector is not None:
-                    parsed['host_selector'] = host_selector
                 if training_data is not None:
                     parsed['training_data_file'] = training_data
 
@@ -101,7 +94,6 @@ def upload(obj, name, runtime, host_selector, training_data, dir,
             parsed = {
                 'name': name,
                 'runtime': runtime,
-                'host_selector': host_selector,
                 'payload': [os.path.join(dir, "*")],
                 'training_data_file': training_data
             }
