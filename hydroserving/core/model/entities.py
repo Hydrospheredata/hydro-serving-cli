@@ -14,7 +14,7 @@ class VersionStatus(Enum):
 
 class UploadMetadata:
 
-    def __init__(self, name, contract, host_selector, runtime, install_command, metadata, monitoring_configuration: dict):
+    def __init__(self, name, contract, runtime, install_command, metadata, monitoring_configuration: dict):
         self.contract = contract
         self.runtime = runtime
         self.name = name
@@ -24,7 +24,7 @@ class UploadMetadata:
 
 
 class Model:
-    def __init__(self, name, host_selector, runtime, contract, payload,
+    def __init__(self, name, runtime, contract, payload,
                  training_data_file, install_command, monitoring, metadata,
                  monitoring_configuration: MonitoringConfiguration):
         self.name = name

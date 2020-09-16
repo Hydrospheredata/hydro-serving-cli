@@ -17,21 +17,24 @@ setup(
         "pyyaml~=5.3",
         "protobuf~=3.6",
         "kafka-python==1.4.3",
-        "hydro-serving-grpc~=2.0",
-        "requests~=2.23",
+        "hydro-serving-grpc~=2.2.1",
+        "requests~=2.23.0",
         "requests-toolbelt~=0.9",
         "gitpython~=2.1",
         "tabulate~=0.8",
+        "pandas~=1.0.3",
         "hydrosdk == 2.4.0rc2",
         "sseclient-py ~=1.7",
-        "numpy >= 1.15.0"
+        "numpy ~= 1.18.3"
     ],
     setup_requires=[
         'pytest-runner'
     ],
     test_suite='tests',
     tests_require=[
-        'pytest>=3.8.0', 'requests_mock>=1.5.0', 'mock>=2.0.0'
+        'pytest>=3.8.0',
+        'requests_mock>=1.5.0',
+        'mock>=2.0.0'
     ],
     entry_points='''
         [console_scripts]
