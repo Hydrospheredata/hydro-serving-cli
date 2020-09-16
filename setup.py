@@ -22,10 +22,8 @@ setup(
         "requests-toolbelt~=0.9",
         "gitpython~=2.1",
         "tabulate~=0.8",
-        "pandas~=1.0.3",
-        "hydrosdk == 2.4.0rc2",
+        "hydrosdk==2.4.0rc3",
         "sseclient-py ~=1.7",
-        "numpy ~= 1.18.3"
     ],
     setup_requires=[
         'pytest-runner'
