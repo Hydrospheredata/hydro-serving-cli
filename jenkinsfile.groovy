@@ -181,7 +181,7 @@ def releaseService(String xVersion, String yVersion){
 node('hydrocentral') {
     stage('SCM'){
 
-      checkoutRepo("https://github.com/provectus/$SERVICENAME" + '.git')
+      checkoutRepo("https://github.com/Hydrospheredata/$SERVICENAME" + '.git')
       if (params.grpcVersion == ''){
           //Set grpcVersion
           grpcVersion = sh(script: "curl -Ls https://pypi.org/pypi/hydro-serving-grpc/json | jq -r .info.version", returnStdout: true, label: "get grpc version").trim()
