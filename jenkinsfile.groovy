@@ -7,9 +7,6 @@ properties([
    ])
 ])
 
-//TODO:remove if work with git
-BRANCH_NAME = 'master'
-
 SERVICENAME = 'hydro-serving-cli'
 SEARCHPATH = './requirements.txt'
 SEARCHGRPC = 'hydro-serving-grpc'
