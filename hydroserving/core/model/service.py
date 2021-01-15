@@ -5,14 +5,14 @@ from hydroserving.core.model.package import assemble_model, enrich_and_normalize
 from hydroserving.core.model.upload import upload_model
 
 
-class ModelService:
+class ModelService: # TODO rewrite here using sdk
     def __init__(self, connection, monitoring_service):
         """
 
         Args:
             connection (RemoteConnection):
         """
-        self.connection = connection
+        self.connection = connection # todo here cluster from sdk
         self.monitoring_service = monitoring_service
 
     def get_logs(self, model_version_id):

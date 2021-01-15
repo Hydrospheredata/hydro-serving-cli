@@ -16,7 +16,7 @@ from hydroserving.integrations.git import collect_git_info, git_to_dict
 from hydroserving.util.dictutil import extract_dict
 
 
-def assemble_model(model, model_path):
+def assemble_model(model: Model, model_path: str):
     """
     Compresses TARGET_PATH to .tar.gz archive
     Returns path to the archive.
@@ -43,7 +43,7 @@ def assemble_model(model, model_path):
     return tar_path
 
 
-def enrich_and_normalize(dir_path, model):
+def enrich_and_normalize(dir_path: str, model: Model):
     """
 
     Args:

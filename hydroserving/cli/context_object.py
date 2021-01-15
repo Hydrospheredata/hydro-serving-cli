@@ -26,7 +26,7 @@ class ContextObject:
         self.application_service = ApplicationService(conn, self.model_service)
         self.servable_service = ServableService(conn)
         self.deployment_configuration_service = DeploymentConfigurationService(conn)
-
+        self.cluster = None
         self.apply_service = ApplyService(
             self.model_service,
             self.application_service,
