@@ -1,11 +1,10 @@
-class ClusterConfig:
-    def __init__(self, current_cluster=None, clusters_list=None):
-        """
+from typing import List
 
-        :param current_cluster: currect cluster to use
-        :type current_cluster: str
-        :param clusters_list: all clusters
-        :type clusters_list: list[dict]
+class ClusterConfig:
+    def __init__(self, current_cluster: str = None, clusters_list: List[dict] = None):
+        """
+        :param current_cluster: active cluster
+        :param clusters_list: all available clusters
         """
         if clusters_list is None:
             clusters_list = []

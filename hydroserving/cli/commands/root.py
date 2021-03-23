@@ -8,145 +8,141 @@ from click import ClickException
 from yaml.parser import ParserError
 from yaml.scanner import ScannerError
 
+from hydroserving.cli.context_object import ContextObject
 from hydroserving.cli.commands.hs import hs_cli
-from hydroserving.cli.help import CONTEXT_SETTINGS, UPLOAD_HELP, APPLY_HELP, PROFILE_FILENAME_HELP
-from hydroserving.core.model.entities import InvalidModelException
+from hydroserving.cli.help import (
+    CONTEXT_SETTINGS, UPLOAD_HELP, APPLY_HELP, PROFILE_FILENAME_HELP,
+)
 from hydroserving.core.model.parser import parse_model
-from hydroserving.core.model.upload import ModelBuildError
-from hydroserving.util.fileutil import get_yamls, get_python_files
+from hydroserving.util.fileutil import get_yamls
 from hydroserving.util.yamlutil import yaml_file
 
 
-@hs_cli.command(help=UPLOAD_HELP, context_settings=CONTEXT_SETTINGS)
-@click.option('--name',
-              required=False)
-@click.option('--runtime',
-              default=None,
-              required=False)
-@click.option('--training-data',
-              type=click.File(),
-              default=None,
-              required=False,
-              help=PROFILE_FILENAME_HELP)
-@click.option('--dir',
-              type=click.Path(
-                  exists=True,
-                  file_okay=False,
-                  dir_okay=True),
-              default=os.getcwd(),
-              show_default=True,
-              required=False)
-@click.option('--no-training-data',
-              type=bool,
-              required=False,
-              default=False,
-              is_flag=True)
-@click.option('--ignore-monitoring',
-              type=bool,
-              required=False,
-              default=False,
-              is_flag=True)
-@click.option('--async', 'is_async', is_flag=True, default=False)
+@hs_cli.command(
+    help=UPLOAD_HELP, 
+    context_settings=CONTEXT_SETTINGS)
+@click.option(
+    '--name',
+    required=False)
+@click.option(
+    '--runtime',
+    default=None,
+    required=False)
+@click.option(
+    '--training-data',
+    default=None,
+    required=False,
+    help=PROFILE_FILENAME_HELP)
+@click.option(
+    '--dir',
+    'target_dir',
+    type=click.Path(
+        exists=True,
+        file_okay=False,
+        dir_okay=True),
+    default=os.getcwd(),
+    show_default=True,
+    required=False)
+@click.option(
+    '--ignore-training-data',
+    type=bool,
+    required=False,
+    default=False,
+    is_flag=True)
+@click.option(
+    '--ignore-metrics',
+    type=bool,
+    required=False,
+    default=False,
+    is_flag=True)
+@click.option(
+    '--async', 
+    'is_async',
+    is_flag=True,
+    default=False)
+@click.option(
+    '-t', '--timeout',
+    type=int,
+    required=False,
+    default=120)
 @click.pass_obj
-def upload(obj, name, runtime, training_data, dir, no_training_data, ignore_monitoring, is_async):
-    dir = os.path.abspath(dir)
-    try:
-        python_files = [
-            file
-            for file in get_python_files(dir)
-            if os.path.splitext(os.path.basename(file))[0] == "serving"
-        ]
-        python_file = python_files[0] if python_files else None
-        serving_files = [
-            file
-            for file in get_yamls(dir)
-            if os.path.splitext(os.path.basename(file))[0] == "serving"
-        ]
-        serving_file = serving_files[0] if serving_files else None
-        if python_file:
-            import sys
-            import pathlib
-            import importlib
-            sys.path.append(dir)
-            module_name = pathlib.Path(python_file).stem
-            try:
-                importlib.import_module(module_name)  # runs setup() on import
-            except Exception as e:
-                logging.error("Error occured while trying to read serving.py", exc_info=e)
-                raise click.ClickException("Error occured while trying to read serving.py")
-            return 0
-        elif serving_file:
-            with open(serving_file, 'r') as f:
-                parsed = yaml_file(f)
-                if parsed.get('kind', 'None') != 'Model':
-                    raise ClickException("Resource defined in {} is not a Model".format(serving_file))
-                if name is not None:
-                    parsed['name'] = name
-                if runtime is not None:
-                    parsed['runtime'] = runtime
-                if training_data is not None:
-                    parsed['training_data_file'] = training_data
+def upload(
+        obj: ContextObject, name: str, runtime: str, target_dir: str, training_data: str, 
+        ignore_training_data: bool, ignore_metrics: bool, is_async: bool, timeout: int,
+):
+    target_dir = os.path.abspath(target_dir)
+    serving_files = [
+        file for file in get_yamls(target_dir)
+        if os.path.splitext(os.path.basename(file))[0] == "serving"
+    ]
+    serving_file = serving_files[0] if serving_files else None
 
-        else:
-            logging.info("Not using any resource definitions. Will try to infer metadata from current folder.")
-            if name is None:
-                name = os.path.basename(os.getcwd())
-            parsed = {
-                'name': name,
-                'runtime': runtime,
-                'payload': [os.path.join(dir, "*")],
-                'training_data_file': training_data
-            }
-        model = parse_model(parsed)
-        result = obj.model_service.apply(model, dir, no_training_data, ignore_monitoring)
-        logging.info("Success:")
-        click.echo(json.dumps(result))
-    except ModelBuildError as err:
-        logging.error("Model build failed")
-        logging.info(json.dumps(err.model_version))
-        raise SystemExit(-1)
-    except requests.RequestException as err:
-        logging.error("Server returned an error")
-        logging.info(err)
-        raise SystemExit(-1)
-    except ValueError as err:
-        logging.error("Upload failed")
-        logging.info(err)
-        raise SystemExit(-1)
-    except InvalidModelException as err:
-        logging.error("Invalid model definition")
-        logging.info(err)
-    except RuntimeError as err:
-        logging.error("Unexpected error")
-        logging.info(err)
+    if serving_file:
+        with open(serving_file, 'r') as f:
+            parsed = yaml_file(f)
+        if parsed.get('kind', 'None') != 'Model':
+            raise ClickException(f"Resource defined in {serving_file} is not a Model")
+        if name is not None:
+            parsed['name'] = name
+        if runtime is not None:
+            parsed['runtime'] = runtime
+        if training_data is not None:
+            parsed['training-data'] = training_data
+    else:
+        raise ClickException("Couldn't find any resource definitions(serving.yaml).")
+    
+    model_version = obj.model_service.apply(
+        parse_model(parsed), target_dir,
+        ignore_training_data, ignore_metrics, is_async, timeout,
+    )
+    
+    logging.info("Success:")
+    click.echo(json.dumps(model_version.to_dict()))
 
 
-@hs_cli.command(help=APPLY_HELP, context_settings=CONTEXT_SETTINGS)
-@click.option('-f',
-              type=click.Path(
-                  exists=True,
-                  file_okay=True,
-                  dir_okay=True,
-                  allow_dash=True,
-                  readable=True
-              ),
-              multiple=True,
-              required=True)
-@click.option('--ignore-monitoring',
-              type=bool,
-              required=False,
-              default=False,
-              is_flag=True)
+@hs_cli.command(
+    help=APPLY_HELP, 
+    context_settings=CONTEXT_SETTINGS)
+@click.option(
+    '-f',
+    type=click.Path(
+        exists=True,
+        file_okay=True,
+        dir_okay=True,
+        allow_dash=True,
+        readable=True),
+    multiple=True,
+    required=True)
+@click.option(
+    '--ignore-metrics',
+    type=bool,
+    required=False,
+    default=False,
+    is_flag=True)
+@click.option(
+    '--ignore-training-data',
+    type=bool,
+    required=False,
+    default=False,
+    is_flag=True)
 @click.pass_obj
-def apply(obj, f, ignore_monitoring):
+def apply(obj: ContextObject, f: str, ignore_metrics: bool, ignore_training_data: bool):
     f = list(f)
     for i, x in enumerate(f):
         if x == "-":
             f[i] = "<STDIN>"
     logging.debug("Got files: {}".format(f))
     try:
-        result = obj.apply_service.apply(f, ignore_monitoring=ignore_monitoring)
-        logging.info(json.dumps(result))
+        results = obj.apply_service.apply(
+            f, 
+            ignore_metrics=ignore_metrics, 
+            ignore_training_data=ignore_training_data
+        )
+        serialized = {
+            key : [value.to_dict() for value in values]
+            for key, values in results.items()
+        }
+        logging.info(json.dumps(serialized))
     except ParserError as ex:
         logging.error("Error while parsing: {}".format(ex))
         raise SystemExit(-1)

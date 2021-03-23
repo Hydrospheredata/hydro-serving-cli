@@ -1,4 +1,5 @@
 import logging
+import traceback
 
 import click
 import click_log
@@ -38,6 +39,7 @@ def hs_cli(ctx, verbose, cluster):
             ctx.obj = ContextObject.with_config_path()
     except Exception as err:
         logging.error("Error occurred while preparing cluster: {}".format(err))
+        traceback.print_exc()
         raise SystemExit(-1)
 
     logging.debug("Current cluster: {}".format(ctx.obj.config_service.current_cluster()))

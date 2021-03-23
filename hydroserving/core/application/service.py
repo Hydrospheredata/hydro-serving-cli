@@ -1,103 +1,57 @@
 import logging
 import time
+from typing import List
 
 from hydroserving.core.application.entities import model_variant
+from hydrosdk.cluster import Cluster
+from hydrosdk.application import Application, ApplicationBuilder
+from hydrosdk.exceptions import BadRequestException
 
 
 class ApplicationService:
-    def __init__(self, connection, model_service):
-        self.connection = connection
-        self.model_service = model_service
+    def __init__(self, cluster: Cluster):
+        self.cluster = cluster
 
-    def apply(self, app):
+    def apply(self, builder: ApplicationBuilder, timeout: int = 120) -> Application:
         """
-        Args:
-            app (ApplicationDef):
+        Create or update an Application on the cluster.
 
-        Returns:
-
+        :param builder: an instance of the ApplicationBuilder with all required attributes
+        :param timeout: timeout for waiting for the application to start
+        :return: Application instance
         """
-        logging.debug("Applying Application %s", app)
-        app_request = self._convert_mv_names(app)
+        logging.debug("Applying application: %s", builder.name)
 
-        app_name = app_request['name']
-        found_app = self.find(app_name)
-        if found_app is None:
-            logging.debug("Creating application: %s", app_request)
-            result = self.create(app_request)
-        else:
-            app_request['id'] = found_app['id']
-            logging.debug("Updating application: %s", app_request)
-            result = self.update(app_request)
+        try:
+            _ = self.find(builder.name)
+            logging.warning("Found an existing application, update required")
+        except BadRequestException:
+            logging.debug("Creating application: %s", builder)
+            application = builder.build()
+        application.lock_while_starting(timeout)
 
-        logging.debug("Server app response")
-        logging.debug(result)
-
-        while True:
-            result = self.find(app_name)
-            status = result['status']
-            if status == 'Ready':
-                return result
-            elif status == 'Failed':
-                raise RuntimeError("Application build failed: {}".format(result))
-            time.sleep(5)
-
-    def _convert_mv_names(self, request):
-        graph = request.execution_graph
-        stages = []
-        for stage in graph['stages']:
-            variants = []
-            for variant in stage['modelVariants']:
-                names = variant["modelVersion"].split(":")
-                if len(names) != 2:
-                    raise ValueError("Invalid modelVersion name: {}".format(variant["modelVersion"]))
-                mv = self.model_service.find_version(names[0], int(names[1]))
-                if not mv:
-                    raise ValueError("Can't find model version {}".format(variant))
-                r = model_variant(mv['id'], variant["weight"])
-                variants.append(r)
-            stages.append({
-                "modelVariants": variants
-            })
-        result = {
-            "executionGraph": {
-                "stages": stages
-            },
-            "name": request.name,
-            "kafkaStreaming": request.kafka_streaming
-        }
-        return result
-
-    def create(self, application):
-        return self.connection.post_json("/api/v2/application", application).json()
-
-    def update(self, application):
-        return self.connection.put('/api/v2/application', application).json()
-
-    def list(self):
+    def list(self) -> List[Application]:
         """
+        List all available applications on the cluster.
 
-        Returns:
-            list of dict:
+        :return: list of Application instances
         """
-        resp = self.connection.get("/api/v2/application")
-        if resp.ok:
-            return resp.json()
-        return None
+        return Application.list(self.cluster)
 
-    def find(self, app_name):
+    def find(self, name: str) -> Application:
         """
+        Find an application by name. 
 
-        Args:
-            app_name (str):
+        :param name: application name
+        :return: Application instance
         """
-        resp = self.connection.get("/api/v2/application/{}".format(app_name))
-        if resp.ok:
-            return resp.json()
-        return None
+        return Application.find(self.cluster, name)
 
-    def delete(self, app_name):
-        resp = self.connection.delete("/api/v2/application/{}".format(app_name))
-        if resp.ok:
-            return resp.json()
-        return None
+    def delete(self, name: str) -> dict:
+        """
+        Delete an application by name.
+
+        :param name: application name
+        :return: json response from the cluster
+        """
+        return Application.delete(self.cluster, name)

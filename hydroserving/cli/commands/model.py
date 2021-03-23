@@ -1,65 +1,85 @@
 import logging
 
 import click
+from click_aliases import ClickAliasedGroup
 from tabulate import tabulate
 
 from hydroserving.cli.commands.hs import hs_cli
 from hydroserving.cli.context import CONTEXT_SETTINGS
 from hydroserving.cli.help import PROFILE_HELP
+from hydroserving.cli.context_object import ContextObject
 
 
-@hs_cli.group(help=PROFILE_HELP)
-def model():
+@hs_cli.group(cls=ClickAliasedGroup)
+def model(): 
+    """
+    Working with models and model versions.
+    """
     pass
 
 
-@model.command(context_settings=CONTEXT_SETTINGS)
+@model.command(
+    aliases=["ls"], 
+    context_settings=CONTEXT_SETTINGS)
 @click.pass_obj
-def list(obj):
-    models = obj.model_service.list_versions()
-    if models:
-        versions_view = []
-        for m in models:
-            model = m.get('model')
-            runtime = m.get('runtime')
-            versions_view.append({
-                'id': m.get('id'),
-                'name': model.get('name'),
-                '#': m.get('modelVersion'),
-                'status': m.get('status'),
-                'runtime': "{}:{}".format(runtime.get('name'), runtime.get('tag')),
-                'apps': m.get('applications')
-            })
-        logging.info(tabulate(sorted(versions_view, key=lambda x: (x['name'], x['#'])), headers="keys", tablefmt="github"))
+def list(obj: ContextObject):
+    """
+    List all model versions on the cluster.
+    """
+    view = []
+    for model_id, model_name, versions in obj.model_service.list_models_enriched():
+        view.append({
+            'id': model_id,
+            'name': model_name,
+            '# of versions': len([1 for _ in versions]),
+        })
+    if view:
+        logging.info(tabulate(
+            sorted(view, key=lambda x: x['name']), 
+            headers="keys", 
+            tablefmt="github",
+        ))
     else:
-        logging.warning("Can't get model version list: %s", models)
+        logging.info("Couldn't find any models")
         raise SystemExit(-1)
 
 
-@model.command(context_settings=CONTEXT_SETTINGS)
-@click.argument('model-name',
-                required=True)
+@model.command(
+    aliases=["remove", "del", "rm"], 
+    context_settings=CONTEXT_SETTINGS)
+@click.option(
+    '--id', 'id_', 
+    type=int, 
+    help="Model unique identifier.")
+@click.option(
+    '--name', 
+    type=str, 
+    help="Model name to delete.")
+@click.option(
+    '-y', '--yes',
+    'is_confirmed',
+    type=bool,
+    is_flag=True,
+    default=False,
+    help="Proceed without confirmation.")
 @click.pass_obj
-def rm(obj, model_name):
-    mv = obj.model_service.find_model(model_name)
-    if not mv:
-        raise click.ClickException("Model {} not found".format(model_name))
-    mv_id = mv['id']
-    res = obj.model_service.delete(mv_id)
-    logging.info("Model and it's versions are deleted: %s", res)
+def delete(obj: ContextObject, id_: int, name: str, is_confirmed: bool):
+    """
+    Delete a model and all of its versions.
+    """
+    if id_ is None and name is None:
+        logging.error("Either --id or --name options should be provided.") 
+        raise SystemExit(-1)
 
+    if id_ is None:
+        model_id = obj.model_service.find_model_by_name(name)
+        num_versions = len(obj.model_service.list_versions_by_model_name(name))
+    else:
+        model_id = id_
+        num_versions = len(obj.model_service.list_versions_by_model_id(model_id))
 
-@model.command(context_settings=CONTEXT_SETTINGS)
-@click.argument('model-name', required=True)
-@click.pass_obj
-def logs(obj, model_name):
-    (name, version) = model_name.split(':')
-    mv = obj.model_service.find_version(name, version)
-    if not mv:
-        raise click.ClickException("Model {} not found".format(model_name))
-    mv_id = mv['id']
-    logs = obj.model_service.get_logs(mv_id)
-    if not logs:
-        raise click.ClickException("No logs found")
-    for l in logs:
-        logging.info(l.data)
+    _ = is_confirmed or click.confirm(
+        f"Do you REALLY want to delete the model {name} and all of its ({num_versions}) versions?", abort=True)
+    
+    obj.model_service.delete(model_id)
+    logging.info(f"Model {name} and all of its ({num_versions}) versions has been deleted.")

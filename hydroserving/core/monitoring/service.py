@@ -1,118 +1,17 @@
 import logging
 from enum import Enum
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple, Union, List, Callable
 
 from hydrosdk import Cluster, MetricSpecConfig, ModelVersion
 from hydrosdk.monitoring import ThresholdCmpOp
 
 from hydroserving.util.fileutil import read_in_chunks
 
-
 class DataProfileStatus(Enum):
     Success = "Success"
     Failure = "Failure"
     Processing = "Processing"
     NotRegistered = "NotRegistered"
-
-
-ThresholdOpToStr = {
-    "==": ThresholdCmpOp.EQ,
-    "!=": ThresholdCmpOp.NOT_EQ,
-    ">": ThresholdCmpOp.GREATER,
-    "<": ThresholdCmpOp.LESS,
-    ">=": ThresholdCmpOp.GREATER_EQ,
-    "<=": ThresholdCmpOp.LESS_EQ,
-}
-
-
-def custom_model_metric_spec(monitoring_model, threshold, threshold_op):
-    if not isinstance(monitoring_model, str):
-        raise TypeError("Invalid monitoring_model: {}".format(monitoring_model))
-
-    try:
-        name, version = monitoring_model.split(":")
-    except ValueError:
-        raise ValueError("Invalid model identifier. Expected format {name}:{version}")
-
-    allowed = {
-        "==": "Eq",
-        "!=": "NotEq",
-        ">": "Greater",
-        "<": "Less",
-        ">=": "GreaterEq",
-        "<=": "LessEq",
-    }
-
-    if not isinstance(threshold_op, str):
-        raise TypeError("Invalid comparison operator type: {}".format(type(threshold_op)))
-
-    value = allowed.get(threshold_op)
-    if not value:
-        if value not in allowed.values():
-            raise TypeError("Invalid comparison operator: {}".format(threshold_op))
-        else:
-            value = threshold_op
-
-    return {
-        "monitoringModelName": name,
-        "monitoringModelVersion": version,
-        "thresholdCmpOperator": {
-            "kind": value
-        },
-        "threshold": float(threshold)
-    }
-
-
-def parse_monitoring_params(in_dict: Dict, cluster: Cluster) -> Optional[Dict[str, MetricSpecConfig]]:
-    """
-    :param in_dict:
-    :return:
-    """
-    if in_dict is None:
-        return None
-    result = {}
-    for item in in_dict:
-        monitoring_model_name = item['config']['monitoring-model']
-        threshold = item['config']['threshold']
-        threshold_op = item['config']['operator']
-        if not isinstance(threshold_op, str):
-            raise TypeError("Invalid comparison operator type: {}".format(type(threshold_op)))
-        threshold_op_str = ThresholdOpToStr.get(threshold_op)
-        if not threshold_op_str:
-            if threshold_op_str not in ThresholdOpToStr.values():
-                raise TypeError(f"Invalid comparison operator: {threshold_op}")
-
-        model, version = monitoring_model_name.split(':')
-        monitoring_mv = ModelVersion.find(cluster, model, version)
-        result[item['name']] = MetricSpecConfig(modelversion_id=monitoring_mv.id,
-                                                threshold=threshold,
-                                                threshold_op=threshold_op_str)
-    return result
-
-
-def parse_monitoring_params(in_dict):
-    """
-
-    Args:
-        in_dict (dict):
-
-    Returns:
-        MonitoringParams:
-    """
-    if in_dict is None:
-        return None
-    result = []
-    for item in in_dict:
-        monitoring_model_name = item['config']['monitoring-model']
-        threshold = item['config']['threshold']
-        threshold_op = item['config']['operator']
-        result.append(
-            {
-                "name": item["name"],
-                "config": custom_model_metric_spec(monitoring_model_name, threshold, threshold_op)
-            }
-        )
-    return result
 
 
 class MonitoringService:

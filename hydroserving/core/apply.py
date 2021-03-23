@@ -84,21 +84,21 @@ class ApplyService:
     def apply_yaml(self, docs, call_path, **kwargs):
         responses = []
         for doc_obj in docs:
-            parsed = parse_generic_dict(doc_obj)
+            partial_parser = parse_generic_dict(doc_obj)
             kind = doc_obj.get('kind')
             if kind is None:
                 raise ValueError("Resource kind is not specified.")
             if kind == 'Model':
                 logging.debug("Model detected")
-                responses.append(self.model_service.apply(parsed, call_path, **kwargs))
+                responses.append(self.model_service.apply(partial_parser, call_path, **kwargs))
             elif kind == 'Application':
                 logging.debug("Application detected")
-                responses.append(self.application_service.apply(parsed))
+                responses.append(self.application_service.apply(partial_parser))
             elif kind == 'DeploymentConfiguration':
                 logging.debug("DeploymentConfiguration detected")
-                responses.append(self.deployment_configuration_service.apply(parsed))
+                responses.append(self.deployment_configuration_service.apply(partial_parser))
             else:
-                logging.error("Unknown resource: {}".format(parsed))
+                logging.error("Unknown resource: {}".format(doc_obj))
                 raise UnknownResource(doc_obj)
         return responses
 
@@ -110,7 +110,6 @@ class ApplyError(RuntimeError):
 class UnknownResource(ApplyError):
     def __init__(self, res):
         super().__init__("Unknown resource: {}".format(res))
-        self.resource = res
 
 
 class UnknownFile(ApplyError):

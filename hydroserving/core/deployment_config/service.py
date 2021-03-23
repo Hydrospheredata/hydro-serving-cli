@@ -1,30 +1,46 @@
-import logging
+from typing import List
 
 from hydrosdk.cluster import Cluster
-from hydrosdk.deployment_configuration import DeploymentConfiguration
-
-from hydroserving.http.remote_connection import RemoteConnection
+from hydrosdk.deployment_configuration import (
+    DeploymentConfiguration, DeploymentConfigurationBuilder,
+)
 
 
 class DeploymentConfigurationService:
-    def __init__(self, connection: RemoteConnection):
-        self.connection = connection
-        self.cluster = Cluster(self.connection.remote_addr)
+    def __init__(self, cluster: Cluster):
+        self.cluster = cluster
 
-    def get(self, deployment_configuration_name):
-        return DeploymentConfiguration.find(self.cluster, deployment_configuration_name)
+    def find(self, name: str) -> DeploymentConfiguration:
+        """
+        Search a deployment configuration by name
 
-    def apply(self, deployment_configuration: DeploymentConfiguration):
-        data = deployment_configuration.to_camel_case_dict()
-        r = self.connection.post_json("/api/v2/deployment_configuration", data)
-        if r.ok:
-            return f"Successfully uploaded {deployment_configuration}"
-        else:
-            logging.info(f"Error while uploading {deployment_configuration}:\n\tResponse [{r.status_code}], {r.json()}")
-            return f"Failed uploading {deployment_configuration}."
+        :param name: name of the deployment configuration
+        :return: DeploymentConfiguration instance
+        """
+        return DeploymentConfiguration.find(self.cluster, name)
 
-    def delete(self, deployment_configuration_name):
-        return DeploymentConfiguration.delete(self.cluster, deployment_configuration_name)
+    def apply(self, builder: DeploymentConfigurationBuilder) -> DeploymentConfiguration:
+        """
+        Create a DeploymentConfiguration on the cluster
+        
+        :param builder: an instance of the DeploymentConfigurationBuilder with all required attributes
+        :return: DeploymentConfiguration instance
+        """
+        return builder.build()
 
-    def list(self):
+    def delete(self, name: str) -> dict:
+        """
+        Delete deployment configuration from the cluster
+
+        :param name: name of the deployment configuration
+        :return: json response from the cluster
+        """
+        return DeploymentConfiguration.delete(self.cluster, name)
+
+    def list(self) -> List[DeploymentConfiguration]:
+        """
+        List all deployment configurations
+
+        :return: list of DeploymentConfiguration instances
+        """
         return DeploymentConfiguration.list(self.cluster)
