@@ -1,42 +1,85 @@
 import logging
+import json
 
 import click
+from click_aliases import ClickAliasedGroup
 from tabulate import tabulate
 
 from hydroserving.cli.commands.hs import hs_cli
 from hydroserving.cli.context import CONTEXT_SETTINGS
-from hydroserving.cli.help import PROFILE_HELP
+from hydroserving.cli.context_object import ContextObject
 
 
-@hs_cli.group(help=PROFILE_HELP)
+@hs_cli.group(
+    cls=ClickAliasedGroup,
+    context_settings=CONTEXT_SETTINGS)
 def app():
+    """
+    Manage applications.
+    """
     pass
 
 
-@app.command(context_settings=CONTEXT_SETTINGS)
+@app.command(
+    aliases=["ls"],
+    context_settings=CONTEXT_SETTINGS)
 @click.pass_obj
-def list(obj):
-    apps = obj.application_service.list()
-    if apps:
-        apps_view = []
-        for a in apps:
-            apps_view.append({
-                'name': a.get('name'),
-                'streaming-params': a.get('kafkaStreaming')
-            })
-        logging.info(tabulate(apps_view, headers="keys", tablefmt="github"))
+def list(obj: ContextObject):
+    """
+    List all applications. 
+    """
+    view = []
+    for app in obj.application_service.list():
+        view.append({
+            "id": app.id,
+            "name": app.name,
+            "status": app.status.name,
+        })
+    if view:
+        logging.info(tabulate(view, headers="keys", tablefmt="github"))
     else:
-        logging.warning("Can't get application list: %s", apps)
-        raise SystemExit(-1)
+        logging.info("Couldn't find any applications.")
+        raise SystemExit(0)
 
 
-@app.command(context_settings=CONTEXT_SETTINGS)
-@click.argument('app-name',
-                required=True)
+@app.command(
+    aliases=["desc"],
+    context_settings=CONTEXT_SETTINGS)
+@click.argument("name")
 @click.pass_obj
-def rm(obj, app_name):
-    app = obj.application_service.find(app_name)
-    if not app:
-        raise click.ClickException("Application {} is not found".format(app_name))
-    res = obj.application_service.delete(app_name)
-    logging.info("Application is  deleted: %s", res)
+def describe(obj: ContextObject, name: str):
+    """
+    Describe an application.
+    """
+    app = obj.application_service.find(name)
+    logging.info(json.dumps({
+        "id": app.id,
+        "name": app.name,
+        "metadata": app.metadata,
+        "executionGraph": app.execution_graph._asdict(),
+        "streamingParams": app.kafka_streaming,
+        "status": app.status.name,
+    }))
+
+
+@app.command(
+    aliases=["del", "remove", "rm"],
+    context_settings=CONTEXT_SETTINGS)
+@click.argument("name")
+@click.option(
+    '-y', '--yes',
+    'is_confirmed',
+    type=bool,
+    is_flag=True,
+    default=False,
+    help="Proceed without confirmation.")
+@click.pass_obj
+def delete(obj: ContextObject, name: str, is_confirmed: bool):
+    """
+    Delete an application.
+    """
+    _ = is_confirmed or click.confirm(
+        f"Do you REALLY want to delete the application {name}?", abort=True)
+    
+    obj.application_service.delete(name)
+    logging.info(f"Application {name} has been deleted.")

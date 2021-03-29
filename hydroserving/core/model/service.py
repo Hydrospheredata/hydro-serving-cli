@@ -4,11 +4,10 @@ import itertools
 from typing import List, Iterable, Callable, Tuple, Optional
 from copy import deepcopy
 
-from hydroserving.core.model.package import assemble_model, enrich_and_normalize
 from hydroserving.util.err_handler import handle_cluster_error
 
 from hydrosdk.cluster import Cluster
-from hydrosdk.modelversion import ModelVersion, LocalModel
+from hydrosdk.modelversion import ModelVersion, ModelVersionBuilder
 from hydrosdk.monitoring import MetricSpecConfig, MetricSpec
 from hydrosdk.utils import handle_request_error
 from hydrosdk.exceptions import BadRequestException
@@ -101,40 +100,47 @@ class ModelService:
         return ModelVersion.find_by_id(self.cluster, id_)
 
     @handle_cluster_error
-    def find_model_by_name(self, model_name) -> int:
+    def find_model_by_name(self, name: str) -> int:
+        """
+        Find a Model on the cluster by its name.
+
+        :param name: name of the model
+        :return: id of the model (not model version id)
+        """
         for model_json in self.list_models():
             if model_json.get("name") == model_name:
                 return model_json["id"]
-        raise BadRequestException(f"Failed to find the model with a name {model_name}.")
+        raise BadRequestException(f"Failed to find the model with a name {name}.")
 
     @handle_cluster_error
-    def apply(
-            self, 
-            partial_parser: Callable[[str], Tuple[LocalModel, List[Callable[[Cluster], Tuple[str, MetricSpecConfig]]]]],
+    def apply(self, 
+            partial_model_parser: Callable[[Cluster, str], ModelVersion],
+            partial_metric_parser: Callable[[Cluster], List[Tuple[str, MetricSpecConfig]]],
             path: str,
             ignore_training_data: bool,
             ignore_metrics: bool,
             is_async: Optional[bool] = False,
             timeout: Optional[int] = 120,
     ) -> ModelVersion:
-        local_model, almost_metrics = partial_parser(path)
-        enriched_model = enrich_and_normalize(path, local_model)
-        _ = assemble_model(path, enriched_model)
+        model_version = partial_model_parser(self.cluster, path=path)
 
-        logging.info("Uploading a model")
-        model_version = local_model.upload(self.cluster)
-        if not ignore_training_data and model_version.training_data:
-            logging.info("Uploading the training data")
-            data_upload_response = model_version.upload_training_data()
-            data_upload_response.wait()
+        if model_version.training_data:
+            if ignore_training_data:
+                logging.warning("Ignoring training data upload")
+            else:
+                logging.info("Uploading training data")
+                data_upload_response = model_version.upload_training_data()
+                data_upload_response.wait()
         
-        if not ignore_metrics and len(almost_metrics) > 0:
-            logging.info("Preparing metrics")
-            metrics = [metric(self.cluster) for metric in almost_metrics]
-
-            logging.info("Assigning metrics to the model")
-            for metric_name, metric_config in metrics:
-                MetricSpec.create(self.cluster, metric_name, model_version.id, metric_config)
+        if ignore_metrics:
+            logging.warning("Ignoring metrics assignment")
+        else:
+            logging.debug("Preparing possible metrics")
+            metrics = partial_metric_parser(self.cluster)
+            if metrics:
+                logging.info("Assigning metrics to the model")
+                for metric_name, metric_config in metrics:
+                    MetricSpec.create(self.cluster, metric_name, model_version.id, metric_config)
         
         if not is_async:
             model_version.lock_till_released(timeout)

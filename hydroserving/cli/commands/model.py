@@ -6,14 +6,13 @@ from tabulate import tabulate
 
 from hydroserving.cli.commands.hs import hs_cli
 from hydroserving.cli.context import CONTEXT_SETTINGS
-from hydroserving.cli.help import PROFILE_HELP
 from hydroserving.cli.context_object import ContextObject
 
 
 @hs_cli.group(cls=ClickAliasedGroup)
 def model(): 
     """
-    Working with models and model versions.
+    Manage models and model versions.
     """
     pass
 
@@ -24,7 +23,7 @@ def model():
 @click.pass_obj
 def list(obj: ContextObject):
     """
-    List all model versions on the cluster.
+    List models.
     """
     view = []
     for model_id, model_name, versions in obj.model_service.list_models_enriched():
@@ -40,8 +39,8 @@ def list(obj: ContextObject):
             tablefmt="github",
         ))
     else:
-        logging.info("Couldn't find any models")
-        raise SystemExit(-1)
+        logging.info("Couldn't find any models.")
+        raise SystemExit(0)
 
 
 @model.command(
@@ -51,10 +50,7 @@ def list(obj: ContextObject):
     '--id', 'id_', 
     type=int, 
     help="Model unique identifier.")
-@click.option(
-    '--name', 
-    type=str, 
-    help="Model name to delete.")
+@click.argument("name")
 @click.option(
     '-y', '--yes',
     'is_confirmed',
@@ -68,7 +64,7 @@ def delete(obj: ContextObject, id_: int, name: str, is_confirmed: bool):
     Delete a model and all of its versions.
     """
     if id_ is None and name is None:
-        logging.error("Either --id or --name options should be provided.") 
+        logging.error("Either --id option or [NAME] argument should be provided.") 
         raise SystemExit(-1)
 
     if id_ is None:

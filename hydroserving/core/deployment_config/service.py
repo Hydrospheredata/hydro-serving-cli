@@ -1,45 +1,48 @@
-from typing import List
+from typing import List, Callable
 
 from hydrosdk.cluster import Cluster
-from hydrosdk.deployment_configuration import (
-    DeploymentConfiguration, DeploymentConfigurationBuilder,
-)
+from hydrosdk.deployment_configuration import DeploymentConfiguration
+from hydroserving.util.err_handler import handle_cluster_error
 
 
 class DeploymentConfigurationService:
     def __init__(self, cluster: Cluster):
         self.cluster = cluster
 
+    @handle_cluster_error
     def find(self, name: str) -> DeploymentConfiguration:
         """
-        Search a deployment configuration by name
+        Search a deployment configuration by name.
 
         :param name: name of the deployment configuration
         :return: DeploymentConfiguration instance
         """
         return DeploymentConfiguration.find(self.cluster, name)
 
-    def apply(self, builder: DeploymentConfigurationBuilder) -> DeploymentConfiguration:
+    @handle_cluster_error
+    def apply(self, partial_parser: Callable[[Cluster], DeploymentConfiguration]) -> DeploymentConfiguration:
         """
-        Create a DeploymentConfiguration on the cluster
+        Create a DeploymentConfiguration on the cluster.
         
-        :param builder: an instance of the DeploymentConfigurationBuilder with all required attributes
+        :param partial_parser: a partial function, which will create a deployment configuration
         :return: DeploymentConfiguration instance
         """
-        return builder.build()
+        return partial_parser(self.cluster)
 
+    @handle_cluster_error
     def delete(self, name: str) -> dict:
         """
-        Delete deployment configuration from the cluster
+        Delete deployment configuration from the cluster.
 
         :param name: name of the deployment configuration
         :return: json response from the cluster
         """
         return DeploymentConfiguration.delete(self.cluster, name)
 
+    @handle_cluster_error
     def list(self) -> List[DeploymentConfiguration]:
         """
-        List all deployment configurations
+        List all deployment configurations.
 
         :return: list of DeploymentConfiguration instances
         """

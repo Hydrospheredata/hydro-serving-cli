@@ -13,81 +13,80 @@ from hydroserving.config.settings import TARGET_FOLDER, SEGMENT_DIVIDER
 from hydroserving.integrations.dvc import collect_dvc_info, dvc_to_dict
 from hydroserving.integrations.git import collect_git_info, git_to_dict
 
-from hydrosdk.modelversion import LocalModel
+from hydrosdk.modelversion import ModelVersionBuilder
 from hydrosdk.signature import ModelField
+from hydro_serving_grpc.serving.contract.types_pb2 import DataProfileType, DataType
 
 
-def assemble_model(dir_path: str, local_model: LocalModel):
+def assemble_model_on_local_fs(builder: ModelVersionBuilder):
     """
     Compresses TARGET_PATH to .tar.gz archive
     Returns path to the archive.
-
-    Args:
-        model (Model):
-        model_path (str):
     """
-    target_dir = os.path.join(dir_path, TARGET_FOLDER)
-    hs_model_dir = os.path.join(target_dir, local_model.name)
+    target_dir = os.path.join(builder.path, TARGET_FOLDER)
+    hs_model_dir = os.path.join(target_dir, builder.name)
     if os.path.exists(hs_model_dir):
         shutil.rmtree(hs_model_dir)
     os.makedirs(hs_model_dir)
 
-    tar_name = "{}.tar.gz".format(local_model.name)
+    tar_name = "{}.tar.gz".format(builder.name)
     tar_path = os.path.join(hs_model_dir, tar_name)
     logging.debug("Creating archive: %s", tar_path)
     with tarfile.open(tar_path, "w:gz") as tar:
-        for entry in local_model.payload.values():
+        for entry in builder.payload.values():
             entry_name = os.path.basename(entry)
             logging.debug("Archiving %s as %s", entry, entry_name)
             tar.add(entry, arcname=entry_name)
     return tar_path
 
 
-def enrich_and_normalize(dir_path: str, local_model: LocalModel) -> LocalModel:
+def enrich_and_normalize(builder: ModelVersionBuilder) -> ModelVersionBuilder:
     """
     Enrich the model with the additional information contained in the directory.
 
-    :param dir_path: a path, where model artifacts are located
-    :param local_model: an instance of a LocalModel
-    :return: an enriched instance of a LocalModel
+    :param builder: an instance of a ModelVersionBuilder
+    :return: an enriched instance of a ModelVersionBuilder
     """
-    if os.path.isfile(dir_path):
-        dir_path = os.path.dirname(dir_path)
-        logging.debug("Applying file. Dirname {}".format(dir_path))
-    gitinfo = collect_git_info(dir_path, search_parent_directories=True)
+    path = builder.path
+    if os.path.isfile(path):
+        path = os.path.dirname(builder.path)
+        logging.debug("Applying file. Dirname {}".format(path))
+    gitinfo = collect_git_info(path, search_parent_directories=True)
     if gitinfo:
         logging.debug("Extracted git metadata: %s", gitinfo)
-        local_model.metadata.update(git_to_dict(gitinfo))
-    dvcinfo = collect_dvc_info(dir_path)
+        builder.metadata.update(git_to_dict(gitinfo))
+    dvcinfo = collect_dvc_info(path)
     if dvcinfo:
         logging.debug("Extracted dvc metadata: %s", dvcinfo)
-        local_model.metadata.update(dvc_to_dict(dvcinfo))
+        builder.metadata.update(dvc_to_dict(dvcinfo))
     logging.info("Parsed model definition")
-    logging.info("Name: " + local_model.name)
-    logging.info("Runtime: " + str(local_model.runtime))
-    if local_model.install_command is not None:
-        logging.info("Install command: " + local_model.install_command)
-    if local_model.training_data is not None:
-        logging.info("Training data: " + local_model.training_data)
-    logging.info("Signature name: " + local_model.signature.signature_name)
+    logging.info(SEGMENT_DIVIDER)
+    logging.info("Name: " + builder.name)
+    logging.info("Runtime: " + builder.runtime.to_string())
+    if builder.install_command is not None:
+        logging.info("Install command: " + builder.install_command)
+    if builder.training_data is not None:
+        logging.info("Training data: " + builder.training_data)
+    logging.info("Signature name: " + builder.signature.signature_name)
     logging.info("Inputs:")
-    inputs_view = signature_view(local_model.signature.inputs)
+    inputs_view = signature_view(builder.signature.inputs)
     logging.info(tabulate.tabulate(inputs_view, headers="keys", tablefmt="github"))
     logging.info("Outputs:")
-    outputs_view = signature_view(local_model.signature.outputs)
+    outputs_view = signature_view(builder.signature.outputs)
     logging.info(tabulate.tabulate(outputs_view, headers="keys", tablefmt="github"))
-    if local_model.monitoring_configuration is not None:
+    if builder.monitoring_configuration is not None:
         logging.info("Monitoring:")
-        logging.info("    " + str(local_model.monitoring_configuration))
-    if local_model.metadata is not None: 
+        for key, value in builder.monitoring_configuration.to_dict().items():
+            logging.info(f"    {key}={value}")
+    if builder.metadata is not None and builder.metadata: 
         logging.info("Metadata:")
-        for k,v in local_model.metadata.items():
+        for k,v in builder.metadata.items():
             logging.info("    {}: {}".format(k, v))
     logging.info("Payload:")
-    for f in local_model.payload.values():
+    for f in builder.payload.values():
         logging.info("    " + str(f))
     logging.info(SEGMENT_DIVIDER)
-    return local_model
+    return builder
 
 
 def signature_view(fields: List[ModelField]) -> List[Dict[str, Any]]:
@@ -95,11 +94,11 @@ def signature_view(fields: List[ModelField]) -> List[Dict[str, Any]]:
     for field in fields:
         view = {
             'name': field.name,
-            'shape': field.shape or "scalar",
-            'profile': field.profile
+            'shape': field.shape.dims or "scalar",
+            'profile': DataProfileType.Name(field.profile),
         }
         if hasattr(field, 'dtype'):
-            view['type'] = field.dtype
+            view['type'] = DataType.Name(field.dtype) 
         else:
             view['subfields'] = '...'
         outputs_view.append(view)

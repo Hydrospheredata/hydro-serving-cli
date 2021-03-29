@@ -3,6 +3,7 @@ import time
 from typing import List
 
 from hydroserving.core.application.entities import model_variant
+from hydroserving.util.err_handler import handle_cluster_error
 from hydrosdk.cluster import Cluster
 from hydrosdk.application import Application, ApplicationBuilder
 from hydrosdk.exceptions import BadRequestException
@@ -12,6 +13,7 @@ class ApplicationService:
     def __init__(self, cluster: Cluster):
         self.cluster = cluster
 
+    @handle_cluster_error
     def apply(self, builder: ApplicationBuilder, timeout: int = 120) -> Application:
         """
         Create or update an Application on the cluster.
@@ -30,6 +32,7 @@ class ApplicationService:
             application = builder.build()
         application.lock_while_starting(timeout)
 
+    @handle_cluster_error
     def list(self) -> List[Application]:
         """
         List all available applications on the cluster.
@@ -38,6 +41,7 @@ class ApplicationService:
         """
         return Application.list(self.cluster)
 
+    @handle_cluster_error
     def find(self, name: str) -> Application:
         """
         Find an application by name. 
@@ -47,6 +51,7 @@ class ApplicationService:
         """
         return Application.find(self.cluster, name)
 
+    @handle_cluster_error
     def delete(self, name: str) -> dict:
         """
         Delete an application by name.

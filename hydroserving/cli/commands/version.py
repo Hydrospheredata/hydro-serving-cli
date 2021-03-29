@@ -1,4 +1,5 @@
 import logging
+import json
 from typing import Optional 
 
 import click
@@ -12,15 +13,17 @@ from hydroserving.cli.context import CONTEXT_SETTINGS
 from hydroserving.cli.context_object import ContextObject
 
 
-@model.group(cls=ClickAliasedGroup)
-def versions(): 
+@model.group(
+    cls=ClickAliasedGroup,
+    context_settings=CONTEXT_SETTINGS)
+def version(): 
     """
     Working with model versions.
     """
     pass
 
 
-@versions.command(
+@version.command(
     aliases=["ls"], 
     context_settings=CONTEXT_SETTINGS)
 @click.option(
@@ -44,7 +47,7 @@ def list(obj: ContextObject, name: Optional[str] = None):
             'name': version.name,
             'version #': version.version,
             'status': version.status,
-            'runtime': version.runtime.full,
+            'runtime': version.runtime.to_string(),
             'apps': version.applications,
         })
     if view:
@@ -58,39 +61,56 @@ def list(obj: ContextObject, name: Optional[str] = None):
         raise SystemExit(-1)
 
 
-@versions.command(
+@version.command(
     context_settings=CONTEXT_SETTINGS)
 @click.option(
     '--id', 'id_', 
     type=int, 
     help="Model version unique identifier")
-@click.option(
-    '--name-version', 
-    type=str, 
-    help="Model version reference string in a form name:version")
+@click.argument(
+    "name", 
+    required=False)
 @click.pass_obj
-def logs(obj: ContextObject, id_: int, name_version: str):
+def logs(obj: ContextObject, id_: int, name: str):
     """
     Get build logs from a model version. 
     """
-    mv = get_model_version_by_id_or_by_reference_string(obj, id_, name_version)
-    logging.info(f"Build logs for the {mv}")
+    mv = get_model_version_by_id_or_by_reference_string(obj, id_, name)
+    logging.info(f"Build logs for {mv}")
     for l in obj.model_service.get_build_logs(mv.id):
         logging.info(l.data)
 
 
-@versions.command(
+@version.command(
+    aliases=["desc"],
     context_settings=CONTEXT_SETTINGS)
+@click.argument(
+    "name", 
+    required=False)
 @click.option(
     '--id', 'id_', 
     type=int, 
-    help="Model version unique identifier")
+    help="Model version unique identifier.")
+@click.pass_obj
+def describe(obj: ContextObject, name: str, id_: int):
+    """
+    Describe an application.
+    """
+    mv = get_model_version_by_id_or_by_reference_string(obj, id_, name)
+    logging.info(json.dumps(mv.to_dict()))
+
+
+@version.command(
+    context_settings=CONTEXT_SETTINGS)
+@click.argument(
+    "name", 
+    required=False)
 @click.option(
-    '--name-version', 
-    type=str, 
-    help="Model version reference string in a form name:version")
+    '--id', 'id_', 
+    type=int, 
+    help="Model version unique identifier.")
 @click.option(
-    '-i', '--infinity',
+    '-i', '--inf',
     'wait_for_infinity',
     type=bool,
     help="Lock infinitely until the model gets released.",
@@ -99,32 +119,35 @@ def logs(obj: ContextObject, id_: int, name_version: str):
 @click.option(
     '-t', '--timeout',
     type=int,
-    help='Timeout after given time, if model doesn\'t get released',
+    help='Timeout after a given time, if model doesn\'t get released.',
     default=120,)
 @click.pass_obj
-def lock(obj: ContextObject, id_: int, name_version: str, wait_for_infinity: bool, timeout: str):
+def lock(obj: ContextObject, id_: int, name: str, wait_for_infinity: bool, timeout: str):
     """
     Lock, until the model version gets released.
     """
-    mv = get_model_version_by_id_or_by_reference_string(obj, id_, name_version)
-    if wait_for_infinity:
-        while True:
-            try:
-                mv.lock_till_released()
-                break
-            except TimeoutException:
-                pass
-    else:
-        mv.lock_till_released(timeout)
-
+    mv = get_model_version_by_id_or_by_reference_string(obj, id_, name)
+    try:
+        if wait_for_infinity:
+            while True:
+                try:
+                    mv.lock_till_released()
+                    break
+                except TimeoutException:
+                    pass
+        else:
+            mv.lock_till_released(timeout)
+    except (ModelVersion.ReleaseFailed, TimeoutException) as e:
+        logging.error(e)
+        raise SystemExit(-1)
 
 
 def get_model_version_by_id_or_by_reference_string(obj: ContextObject, id_: int, reference: str) -> ModelVersion:
     """
     A helper function to retrieve a ModelVersion by id or by a reference string.
     """
-    if id_ is None and name_version is None:
-        logging.error("Either --id or --name-version options should be provided.") 
+    if id_ is None and reference is None:
+        logging.error("Either --id option or [NAME] argument should be provided.") 
         raise SystemExit(-1)
     
     if id_ is not None:
@@ -134,7 +157,7 @@ def get_model_version_by_id_or_by_reference_string(obj: ContextObject, id_: int,
             name, version = reference.split(':')
         except ValueError as e:
             logging.error("Couldn't parse a model version reference string. "
-                "The reference should be in a form `model_name:version`")
+                "[NAME] argument should be in a form `name:version`")
             raise SystemExit(-1)
         mv = obj.model_service.find_version(name, version)
     return mv
