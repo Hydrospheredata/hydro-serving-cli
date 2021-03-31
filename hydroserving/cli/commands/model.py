@@ -39,8 +39,7 @@ def list(obj: ContextObject):
             tablefmt="github",
         ))
     else:
-        logging.info("Couldn't find any models.")
-        raise SystemExit(0)
+        logging.info("Couldn't find any models")
 
 
 @model.command(
@@ -64,8 +63,8 @@ def delete(obj: ContextObject, id_: int, name: str, is_confirmed: bool):
     Delete a model and all of its versions.
     """
     if id_ is None and name is None:
-        logging.error("Either --id option or [NAME] argument should be provided.") 
-        raise SystemExit(-1)
+        logging.error("Either --id option or [NAME] argument should be provided") 
+        raise SystemExit(1)
 
     if id_ is None:
         model_id = obj.model_service.find_model_by_name(name)
@@ -78,4 +77,4 @@ def delete(obj: ContextObject, id_: int, name: str, is_confirmed: bool):
         f"Do you REALLY want to delete the model {name} and all of its ({num_versions}) versions?", abort=True)
     
     obj.model_service.delete(model_id)
-    logging.info(f"Model {name} and all of its ({num_versions}) versions has been deleted.")
+    logging.info(f"Model {name} and all of its ({num_versions}) versions has been deleted")

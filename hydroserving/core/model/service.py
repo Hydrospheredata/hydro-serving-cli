@@ -108,7 +108,7 @@ class ModelService:
         :return: id of the model (not model version id)
         """
         for model_json in self.list_models():
-            if model_json.get("name") == model_name:
+            if model_json.get("name") == name:
                 return model_json["id"]
         raise BadRequestException(f"Failed to find the model with a name {name}.")
 

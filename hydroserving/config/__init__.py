@@ -1,1 +1,1 @@
-from hydroserving.config.config_service import ConfigService
+from hydroserving.config.service import ConfigService

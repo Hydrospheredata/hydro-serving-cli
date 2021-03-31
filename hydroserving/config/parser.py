@@ -14,8 +14,8 @@ def config_to_dict(obj):
 
 
 def parse_config(in_dict):
-    clusters = in_dict['clusters']
-    current_cluster = in_dict.get('current-cluster')
-    if not current_cluster:  # back-compatible alternative
-        current_cluster = in_dict['current_cluster']
+    clusters = in_dict.get('clusters', [])
+    current_cluster = in_dict.get('current-cluster', None)
+    if current_cluster is None:
+        current_cluster = in_dict.get('current_cluster', None)
     return ClusterConfig(current_cluster, clusters)

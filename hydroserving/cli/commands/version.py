@@ -11,6 +11,7 @@ from hydrosdk.exceptions import TimeoutException
 from hydroserving.cli.commands.model import model
 from hydroserving.cli.context import CONTEXT_SETTINGS
 from hydroserving.cli.context_object import ContextObject
+from hydroserving.util.parseutil import _parse_model_reference
 
 
 @model.group(
@@ -58,7 +59,7 @@ def list(obj: ContextObject, name: Optional[str] = None):
         ))
     else:
         logging.info("Couldn't find any models")
-        raise SystemExit(-1)
+        raise SystemExit(1)
 
 
 @version.command(
@@ -139,7 +140,7 @@ def lock(obj: ContextObject, id_: int, name: str, wait_for_infinity: bool, timeo
             mv.lock_till_released(timeout)
     except (ModelVersion.ReleaseFailed, TimeoutException) as e:
         logging.error(e)
-        raise SystemExit(-1)
+        raise SystemExit(1)
 
 
 def get_model_version_by_id_or_by_reference_string(obj: ContextObject, id_: int, reference: str) -> ModelVersion:
@@ -147,17 +148,12 @@ def get_model_version_by_id_or_by_reference_string(obj: ContextObject, id_: int,
     A helper function to retrieve a ModelVersion by id or by a reference string.
     """
     if id_ is None and reference is None:
-        logging.error("Either --id option or [NAME] argument should be provided.") 
-        raise SystemExit(-1)
+        logging.error("Either --id option or [NAME] argument should be provided") 
+        raise SystemExit(1)
     
     if id_ is not None:
         mv = obj.model_service.find_version_by_id(id_)
     else:
-        try: 
-            name, version = reference.split(':')
-        except ValueError as e:
-            logging.error("Couldn't parse a model version reference string. "
-                "[NAME] argument should be in a form `name:version`")
-            raise SystemExit(-1)
+        name, version = _parse_model_reference(reference)
         mv = obj.model_service.find_version(name, version)
     return mv

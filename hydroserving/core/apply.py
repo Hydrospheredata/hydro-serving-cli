@@ -42,20 +42,20 @@ class ApplyService:
         for file in paths:
             abs_file = os.path.abspath(file)
             if file == "<STDIN>":  # special case for stdin redirect
-                logging.info("Reading resource from <STDIN> ...")
+                logging.info("Reading resource from <STDIN>")
                 results[os.getcwd()] = yaml_file_stream(sys.stdin)
             else:
                 if not os.path.exists(file):
                     raise FileNotFoundError(file)
 
                 if os.path.isdir(file):
-                    logging.debug("Looking for resources in {} ...".format(os.path.basename(abs_file)))
+                    logging.debug("Looking for resources in {}".format(os.path.basename(abs_file)))
                     for yaml_file in sorted(get_yamls(abs_file)):
-                        logging.info("Reading {} ...".format(os.path.basename(yaml_file)))
+                        logging.info("Reading {}".format(os.path.basename(yaml_file)))
                         with open(yaml_file, 'r') as f:
                             results[abs_file] = yaml_file_stream(f)
                 elif is_yaml(file):
-                    logging.info("Reading {} ...".format(os.path.basename(file)))
+                    logging.info("Reading {}".format(os.path.basename(file)))
                     with open(file, 'r') as f:
                         results[os.path.dirname(abs_file)] = yaml_file_stream(f)
                 else:
@@ -71,7 +71,7 @@ class ApplyService:
             kind = doc_obj.get("kind")
             if not kind:
                 logging.error("Cannot parse a resource without `kind` specification")
-                raise SystemExit(-1)
+                raise SystemExit(1)
             if kind == 'Model':
                 logging.debug("Model detected")
                 responses.append(self.model_service.apply(

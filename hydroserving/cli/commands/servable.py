@@ -37,14 +37,13 @@ def list(obj):
         logging.info(tabulate(sorted(servables_view, key = lambda x: x['name']), headers="keys", tablefmt="github"))
     else:
         logging.warning("Can't get servables list: %s", servables)
-        raise SystemExit(-1)
+        raise SystemExit(1)
 
 @servable.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('model-name', required=True)
 @click.pass_obj
 def deploy(obj, model_name):
-    (name, version) = model_name.split(':')
-    version = int(version)
+    name, version = _parse_model_reference(model_version)
     mv = obj.model_service.find_version(name, version)
     if not mv:
         raise click.ClickException("Model {} not found".format(model_name))
@@ -66,10 +65,10 @@ def rm(obj, servable_name):
             logging.info("Servable {} was deleted".format(servable_name))
         else:
             logging.error("Servable {} wasn't deleted".format(servable_name))
-            raise SystemExit(-1)
+            raise SystemExit(1)
     else:
         logging.error("Servable {} doesn't exist".format(servable_name))
-        raise SystemExit(-1)
+        raise SystemExit(1)
 
 
 @servable.command(context_settings=CONTEXT_SETTINGS)
@@ -84,4 +83,4 @@ def logs(obj, servable_name, follow):
                 logging.info(event.data)
     else:
         logging.error("Cannot fetch logs for %s", (servable_name,))
-        raise SystemExit(-1)
+        raise SystemExit(1)

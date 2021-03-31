@@ -71,7 +71,7 @@ def _parse_horizontal_pod_autoscaler_spec(in_dict: dict) -> Optional[HorizontalP
     """
     logging.debug(f"Parsing horizontal pod autoscaler specification: {in_dict}")
     if in_dict is None: 
-        logging.debug("Couldn't find horizontal pod autoscaler specification, skipping ...")
+        logging.debug("Couldn't find horizontal pod autoscaler specification, skipping")
         return None 
     hpa = HorizontalPodAutoScalerSpec(
         min_replicas=in_dict.get("minReplicas"),
@@ -91,7 +91,7 @@ def _parse_deployment_spec(in_dict: Optional[dict]) -> Optional[DeploymentSpec]:
     """
     logging.debug(f"Parsing deployment specification: {in_dict}")
     if in_dict is None: 
-        logging.debug("Couldn't find deployment specification, skipping ...")
+        logging.debug("Couldn't find deployment specification, skipping")
         return None 
     deployment = DeploymentSpec(replica_count=in_dict.get("replicaCount"))
     logging.debug(f"Parsed deployment specification: {deployment}")
@@ -116,7 +116,7 @@ def _parse_container_spec(in_dict: Optional[dict]) -> Optional[ContainerSpec]:
     """
     logging.debug(f"Parsing container specification: {in_dict}")
     if in_dict is None: 
-        logging.debug("Couldn't find container specification, skipping ...")
+        logging.debug("Couldn't find container specification, skipping")
         return None
     container = ContainerSpec(
         resources=ResourceRequirements(
@@ -143,7 +143,7 @@ def _parse_pod_spec(in_dict: Optional[dict]) -> Optional[PodSpec]:
     """
     logging.debug(f"Parsing pod specification: {in_dict}")
     if in_dict is None: 
-        logging.debug("Couldn't find pod specification, skipping ...")
+        logging.debug("Couldn't find pod specification, skipping")
         return None
     pod = PodSpec(
         node_selector=_parse_node_selector(in_dict.get("nodeSelector")),
@@ -197,7 +197,7 @@ def _parse_node_affinity_node_selector(in_dict: Optional[dict] = None) -> Option
     """
     logging.debug(f"Parsing node affinity node selector: {in_dict}")
     if in_dict is None:
-        logging.debug("Couldn't find any node affinity node selector, skipping ...")
+        logging.debug("Couldn't find any node affinity node selector, skipping")
         return None
     node_selector = NodeSelector(
         node_selector_terms=[
@@ -219,7 +219,7 @@ def _parse_node_selector(in_dict: Optional[dict] = None) -> Optional[Dict[str, s
     """
     logging.debug(f"Parsing node selectors: {in_dict}")
     if in_dict is None:
-        logging.debug("Couldn't find any node selector constraints, skipping ...")
+        logging.debug("Couldn't find any node selector constraints, skipping")
         return None
     constraints = in_dict
     logging.debug(f"Parsed node selector constraints: {constraints}")
@@ -240,7 +240,7 @@ def _parse_affinity(in_dict: Optional[dict] = None) -> Optional[Affinity]:
     """
     logging.debug(f"Parsing affinity: {in_dict}")
     if in_dict is None:
-        logging.debug("Couldn't find affinity specification, skipping ...")
+        logging.debug("Couldn't find affinity specification, skipping")
         return None
     affinity = Affinity(
         node_affinity=_parse_node_affinity(in_dict.get("nodeAffinity")),
@@ -264,7 +264,7 @@ def _parse_node_affinity(in_dict: Optional[dict] = None) -> Optional[NodeAffinit
     """
     logging.debug(f"Parsing node affinity: {in_dict}")
     if in_dict is None:
-        logging.debug("Couldn't find node affinity specification, skipping ...")
+        logging.debug("Couldn't find node affinity specification, skipping")
         return None
     required_terms = in_dict.get("requiredDuringSchedulingIgnoredDuringExecution", {})
     preferred_terms = in_dict.get("preferredDuringSchedulingIgnoredDuringExecution", [])
@@ -357,7 +357,7 @@ def _parse_pod_affinity(in_dict: Optional[dict] = None) -> Optional[PodAffinity]
     """
     logging.debug(f"Parsing pod affinity: {in_dict}")
     if in_dict is None:
-        logging.debug("Couldn't find pod affinity specification, skipping ...")
+        logging.debug("Couldn't find pod affinity specification, skipping")
         return None
     required_terms = in_dict.get("requiredDuringSchedulingIgnoredDuringExecution", [])
     preferred_terms = in_dict.get("preferredDuringSchedulingIgnoredDuringExecution", [])
@@ -388,7 +388,7 @@ def _parse_pod_affinity_term(in_dict: Optional[dict] = None) -> PodAffinityTerm:
     """
     logging.debug(f"Parsing pod affinity term: {in_dict}")
     if in_dict is None:
-        logging.debug("Couldn't find pod affinity term, skipping ...")
+        logging.debug("Couldn't find pod affinity term, skipping")
         return None
     term = PodAffinityTerm(
         label_selector=_parse_label_selector(in_dict.get("labelSelector")),
@@ -416,7 +416,7 @@ def _parse_label_selector(in_dict: Optional[dict] = None) -> LabelSelector:
     """
     logging.debug(f"Parsing label selector: {in_dict}")
     if in_dict is None:
-        logging.debug("Couldn't find label selector, skipping ...")
+        logging.debug("Couldn't find label selector, skipping")
         return None
     expressions = []
     for exp in in_dict.get("matchExpressions", []):
@@ -466,7 +466,7 @@ def _parse_weighted_pod_affinity_terms(items: List[dict]) -> List[WeightedPodAff
     if terms: 
         logging.debug(f"Parsed weighted pod affinity terms: {terms}")
     else:
-        logging.debug("Couldn't find any weighted pod affinity terms.")
+        logging.debug("Couldn't find any weighted pod affinity terms")
     return terms
 
 
@@ -482,7 +482,7 @@ def _parse_pod_anti_affinity(in_dict: Optional[dict] = None) -> Optional[PodAnti
     """
     logging.debug(f"Parsing pod anti affinity: {in_dict}")
     if in_dict is None:
-        logging.debug("Couldn't find pod anti affinity specification, skipping ...")
+        logging.debug("Couldn't find pod anti affinity specification, skipping")
         return None
     required_terms = in_dict.get("requiredDuringSchedulingIgnoredDuringExecution", [])
     preferred_terms = in_dict.get("preferredDuringSchedulingIgnoredDuringExecution", [])

@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import List
+from typing import List, Callable
 
 from hydroserving.core.application.entities import model_variant
 from hydroserving.util.err_handler import handle_cluster_error
@@ -14,23 +14,14 @@ class ApplicationService:
         self.cluster = cluster
 
     @handle_cluster_error
-    def apply(self, builder: ApplicationBuilder, timeout: int = 120) -> Application:
+    def apply(self, partial_parser: Callable[[Cluster], Application]) -> Application:
         """
-        Create or update an Application on the cluster.
-
-        :param builder: an instance of the ApplicationBuilder with all required attributes
-        :param timeout: timeout for waiting for the application to start
+        Create a Application on the cluster.
+        
+        :param partial_parser: a partial function, which will create an application
         :return: Application instance
         """
-        logging.debug("Applying application: %s", builder.name)
-
-        try:
-            _ = self.find(builder.name)
-            logging.warning("Found an existing application, update required")
-        except BadRequestException:
-            logging.debug("Creating application: %s", builder)
-            application = builder.build()
-        application.lock_while_starting(timeout)
+        return partial_parser(self.cluster)
 
     @handle_cluster_error
     def list(self) -> List[Application]:

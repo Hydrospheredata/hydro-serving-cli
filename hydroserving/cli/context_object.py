@@ -11,14 +11,19 @@ from hydroserving.core.deployment_config.service import DeploymentConfigurationS
 from hydroserving.core.model.service import ModelService
 from hydroserving.core.monitoring.service import MonitoringService
 from hydroserving.core.servable.service import ServableService
+from hydroserving.errors.config import ClusterNotFoundError
 
 
 class ContextObject:
 
     def __init__(self, config_service: ConfigService):
         self.config_service = config_service
-        cluster_definition = config_service.current_cluster()
-        self.cluster = Cluster(cluster_definition['cluster']['server'])
+        self.cluster = None
+        try:
+            cluster_definition = config_service.current_cluster()
+            self.cluster = Cluster(cluster_definition.get('cluster', {}).get('server', 'unknown'))
+        except ClusterNotFoundError:
+            logging.debug("Current cluster is unset, initializing without cluster endpoint")
         self.model_service = ModelService(self.cluster)
         self.application_service = ApplicationService(self.cluster)
         self.servable_service = ServableService(self.cluster)
@@ -41,9 +46,12 @@ class ContextObject:
             ContextServices
         """
         if not os.path.isdir(HOME_PATH_EXPANDED):
-            logging.debug("Didn't find {} folder. Creating...".format(HOME_PATH_EXPANDED))
+            logging.debug("Didn't find {} folder, creating".format(HOME_PATH_EXPANDED))
             os.mkdir(HOME_PATH_EXPANDED)
         config_service = ConfigService(path, overridden_cluster=overridden_cluster)
-        if overridden_cluster and config_service.current_cluster() is None:
-            raise ValueError("No cluster definition for '{}' cluster".format(overridden_cluster))
+        try:
+            _ = overridden_cluster is not None and config_service.current_cluster()
+        except ClusterNotFoundError as e:
+            logging.error(f"No cluster definition for '{overridden_cluster}'")
+            raise SystemExit(1)
         return ContextObject(config_service=config_service)

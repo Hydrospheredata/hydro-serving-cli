@@ -8,6 +8,7 @@ from hydroserving.cli.context import CONTEXT_SETTINGS
 from hydroserving.cli.context_object import ContextObject
 from hydroserving.cli.help import VERBOSE_HELP
 from hydroserving.util.log_handler import StdoutLogHandler
+from hydroserving.errors.config import ClusterNotFoundError
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)
@@ -40,6 +41,9 @@ def hs_cli(ctx, verbose, cluster):
     except Exception as err:
         logging.error("Error occurred while preparing cluster: {}".format(err))
         traceback.print_exc()
-        raise SystemExit(-1)
+        raise SystemExit(1)
 
-    logging.debug("Current cluster: {}".format(ctx.obj.config_service.current_cluster()))
+    try: 
+        logging.debug("Current cluster: {}".format(ctx.obj.config_service.current_cluster()))
+    except ClusterNotFoundError:
+        pass

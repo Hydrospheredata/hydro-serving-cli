@@ -1,88 +1,108 @@
-from hydroserving.core.application.entities import streaming_params, ApplicationDef
+from typing import List, Tuple, Callable, Optional
+import logging
+import functools
+
+from hydroserving.util.parseutil import _parse_model_reference, fill_arguments
+from hydrosdk.application import Application, ApplicationBuilder, ExecutionStageBuilder
+from hydrosdk.deployment_configuration import DeploymentConfiguration
+from hydrosdk.modelversion import ModelVersion
+from hydrosdk.builder import AbstractBuilder
+from hydrosdk.cluster import Cluster
 
 
-def parse_streaming_params(in_list):
-    """
+def parse_application(in_dict: dict) -> Callable[[Cluster], Application]:
+    class LocalBuilder(AbstractBuilder):
+        def __init__(self, in_dict: dict):
+            self.in_dict = in_dict
+        
+        def build(self, cluster: Cluster) -> Application:
+            name = _parse_name(self.in_dict)
+            singular_def = self.in_dict.get("singular")
+            pipeline_def = self.in_dict.get("pipeline")
 
-    Args:
-        in_list (list of dict):
+            if singular_def and pipeline_def:
+                logging.error("Both singular and pipeline definitions are provided")
+                raise SystemExit(1)
 
-    Returns:
-        StreamingParams:
-    """
-    params = []
-    for item in in_list:
-        params.append(streaming_params(item["in-topic"], item["out-topic"]))
-    return params
+            if singular_def:
+                model_version, config = _parse_singular_def(cluster, singular_def)
+                app_builder = ApplicationBuilder(name)
+                stage = ExecutionStageBuilder() \
+                    .with_model_variant(model_version, weight=100, deployment_configuration=config) \
+                    .build()
+                return app_builder.with_stage(stage).build(cluster)
 
+            elif pipeline_def:
+                pipeline = _parse_pipeline_def(cluster, pipeline_def)
+                app_builder = ApplicationBuilder(name)
+                stages = []
+                for stage in pipeline:
+                    stage_builder = ExecutionStageBuilder()
+                    for (model_version, config), weight in stage:
+                        stage_builder.with_model_variant(model_version, weight, config)
+                    stages.append(stage_builder.build())
+                for stage in stages:
+                    app_builder.with_stage(stage)
+                return app_builder.build(cluster)
 
-def parse_singular_app(in_dict):
-    return {
-        "stages": [
-            {
-                "modelVariants": [parse_singular(in_dict)]
-            }
-        ]
-    }
-
-
-def parse_singular(in_dict):
-    return {
-        'modelVersion': in_dict['model'],
-        'weight': 100
-    }
-
-
-def parse_model_variant_list(in_list):
-    services = [
-        parse_model_variant(x)
-        for x in in_list
-    ]
-    return services
-
-
-def parse_model_variant(in_dict):
-    return {
-        'modelVersion': in_dict['model'],
-        'weight': in_dict['weight']
-    }
-
-
-def parse_pipeline_stage(stage_dict):
-    if len(stage_dict) == 1:
-        parsed_variants = [parse_singular(stage_dict[0])]
-    else:
-        parsed_variants = parse_model_variant_list(stage_dict)
-    return {"modelVariants": parsed_variants}
-
-
-def parse_pipeline(in_list):
-    pipeline_stages = []
-    for i, stage in enumerate(in_list):
-        pipeline_stages.append(parse_pipeline_stage(stage))
-    return {'stages': pipeline_stages}
-
-
-def parse_application(in_dict) -> ApplicationDef:
-    singular_def = in_dict.get("singular")
-    pipeline_def = in_dict.get("pipeline")
-
-    streaming_def = in_dict.get('streaming')
-    if streaming_def:
-        streaming_def = parse_streaming_params(streaming_def)
-
-    if singular_def and pipeline_def:
-        raise ValueError("Both singular and pipeline definitions are provided")
-
-    if singular_def:
-        execution_graph = parse_singular_app(singular_def)
-    elif pipeline_def:
-        execution_graph = parse_pipeline(pipeline_def)
-    else:
-        raise ValueError("Neither model nor graph are defined")
-
-    return ApplicationDef(
-        name=in_dict['name'],
-        execution_graph=execution_graph,
-        kafka_streaming=streaming_def
+            else:
+                logging.error("Neither singular nor pipeline fields are defined")
+                raise SystemExit(1)
+    
+    return functools.partial(
+        fill_arguments,
+        lambda **kwargs: LocalBuilder(in_dict),
     )
+
+def _parse_singular_def(cluster: Cluster, in_dict: dict) -> Tuple[ModelVersion, Optional[DeploymentConfiguration]]:
+    """
+    singular: 
+      model: identity:1
+    """
+    reference = in_dict.get("model")
+    if reference is None:
+        logging.error("Couldn't find model field")
+        raise SystemExit(1)
+    name, version = _parse_model_reference(reference)
+    model_version = ModelVersion.find(cluster, name, version)
+    logging.debug(f"Found model: {model_version}")
+    config = None
+    if in_dict.get("deployment-configuration"):
+        config = DeploymentConfiguration.find(cluster, in_dict["deployment-configuration"])
+        logging.debug(f"Found deployment configuration: {config}")
+    return model_version, config
+
+
+def _parse_name(in_dict: dict) -> str:
+    logging.debug(f"Parsing name")
+    if in_dict.get('name') is None:
+        logging.error("Couldn't find name field")
+        raise SystemExit(1)
+    name = in_dict["name"]
+    logging.debug(f"Parsed name: {name}")
+    return name
+
+
+def _parse_weight(in_dict: dict) -> int:
+    return int(in_dict.get("weight", 100))
+
+
+def _parse_pipeline_def(cluster: Cluster, items: list) -> List[List[Tuple[Tuple[ModelVersion, Optional[DeploymentConfiguration]], int]]]:
+    """
+    pipeline:
+      - - model: identity-prep:1
+      - - model: identity:1
+          weight: 80
+        - model: identity:2
+          weight: 20
+    """
+    pipeline = []
+    for stage in items:
+        variants = []
+        for variant in stage:
+            variants.append((
+                _parse_singular_def(cluster, variant),
+                _parse_weight(variant)
+            ))
+        pipeline.append(variants)
+    return pipeline

@@ -9,6 +9,7 @@ from click import ClickException
 
 from hydroserving.util.parseutil import fill_arguments
 from hydroserving.core.model.package import enrich_and_normalize, assemble_model_on_local_fs
+from hydroserving.util.parseutil import _parse_model_reference
 
 from hydrosdk.modelversion import ModelVersion, ModelVersionBuilder, MonitoringConfiguration
 from hydrosdk.signature import ModelSignature, signature_dict_to_ModelSignature
@@ -106,11 +107,7 @@ def parse_metrics(in_dict: dict) -> Callable[[Cluster], List[Tuple[str, MetricSp
         def build(self, cluster: Cluster) -> List[Tuple[str, MetricSpecConfig]]:
             for metric in self.in_dict.get("metrics", []):
                 metric_name = metric["name"]
-                try:
-                    name, version = metric["config"]["monitoring-model"].split(':')
-                except ValueError as e:
-                    raise ClickException(f"Invalid metric specification: {metric_name}") from e
-                
+                name, version = _parse_model_reference(metric["config"]["monitoring-model"])
                 operator = ThresholdOpToStr.get(metric["operator"])
                 if not operator:
                     raise TypeError(f"Invalid or undefined comparison operator: {operator}")
@@ -148,11 +145,11 @@ def _parse_monitoring_configuration(in_dict: dict) -> MonitoringConfiguration:
 def _parse_batch_size(in_dict: dict) -> int:
     logging.debug(f"Parsing batch size")
     batch_size = None
-    if in_dict.get("batchSize") is None:
+    if in_dict.get("batch-size") is None:
         logging.warning("Couldn't find batch size, setting default")
         batch_size = 100
     else: 
-        batch_size = in_dict["batchSize"]
+        batch_size = in_dict["batch-size"]
     logging.debug(f"Parsed batch size: {batch_size}")
     return batch_size
 

@@ -36,8 +36,7 @@ def list(obj: ContextObject):
             tablefmt="github",
         ))
     else:
-        logging.info("Couldn't find any deployment configuration.")
-        raise SystemExit(0)
+        logging.info("Couldn't find any deployment configuration")
 
 
 @dc.command(
@@ -73,4 +72,4 @@ def delete(obj, name: str, is_confirmed: bool):
         f"Do you REALLY want to delete the deployment configuration {name}?", abort=True)
     
     obj.deployment_configuration_service.delete(name)
-    logging.info(f"Deployment configuration {name} has been deleted.")
+    logging.info(f"Deployment configuration {name} has been deleted")

@@ -75,7 +75,7 @@ def upload(
         install_command: str, 
 ):
     """
-    Upload a model to the platform.
+    Upload a model to the cluster.
     """
     logging.debug(f"Checking for serving.yaml file in {target_dir}")
     target_dir = os.path.abspath(target_dir)
@@ -93,10 +93,10 @@ def upload(
             resource = yaml_file(f)
         if resource.get('kind') is None:
             logging.error(f"Resource, defined in {serving_file} doesn't specify `kind` field")
-            raise SystemExit(-1)
+            raise SystemExit(1)
         if resource.get('kind') != 'Model':
             logging.error(f"Resource, defined in {serving_file} is not of kind=Model")
-            raise SystemExit(-1)
+            raise SystemExit(1)
         if name is not None:
             logging.debug(f"Replacing name to {name}")
             resource['name'] = name
@@ -111,7 +111,7 @@ def upload(
             resource['install-command'] = install_command
     else:
         logging.error("Couldn't find serving.yaml for processing")
-        raise SystemExit(-1)
+        raise SystemExit(1)
     
     logging.info("Uploading a model to the cluster")
     model_version = obj.model_service.apply(
@@ -172,10 +172,10 @@ def apply(obj: ContextObject, f: str, ignore_metrics: bool, ignore_training_data
         logging.info(json.dumps(serialized))
     except ParserError as ex:
         logging.error("Error while parsing: {}".format(ex))
-        raise SystemExit(-1)
+        raise SystemExit(1)
     except ScannerError as ex:
         logging.error("Error while applying: Invalid YAML: {}".format(ex))
-        raise SystemExit(-1)
+        raise SystemExit(1)
     # except Exception as err:
     #     logging.error("Error while applying: {}".format(err))
-    #     raise SystemExit(-1)
+    #     raise SystemExit(1)

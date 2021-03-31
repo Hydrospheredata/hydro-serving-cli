@@ -1,5 +1,6 @@
 import logging
 import json
+import textwrap
 
 import click
 from click_aliases import ClickAliasedGroup
@@ -34,12 +35,12 @@ def list(obj: ContextObject):
             "id": app.id,
             "name": app.name,
             "status": app.status.name,
+            "message": textwrap.shorten(app.message or "None", width=80),
         })
     if view:
         logging.info(tabulate(view, headers="keys", tablefmt="github"))
     else:
-        logging.info("Couldn't find any applications.")
-        raise SystemExit(0)
+        logging.info("Couldn't find any applications")
 
 
 @app.command(
@@ -52,14 +53,7 @@ def describe(obj: ContextObject, name: str):
     Describe an application.
     """
     app = obj.application_service.find(name)
-    logging.info(json.dumps({
-        "id": app.id,
-        "name": app.name,
-        "metadata": app.metadata,
-        "executionGraph": app.execution_graph._asdict(),
-        "streamingParams": app.kafka_streaming,
-        "status": app.status.name,
-    }))
+    logging.info(json.dumps(app.to_dict()))
 
 
 @app.command(
@@ -82,4 +76,4 @@ def delete(obj: ContextObject, name: str, is_confirmed: bool):
         f"Do you REALLY want to delete the application {name}?", abort=True)
     
     obj.application_service.delete(name)
-    logging.info(f"Application {name} has been deleted.")
+    logging.info(f"Application {name} has been deleted")

@@ -5,6 +5,7 @@ import click
 from hydroserving.cli.commands.hs import hs_cli
 from hydroserving.cli.context import CONTEXT_SETTINGS
 from hydroserving.cli.help import PROFILE_HELP, PROFILE_PUSH_HELP, PROFILE_MODEL_VERSION_HELP
+from hydroserving.util.parseutil import _parse_model_reference
 
 
 @hs_cli.group(help=PROFILE_HELP)
@@ -31,11 +32,11 @@ def push(obj, model_version, filename, s3path, is_async):
         mv = {"model": {"id": 1}, "modelVersion": 1}
         mv_id = 1
     else:
-        model, version = model_version.split(":")
-        mv = obj.model_service.find_version(model, int(version))
+        name, version = _parse_model_reference(model_version)
+        mv = obj.model_service.find_version(name, version)
         mv_id = mv["id"]
     if s3path:
-        logging.info("S3 training path detected.")
+        logging.info("S3 training path detected")
         resp = obj.monitoring_service.push_s3_csv(mv_id, s3path)
         logging.debug(resp)
     elif filename:
@@ -52,8 +53,8 @@ def push(obj, model_version, filename, s3path, is_async):
                 required=True)
 @click.pass_obj
 def status(obj, model_version):
-    model, version = model_version.split(":")
-    mv = obj.model_service.find_version(model, int(version))
+    name, version = _parse_model_reference(model_version)
+    mv = obj.model_service.find_version(name, version)
     if not mv:
         raise click.ClickException("Model {} is not found".format(model_version))
     mv_id = mv['id']
