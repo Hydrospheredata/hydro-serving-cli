@@ -122,6 +122,7 @@ class ModelService:
             is_async: Optional[bool] = False,
             timeout: Optional[int] = 120,
     ) -> ModelVersion:
+        logging.info(f"Parsing and assembling a model at {path}")
         model_version = partial_model_parser(self.cluster, path=path)
 
         if model_version.training_data:

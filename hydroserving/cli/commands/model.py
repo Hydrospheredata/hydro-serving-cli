@@ -74,7 +74,7 @@ def delete(obj: ContextObject, id_: int, name: str, is_confirmed: bool):
         num_versions = len(obj.model_service.list_versions_by_model_id(model_id))
 
     _ = is_confirmed or click.confirm(
-        f"Do you REALLY want to delete the model {name} and all of its ({num_versions}) versions?", abort=True)
+        f"Do you REALLY want to delete the model '{name}'' and all of its ({num_versions}) versions?", abort=True)
     
     obj.model_service.delete(model_id)
-    logging.info(f"Model {name} and all of its ({num_versions}) versions has been deleted")
+    logging.info(f"Model '{name}' and all of its ({num_versions}) versions has been deleted")

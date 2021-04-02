@@ -6,7 +6,7 @@ from requests.exceptions import ConnectTimeout, ConnectionError
 
 def handle_cluster_error(func):
     def inner(*args, **kwargs):
-        if hasattr(args[0], 'cluster') and args[0].cluster is None:
+        if args and hasattr(args[0], 'cluster') and args[0].cluster is None:
             logging.error("Current cluster is unset, use 'hs cluster set [NAME]' to set an active cluster")
             raise SystemExit(1)
         try: 

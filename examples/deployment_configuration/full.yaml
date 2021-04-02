@@ -1,19 +1,19 @@
 kind: DeploymentConfiguration
-name: cool-deployment-config
+name: full-example
 hpa:
-  minReplicas: 2
-  maxReplicas: 10
+  minReplicas: 1
+  maxReplicas: 4
   cpuUtilization: 80
 deployment:
-  replicaCount: 4
+  replicaCount: 2
 container:
   resources:
     limits:
       cpu: 500m
-      memory: 4G
+      memory: 2G
     requests:
       cpu: 250m
-      memory: 2G
+      memory: 1G
 pod:
   nodeSelector:
     im: a_map
@@ -34,24 +34,24 @@ pod:
           - key: exp2
             operator: NotIn
             values:
-            - aaaa
-            - bvzv
-            - czxc
+            - aaa
+            - bbb
+            - ccc
           matchFields:
           - key: fields3
             operator: NotIn
             values:
             - aaa
-            - cccc
-            - zxcc
+            - bbb
+            - ccc
         weight: 100
     podAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
       - labelSelector:
           matchExpressions:
-          - key: kek
+          - key: foo
             operator: Exists
-          - key: key
+          - key: bar
             operator: NotIn
             values:
             - a
@@ -66,12 +66,12 @@ pod:
             matchLabels:
               key: a
             matchExpressions:
-            - key: kek
+            - key: foo
               operator: In
               values:
               - a
               - b
-            - key: kek2
+            - key: bar
               operator: NotIn
               values:
               - b
@@ -82,14 +82,14 @@ pod:
       requiredDuringSchedulingIgnoredDuringExecution:
       - labelSelector:
           matchExpressions:
-          - key: kek
+          - key: foo
             operator: Exists
-          - key: key2
+          - key: bar
             operator: NotIn
             values:
             - a
             - b
-          - key: kek2
+          - key: que
             operator: DoesNotExist
         namespaces:
         - namespace1
@@ -101,12 +101,12 @@ pod:
             matchLabels:
               key: a
             matchExpressions:
-            - key: kek
+            - key: foo
               operator: In
               values:
               - a
               - b
-            - key: kek
+            - key: bar
               operator: NotIn
               values:
               - b
@@ -118,7 +118,7 @@ pod:
     key: equalToleration
     tolerationSeconds: 30
     operator: Equal
-    value: kek
+    value: foo
   - key: equalToleration
     operator: Exists
     effect: PreferNoSchedule

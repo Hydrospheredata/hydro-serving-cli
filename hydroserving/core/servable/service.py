@@ -2,12 +2,14 @@
 from typing import List, Dict
 from hydrosdk.cluster import Cluster
 from hydrosdk.servable import Servable
+from hydroserving.util.err_handler import handle_cluster_error
 
 
 class ServableService:
     def __init__(self, cluster: Cluster):
         self.cluster = cluster
 
+    @handle_cluster_error
     def list(self) -> List[Servable]:
         """
         List all Servables on the cluster.
@@ -16,18 +18,7 @@ class ServableService:
         """
         return Servable.list(self.cluster)
 
-    def create(self, name: str, version: int, metadata: Dict[str, str] = None, deployment_configuration: str = None) -> Servable:
-        """
-        Deploy an instance of the uploaded model version on the cluster (Servable).
-
-        :param name: a name of the model
-        :param version: a version of the model
-        :param metadata: a metadata to be assigned to the Servable
-        :param deployment_configuration: a DeploymentConfiguration name to be used for to deploy a Servable
-        :return: a Servable instance
-        """
-        return Servable.create(self.cluster, name, version, metadata, deployment_configuration)
-
+    @handle_cluster_error
     def delete(self, name: str) -> dict:
         """
         Delete a Servable instance.
@@ -37,6 +28,7 @@ class ServableService:
         """
         return Servable.delete(self.cluster, name)
 
+    @handle_cluster_error
     def find(self, name: str) -> Servable:
         """
         Search for a Servable with a given name.
@@ -46,5 +38,6 @@ class ServableService:
         """
         return Servable.find_by_name(self.cluster, name)
 
+    @handle_cluster_error
     def logs(self, name: str, follow: bool = False):
         return self.find(name).logs(follow)

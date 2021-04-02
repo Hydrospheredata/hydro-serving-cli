@@ -13,14 +13,14 @@ from hydroserving.cli.context_object import ContextObject
 @hs_cli.group(
     cls=ClickAliasedGroup,
     context_settings=CONTEXT_SETTINGS)
-def dc():
+def config():
     """
     Manage deployment configurations.
     """
     pass
 
 
-@dc.command(
+@config.command(
     aliases=["ls"],
     context_settings=CONTEXT_SETTINGS)
 @click.pass_obj
@@ -39,7 +39,7 @@ def list(obj: ContextObject):
         logging.info("Couldn't find any deployment configuration")
 
 
-@dc.command(
+@config.command(
     aliases=["desc"],
     context_settings=CONTEXT_SETTINGS)
 @click.argument("name")
@@ -52,7 +52,7 @@ def describe(obj: ContextObject, name: str):
     logging.info(json.dumps(dc.to_dict()))
 
 
-@dc.command(
+@config.command(
     aliases=["del", "remove", "rm"],
     context_settings=CONTEXT_SETTINGS)
 @click.argument("name")
@@ -69,7 +69,7 @@ def delete(obj, name: str, is_confirmed: bool):
     Delete a deployment configuration.
     """
     _ = is_confirmed or click.confirm(
-        f"Do you REALLY want to delete the deployment configuration {name}?", abort=True)
+        f"Do you REALLY want to delete the deployment configuration '{name}'?", abort=True)
     
     obj.deployment_configuration_service.delete(name)
-    logging.info(f"Deployment configuration {name} has been deleted")
+    logging.info(f"Deployment configuration '{name}' has been deleted")

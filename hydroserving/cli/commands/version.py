@@ -150,10 +150,12 @@ def get_model_version_by_id_or_by_reference_string(obj: ContextObject, id_: int,
     if id_ is None and reference is None:
         logging.error("Either --id option or [NAME] argument should be provided") 
         raise SystemExit(1)
-    
+
     if id_ is not None:
+        logging.debug(f"Retrieve model version by id: {id_}")
         mv = obj.model_service.find_version_by_id(id_)
     else:
+        logging.debug(f"Retrieve model by reference string: {reference}")
         name, version = _parse_model_reference(reference)
         mv = obj.model_service.find_version(name, version)
     return mv

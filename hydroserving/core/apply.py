@@ -29,7 +29,7 @@ class ApplyService:
         self.model_service = model_service
         self.deployment_configuration_service = deployment_configuration_service
 
-    def apply(self, paths, **kwargs):
+    def apply(self, paths, recursive, **kwargs):
         """
 
         Args:
@@ -39,45 +39,44 @@ class ApplyService:
             list of dict:
         """
         results = {}
-        for file in paths:
-            abs_file = os.path.abspath(file)
-            if file == "<STDIN>":  # special case for stdin redirect
+        for path in paths:
+            if path == "<STDIN>":  # special case for stdin redirect
                 logging.info("Reading resource from <STDIN>")
                 results[os.getcwd()] = yaml_file_stream(sys.stdin)
             else:
-                if not os.path.exists(file):
-                    raise FileNotFoundError(file)
-
-                if os.path.isdir(file):
-                    logging.debug("Looking for resources in {}".format(os.path.basename(abs_file)))
-                    for yaml_file in sorted(get_yamls(abs_file)):
-                        logging.info("Reading {}".format(os.path.basename(yaml_file)))
+                abspath = os.path.abspath(path)
+                if not os.path.exists(abspath):
+                    raise FileNotFoundError(path)
+                if os.path.isdir(abspath):
+                    logging.debug(f"Detected a directory {abspath}, looking for resources")
+                    for yaml_file in sorted(get_yamls(abspath, recursive)):
+                        logging.info("Reading {}".format(yaml_file))
                         with open(yaml_file, 'r') as f:
-                            results[abs_file] = yaml_file_stream(f)
-                elif is_yaml(file):
-                    logging.info("Reading {}".format(os.path.basename(file)))
-                    with open(file, 'r') as f:
-                        results[os.path.dirname(abs_file)] = yaml_file_stream(f)
+                            results[yaml_file] = yaml_file_stream(f)
+                elif is_yaml(abspath):
+                    logging.info("Reading {}".format(abspath))
+                    with open(abspath, 'r') as f:
+                        results[abspath] = yaml_file_stream(f)
                 else:
                     raise UnknownFile(file)
-
         for source, docs in results.items():
             results[source] = self.apply_yaml(docs, source, **kwargs)
         return results
 
-    def apply_yaml(self, docs, call_path, **kwargs):
+    def apply_yaml(self, docs, path, **kwargs):
         responses = []
         for doc_obj in docs:
             kind = doc_obj.get("kind")
             if not kind:
-                logging.error("Cannot parse a resource without `kind` specification")
-                raise SystemExit(1)
+                logging.warning(f"Couldn't find resource specification (kind) at {path}, skipping")
+                continue
             if kind == 'Model':
                 logging.debug("Model detected")
+                model_folder_path = path if os.path.isdir(path) else os.path.dirname(path)
                 responses.append(self.model_service.apply(
                     parse_model(doc_obj), 
                     parse_metrics(doc_obj), 
-                    call_path, **kwargs
+                    model_folder_path, **kwargs
                 ))
             elif kind == 'Application':
                 logging.debug("Application detected")
@@ -92,8 +91,8 @@ class ApplyService:
                     partial_dc_parser
                 ))
             else:
-                logging.error("Unknown resource: {}".format(doc_obj))
-                raise UnknownResource(doc_obj)
+                logging.warning("Unknown resource: {}, skipping".format(doc_obj))
+                continue
         return responses
 
 

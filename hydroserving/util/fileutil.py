@@ -81,7 +81,7 @@ def is_yaml(path):
     return os.path.isfile(path) and (ext in (".yml", ".yaml"))
 
 
-def get_yamls(path):
+def get_yamls(path: str, recursive: bool = False):
     """
     Returns all yaml files.
 
@@ -93,7 +93,7 @@ def get_yamls(path):
 
     return [
         file
-        for file in get_visible_files(path)
+        for file in get_visible_files(path, recursive)
         if is_yaml(file)
     ]
 

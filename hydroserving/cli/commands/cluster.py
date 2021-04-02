@@ -17,7 +17,7 @@ from hydroserving.errors.config import ClusterNotFoundError, ClusterAlreadyExist
 @click.pass_context
 def cluster(ctx):
     """
-    Manage Hydrosphere clusters.
+    Manage clusters.
     """
     if ctx.invoked_subcommand is None:
         try: 

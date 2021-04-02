@@ -1,0 +1,5 @@
+kind: Application
+name: identity-app
+singular:
+  model: infer:1
+  deployment-configuration: default

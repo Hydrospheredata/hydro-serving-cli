@@ -16,6 +16,7 @@ def parse_application(in_dict: dict) -> Callable[[Cluster], Application]:
             self.in_dict = in_dict
         
         def build(self, cluster: Cluster) -> Application:
+            logging.info("Parsing an application definition")
             name = _parse_name(self.in_dict)
             singular_def = self.in_dict.get("singular")
             pipeline_def = self.in_dict.get("pipeline")
@@ -25,6 +26,7 @@ def parse_application(in_dict: dict) -> Callable[[Cluster], Application]:
                 raise SystemExit(1)
 
             if singular_def:
+                logging.debug("Detected a singular app definition, parsing")
                 model_version, config = _parse_singular_def(cluster, singular_def)
                 app_builder = ApplicationBuilder(name)
                 stage = ExecutionStageBuilder() \
@@ -33,6 +35,7 @@ def parse_application(in_dict: dict) -> Callable[[Cluster], Application]:
                 return app_builder.with_stage(stage).build(cluster)
 
             elif pipeline_def:
+                logging.debug("Detected a pipeline app definition, parsing")
                 pipeline = _parse_pipeline_def(cluster, pipeline_def)
                 app_builder = ApplicationBuilder(name)
                 stages = []
@@ -97,12 +100,13 @@ def _parse_pipeline_def(cluster: Cluster, items: list) -> List[List[Tuple[Tuple[
           weight: 20
     """
     pipeline = []
-    for stage in items:
+    for i, stage in enumerate(items):
         variants = []
-        for variant in stage:
-            variants.append((
-                _parse_singular_def(cluster, variant),
-                _parse_weight(variant)
-            ))
+        for j, variant in enumerate(stage):
+            result = (_parse_singular_def(cluster, variant), _parse_weight(variant))
+            logging.debug(f"Parsed variant ({j}) in a stage ({i}): {result}")
+            variants.append(result)
+        logging.debug(f"Total number of variants in a stage ({i}): {len(variants)}")
         pipeline.append(variants)
+    logging.debug(f"Total number of stages: {len(pipeline)}")
     return pipeline

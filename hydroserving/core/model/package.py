@@ -34,9 +34,10 @@ def assemble_model_on_local_fs(builder: ModelVersionBuilder):
     logging.debug("Creating archive: %s", tar_path)
     with tarfile.open(tar_path, "w:gz") as tar:
         for entry in builder.payload.values():
+            source = os.path.join(builder.path, entry)
             entry_name = os.path.basename(entry)
-            logging.debug("Archiving %s as %s", entry, entry_name)
-            tar.add(entry, arcname=entry_name)
+            logging.debug("Archiving %s as %s", source, entry_name)
+            tar.add(source, arcname=entry_name)
     return tar_path
 
 
@@ -59,7 +60,7 @@ def enrich_and_normalize(builder: ModelVersionBuilder) -> ModelVersionBuilder:
     if dvcinfo:
         logging.debug("Extracted dvc metadata: %s", dvcinfo)
         builder.metadata.update(dvc_to_dict(dvcinfo))
-    logging.info("Parsed model definition")
+    logging.info("Parsed a model definition")
     logging.info(SEGMENT_DIVIDER)
     logging.info("Name: " + builder.name)
     logging.info("Runtime: " + builder.runtime.to_string())

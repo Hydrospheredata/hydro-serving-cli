@@ -1,63 +1,101 @@
+import os
 import logging
+from typing import Optional
 
 import click
 
 from hydroserving.cli.commands.hs import hs_cli
 from hydroserving.cli.context import CONTEXT_SETTINGS
-from hydroserving.cli.help import PROFILE_HELP, PROFILE_PUSH_HELP, PROFILE_MODEL_VERSION_HELP
+from hydroserving.cli.context_object import ContextObject
 from hydroserving.util.parseutil import _parse_model_reference
+from hydroserving.cli.commands.version import get_model_version_by_id_or_by_reference_string
+from hydroserving.util.err_handler import handle_cluster_error
+
+from hydrosdk.modelversion import DataUploadResponse
 
 
-@hs_cli.group(help=PROFILE_HELP)
+@hs_cli.group()
 def profile():
+    """
+    Manage data profiles.
+    """
     pass
 
 
-@profile.command(help=PROFILE_PUSH_HELP, context_settings=CONTEXT_SETTINGS)
-@click.option('--model-version',
-              required=True,
-              help=PROFILE_MODEL_VERSION_HELP)
-@click.option('--filename',
-              type=click.File(mode='rb'),
-              required=False
-              )
-@click.option('--s3path',
-              type=click.STRING,
-              required=False)
-@click.option('--async', 'is_async', is_flag=True, default=False)
-@click.pass_obj
-def push(obj, model_version, filename, s3path, is_async):
-    url = obj.config_service.get_connection()
-    if model_version == "~~~":  # only for debugging
-        mv = {"model": {"id": 1}, "modelVersion": 1}
-        mv_id = 1
-    else:
-        name, version = _parse_model_reference(model_version)
-        mv = obj.model_service.find_version(name, version)
-        mv_id = mv["id"]
-    if s3path:
-        logging.info("S3 training path detected")
-        resp = obj.monitoring_service.push_s3_csv(mv_id, s3path)
-        logging.debug(resp)
-    elif filename:
-        resp = obj.monitoring_service.start_data_processing(mv_id, filename)
-        logging.debug(resp)
-    else:
-        raise click.ClickException("Neither S3 nor file was defined.")
-    logging.info("Data profile for {} will be available: {}/models/{}/{}".format(
-        model_version, url.remote_addr, mv["model"]["id"], mv["id"]))
-
-
 @profile.command(context_settings=CONTEXT_SETTINGS)
-@click.argument('model-version',
-                required=True)
+@click.option(
+    '--id', 'id_', 
+    type=int, 
+    help="Model version unique identifier.")
+@click.option(
+    "--name",
+    help="Model version reference string.")
+@click.argument(
+    "uri",
+    required=True)
+@click.option(
+    '--async', 
+    'is_async', 
+    is_flag=True, 
+    default=False)
+@click.option(
+    "--retry",
+    type=int,
+    default=12,
+    help="How many times to retry polling, if profiling is not yet finished. Defaults to 12.")
+@click.option(
+    "--sleep",
+    type=int,
+    default=30,
+    help="Sleep time between retries. Defaults to 30.")
 @click.pass_obj
-def status(obj, model_version):
-    name, version = _parse_model_reference(model_version)
-    mv = obj.model_service.find_version(name, version)
-    if not mv:
-        raise click.ClickException("Model {} is not found".format(model_version))
-    mv_id = mv['id']
-    res = obj.monitoring_service.get_data_processing_status(mv_id)
-    logging.info("Looking for profiling status for model id=%s name=%s version=%s", mv_id, model, version)
-    logging.info("Data profiling status: %s", res)
+def upload(
+        obj: ContextObject, 
+        id_: Optional[int], 
+        name: Optional[str], 
+        uri: str, 
+        is_async: bool,
+        retry: int,
+        sleep: int,
+):
+    """
+    Upload a training dataset to compute its profiles.
+    """
+    mv = get_model_version_by_id_or_by_reference_string(obj, id_, name)
+    logging.info(f"Uploading training data for '{mv.name}:{mv.version}'")
+    mv.training_data = uri
+    dur = handle_cluster_error(mv.upload_training_data)()
+    if not is_async:
+        dur.wait(retry=retry, sleep=sleep)
+
+
+@profile.command(
+    context_settings=CONTEXT_SETTINGS)
+@click.option(
+    '--id', 'id_', 
+    type=int, 
+    help="Model version unique identifier.")
+@click.option(
+    "--name",
+    help="Model version reference string.")
+@click.option(
+    "--retry",
+    type=int,
+    default=12,
+    help="How many times to retry polling, if profiling is not yet finished. Defaults to 12.")
+@click.option(
+    "--sleep",
+    type=int,
+    default=30,
+    help="Sleep time between retries. Defaults to 30.")
+@click.pass_obj
+def lock(obj: ContextObject, id_: int, name: str, retry: int, sleep: int):
+    """
+    Lock, until the profiling job gets completed.
+    """
+    mv = get_model_version_by_id_or_by_reference_string(obj, id_, name)
+    dur = DataUploadResponse(mv.cluster, mv.id)
+    try:
+        dur.wait(retry, sleep)
+    except (DataUploadResponse.NotRegistered, DataUploadResponse.Failed) as e:
+        logging.error(e)

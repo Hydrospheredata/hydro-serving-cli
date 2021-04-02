@@ -9,7 +9,6 @@ from hydroserving.core.application.service import ApplicationService
 from hydroserving.core.apply import ApplyService
 from hydroserving.core.deployment_config.service import DeploymentConfigurationService
 from hydroserving.core.model.service import ModelService
-from hydroserving.core.monitoring.service import MonitoringService
 from hydroserving.core.servable.service import ServableService
 from hydroserving.errors.config import ClusterNotFoundError
 
@@ -23,7 +22,7 @@ class ContextObject:
             cluster_definition = config_service.current_cluster()
             self.cluster = Cluster(cluster_definition.get('cluster', {}).get('server', 'unknown'))
         except ClusterNotFoundError:
-            logging.debug("Current cluster is unset, initializing without cluster endpoint")
+            logging.warning("Current cluster is unset, initializing without cluster endpoint")
         self.model_service = ModelService(self.cluster)
         self.application_service = ApplicationService(self.cluster)
         self.servable_service = ServableService(self.cluster)

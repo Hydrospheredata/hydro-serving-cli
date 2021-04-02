@@ -75,7 +75,7 @@ def upload(
         install_command: str, 
 ):
     """
-    Upload a model to the cluster.
+    Upload a model version to the cluster.
     """
     logging.debug(f"Checking for serving.yaml file in {target_dir}")
     target_dir = os.path.abspath(target_dir)
@@ -113,7 +113,6 @@ def upload(
         logging.error("Couldn't find serving.yaml for processing")
         raise SystemExit(1)
     
-    logging.info("Uploading a model to the cluster")
     model_version = obj.model_service.apply(
         parse_model(resource), 
         parse_metrics(resource),
@@ -122,7 +121,7 @@ def upload(
     )
     
     logging.info("Success:")
-    click.echo(json.dumps(model_version.to_dict()))
+    logging.info(json.dumps(model_version.to_dict()))
 
 
 @hs_cli.command(
@@ -136,7 +135,15 @@ def upload(
         allow_dash=True,
         readable=True),
     multiple=True,
-    required=True)
+    required=True,
+    help="File/dir/stdin to read resources from.")
+@click.option(
+    '-r', '--recursive',
+    type=bool,
+    default=False,
+    is_flag=True,
+    help="Apply recursive search if -f is a directory."
+)
 @click.option(
     '--ignore-metrics',
     type=bool,
@@ -150,18 +157,19 @@ def upload(
     default=False,
     is_flag=True)
 @click.pass_obj
-def apply(obj: ContextObject, f: str, ignore_metrics: bool, ignore_training_data: bool):
+def apply(obj: ContextObject, f: str, recursive: bool, ignore_metrics: bool, ignore_training_data: bool):
     """
-    Upload multiple resources at once.
+    Create multiple resources on the cluster.
     """
-    f = list(f)
-    for i, x in enumerate(f):
+    fs = list(f)
+    for i, x in enumerate(fs):
         if x == "-":
-            f[i] = "<STDIN>"
-    logging.debug("Got files: {}".format(f))
+            fs[i] = "<STDIN>"
+    logging.debug("Got paths: {}".format(fs))
     try:
         results = obj.apply_service.apply(
-            f, 
+            fs, 
+            recursive,
             ignore_metrics=ignore_metrics, 
             ignore_training_data=ignore_training_data
         )
@@ -169,6 +177,7 @@ def apply(obj: ContextObject, f: str, ignore_metrics: bool, ignore_training_data
             key : [value.to_dict() for value in values]
             for key, values in results.items()
         }
+        logging.info(f"Applied {len(serialized)} resource{'s'[:len(serialized)^1]}:")
         logging.info(json.dumps(serialized))
     except ParserError as ex:
         logging.error("Error while parsing: {}".format(ex))

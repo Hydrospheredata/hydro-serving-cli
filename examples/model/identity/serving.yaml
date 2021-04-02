@@ -1,0 +1,24 @@
+kind: Model
+name: infer
+runtime: hydrosphere/serving-runtime-python-3.6:2.4.0
+install-command: "pip install -r requirements.txt"
+training-data: "training-data.csv"
+payload:
+  - 'file1.txt'
+  - "src/"
+  - "requirements.txt"
+signature:
+  name: infer
+  inputs:
+    input:
+      shape: scalar
+      type: int64
+      profile: numerical
+  outputs:
+    output:
+      shape: scalar
+      type: int64
+      profile: numerical
+monitoring:
+  configuration:
+    batch-size: 50
