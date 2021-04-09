@@ -7,7 +7,6 @@ from click import Context
 
 from hydroserving.cli.context import CONTEXT_SETTINGS
 from hydroserving.cli.context_object import ContextObject
-from hydroserving.cli.help import VERBOSE_HELP
 from hydroserving.util.log_handler import StdoutLogHandler, PrettyFormatter
 from hydroserving.errors.config import ClusterNotFoundError
 
@@ -36,6 +35,7 @@ def hs_cli(ctx: Context, verbose: bool, cluster: str, pretty_print: bool):
     log_handler = StdoutLogHandler()
     log_handler.formatter = PrettyFormatter(pretty_print)
     logging.root.handlers = [log_handler]
+    
     if verbose:
         logging.root.setLevel(logging.DEBUG)
     else:

@@ -111,7 +111,7 @@ class ModelService:
             if model_json.get("name") == name:
                 return model_json["id"]
         raise BadRequestException(f"Failed to find the model with a name {name}.")
-
+    
     @handle_cluster_error
     def apply(self, 
             partial_model_parser: Callable[[Cluster, str], ModelVersion],
@@ -124,14 +124,17 @@ class ModelService:
     ) -> ModelVersion:
         logging.info(f"Parsing and assembling a model at {path}")
         model_version = partial_model_parser(self.cluster, path=path)
+        logging.info(f"Submitted model registration request")
 
         if model_version.training_data:
             if ignore_training_data:
                 logging.warning("Ignoring training data upload")
             else:
-                logging.info("Uploading training data")
-                data_upload_response = model_version.upload_training_data()
-                data_upload_response.wait()
+                logging.info("Submitting training data")
+                dur = model_version.upload_training_data()
+                if not is_async:
+                    logging.info("Waiting for the profiling job to complete")
+                    dur.wait()
         
         if ignore_metrics:
             logging.warning("Ignoring metrics assignment")

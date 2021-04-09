@@ -1,6 +1,6 @@
 kind: Model
 name: infer
-runtime: hydrosphere/serving-runtime-python-3.6:2.4.0
+runtime: hydrosphere/serving-runtime-python-3.6:latest
 install-command: "pip install -r requirements.txt"
 training-data: "training-data.csv"
 payload:

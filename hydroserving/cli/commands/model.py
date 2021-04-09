@@ -7,7 +7,7 @@ from tabulate import tabulate
 from hydroserving.cli.commands.hs import hs_cli
 from hydroserving.cli.context import CONTEXT_SETTINGS
 from hydroserving.cli.context_object import ContextObject
-
+from hydroserving.cli.util import filter_internal_model_versions
 
 @hs_cli.group(cls=ClickAliasedGroup)
 def model(): 
@@ -20,18 +20,29 @@ def model():
 @model.command(
     aliases=["ls"], 
     context_settings=CONTEXT_SETTINGS)
+@click.option(
+    '-a', '--all',
+    'select_all',
+    type=bool,
+    is_flag=True,
+    default=False,
+    help="Select all model versions, including platform managed ones.")
 @click.pass_obj
-def list(obj: ContextObject):
+def list(obj: ContextObject, select_all: bool = False):
     """
     List models.
     """
     view = []
     for model_id, model_name, versions in obj.model_service.list_models_enriched():
-        view.append({
-            'id': model_id,
-            'name': model_name,
-            '# of versions': len([1 for _ in versions]),
-        })
+        if not select_all:
+            versions = filter_internal_model_versions(versions)
+        num_versions = len([1 for _ in versions])
+        if num_versions > 0:
+            view.append({
+                'id': model_id,
+                'name': model_name,
+                '# of versions': num_versions,
+            })
     if view:
         logging.info(tabulate(
             sorted(view, key=lambda x: x['name']), 

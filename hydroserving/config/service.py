@@ -8,6 +8,7 @@ import click
 from click import Abort
 import requests
 from requests import ConnectionError, ConnectTimeout
+from hydrosdk.cluster import Cluster
 from hydroserving.config.cluster_config import ClusterConfig
 from hydroserving.config.parser import parse_config
 from hydroserving.config.settings import CONFIG_FILE
@@ -15,15 +16,6 @@ from hydroserving.util.yamlutil import yaml_file, write_yaml
 from hydroserving.errors.config import (
     ParseConfigurationError, ClusterNotFoundError, ClusterAlreadyExistsError,
 )
-
-CLUSTER_COMPONENTS_INFO = {
-    "/api/buildinfo",           # manager service
-    "/gateway/buildinfo",       # gateway service
-    "/monitoring/buildinfo",    # sonar service
-    "/rootcause/buildinfo",     # root cause service
-    "/stat/buildinfo",          # data drift service
-    "/visualization/buildinfo", # data projection service
-}
 
 
 class ConfigService:
@@ -120,28 +112,8 @@ class ConfigService:
             return self.find_cluster(self.overridden_cluster)
         return self.find_cluster(self.config.current_cluster)
 
-    def get_cluster_buildinfo(self, is_silent: bool) -> list:
-        result = []
+    def get_cluster_buildinfo(self) -> list:
         try:
-            base = self.current_cluster()["cluster"]["server"]
-            for url in CLUSTER_COMPONENTS_INFO:
-                endpoint = urljoin(base, url)
-                try:
-                    res = requests.get(endpoint)
-                except (ConnectionError, ConnectTimeout) as e:
-                    if not is_silent: 
-                        logging.error(f"Couldn't retrieve buildinfo from {endpoint}: {e}")
-                    continue
-
-                if res.ok:
-                    try: 
-                        result.append(res.json())
-                    except JSONDecodeError as e:
-                        if not is_silent:
-                            logging.warning(f"Couldn't serialize response from {endpoint} as JSON: {e}")
-                else:
-                    if not is_silent:
-                        logging.error(f"Failed to retrieve buildinfo from {endpoint}. {res.status_code} {res.text}")
-            return result
+            return Cluster(self.current_cluster()["cluster"]["server"]).build_info()
         except KeyError as e:
             logging.error(f"Couldn't read malformed cluster definition: {self.current_cluster()}")

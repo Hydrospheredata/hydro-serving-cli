@@ -70,10 +70,10 @@ def enrich_and_normalize(builder: ModelVersionBuilder) -> ModelVersionBuilder:
         logging.info("Training data: " + builder.training_data)
     logging.info("Signature name: " + builder.signature.signature_name)
     logging.info("Inputs:")
-    inputs_view = signature_view(builder.signature.inputs)
+    inputs_view = _signature_view(builder.signature.inputs)
     logging.info(tabulate.tabulate(inputs_view, headers="keys", tablefmt="github"))
     logging.info("Outputs:")
-    outputs_view = signature_view(builder.signature.outputs)
+    outputs_view = _signature_view(builder.signature.outputs)
     logging.info(tabulate.tabulate(outputs_view, headers="keys", tablefmt="github"))
     if builder.monitoring_configuration is not None:
         logging.info("Monitoring:")
@@ -90,7 +90,7 @@ def enrich_and_normalize(builder: ModelVersionBuilder) -> ModelVersionBuilder:
     return builder
 
 
-def signature_view(fields: List[ModelField]) -> List[Dict[str, Any]]:
+def _signature_view(fields: List[ModelField]) -> List[Dict[str, Any]]:
     outputs_view = []
     for field in fields:
         view = {

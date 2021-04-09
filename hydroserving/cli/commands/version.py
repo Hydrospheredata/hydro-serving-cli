@@ -12,6 +12,7 @@ from hydroserving.cli.commands.model import model
 from hydroserving.cli.context import CONTEXT_SETTINGS
 from hydroserving.cli.context_object import ContextObject
 from hydroserving.util.parseutil import _parse_model_reference
+from hydroserving.cli.util import filter_internal_model_versions
 
 
 @model.group(
@@ -32,8 +33,15 @@ def version():
     type=str,
     default=None, 
     help="Show versions only for the defined model.")
+@click.option(
+    '-a', '--all',
+    'select_all',
+    type=bool,
+    is_flag=True,
+    default=False,
+    help="Select all model versions, including platform managed ones.")
 @click.pass_obj
-def list(obj: ContextObject, name: Optional[str] = None):
+def list(obj: ContextObject, name: Optional[str] = None, select_all: bool = False):
     """
     List all model versions on the cluster.
     """
@@ -42,6 +50,8 @@ def list(obj: ContextObject, name: Optional[str] = None):
         versions = obj.model_service.list_versions()
     else:
         versions = obj.model_service.list_versions_by_model_name(name)
+    if not select_all:
+        versions = filter_internal_model_versions(versions)
     for version in versions:
         view.append({
             'id': version.id,

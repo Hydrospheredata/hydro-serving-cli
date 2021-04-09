@@ -10,9 +10,7 @@ from yaml.scanner import ScannerError
 
 from hydroserving.cli.context_object import ContextObject
 from hydroserving.cli.commands.hs import hs_cli
-from hydroserving.cli.help import (
-    CONTEXT_SETTINGS, UPLOAD_HELP, APPLY_HELP, PROFILE_FILENAME_HELP,
-)
+from hydroserving.cli.context import CONTEXT_SETTINGS
 from hydroserving.core.model.parser import parse_model, parse_metrics
 from hydroserving.util.fileutil import get_yamls
 from hydroserving.util.yamlutil import yaml_file
@@ -22,20 +20,23 @@ from hydroserving.util.yamlutil import yaml_file
     context_settings=CONTEXT_SETTINGS)
 @click.option(
     '--name',
-    required=False)
+    required=False,
+    help="Override name.")
 @click.option(
     '--runtime',
     default=None,
-    required=False)
+    required=False,
+    help="Override runtime.")
 @click.option(
     '--training-data',
     default=None,
     required=False,
-    help=PROFILE_FILENAME_HELP)
+    help="Override training data path.")
 @click.option(
     '--install-command',
     default=None,
-    required=False)
+    required=False,
+    help="Override install command.")
 @click.option(
     '--dir',
     'target_dir',
@@ -45,29 +46,34 @@ from hydroserving.util.yamlutil import yaml_file
         dir_okay=True),
     default=os.getcwd(),
     show_default=True,
-    required=False)
+    required=False,
+    help="Specify target dir for the model.")
 @click.option(
     '--ignore-training-data',
     type=bool,
     required=False,
     default=False,
-    is_flag=True)
+    is_flag=True,
+    help="Flag to omit upload of training data.")
 @click.option(
     '--ignore-metrics',
     type=bool,
     required=False,
     default=False,
-    is_flag=True)
+    is_flag=True,
+    help="Flag to omit metrics registration.")
 @click.option(
     '--async', 
     'is_async',
     is_flag=True,
-    default=False)
+    default=False,
+    help="Upload the model asynchronously.")
 @click.option(
     '-t', '--timeout',
     type=int,
     required=False,
-    default=120)
+    default=120,
+    help="Default timeout for model build process.")
 @click.pass_obj
 def upload(
         obj: ContextObject, name: str, runtime: str, target_dir: str, training_data: str, 
@@ -149,13 +155,15 @@ def upload(
     type=bool,
     required=False,
     default=False,
-    is_flag=True)
+    is_flag=True,
+    help="Flag to omit metrics registration.")
 @click.option(
     '--ignore-training-data',
     type=bool,
     required=False,
     default=False,
-    is_flag=True)
+    is_flag=True,
+    help="Flag to omit upload of training data.")
 @click.pass_obj
 def apply(obj: ContextObject, f: str, recursive: bool, ignore_metrics: bool, ignore_training_data: bool):
     """
@@ -185,6 +193,6 @@ def apply(obj: ContextObject, f: str, recursive: bool, ignore_metrics: bool, ign
     except ScannerError as ex:
         logging.error("Error while applying: Invalid YAML: {}".format(ex))
         raise SystemExit(1)
-    # except Exception as err:
-    #     logging.error("Error while applying: {}".format(err))
-    #     raise SystemExit(1)
+    except Exception as err:
+        logging.error("Error while applying: {}".format(err))
+        raise SystemExit(1)

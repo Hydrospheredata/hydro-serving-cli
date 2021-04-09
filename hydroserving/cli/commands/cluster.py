@@ -90,6 +90,7 @@ def add(obj: ContextObject, name: str, server: str):
         logging.error(f"Cluster '{name}' already exists")
         raise SystemExit(1)
 
+
 @cluster.command(
     aliases=["del", "remove", "rm"])
 @click.argument("name")
@@ -106,19 +107,12 @@ def delete(obj: ContextObject, name: str):
 
 
 @cluster.command()
-@click.option(
-    '-s', '--ignore-errors', 
-    'is_silent',
-    type=bool,
-    is_flag=True,
-    default=False,
-    help="Omit warning and error messages from the output")
 @click.pass_obj
-def buildinfo(obj: ContextObject, is_silent: bool):
+def buildinfo(obj: ContextObject):
     """
     Retrieve buildinfo from the active cluster.
     """
-    response = obj.config_service.get_cluster_buildinfo(is_silent)
+    response = obj.config_service.get_cluster_buildinfo()
     if not response:
         logging.error("Couldn't retrieve any buildinfo")
     else: 

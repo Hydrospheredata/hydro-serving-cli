@@ -62,11 +62,12 @@ def upload(
     Upload a training dataset to compute its profiles.
     """
     mv = get_model_version_by_id_or_by_reference_string(obj, id_, name)
-    logging.info(f"Uploading training data for '{mv.name}:{mv.version}'")
+    logging.info(f"Uploading training data for profiling for '{mv}'")
     mv.training_data = uri
     dur = handle_cluster_error(mv.upload_training_data)()
     if not is_async:
         dur.wait(retry=retry, sleep=sleep)
+        logging.info("Profiling job is successfully finished")
 
 
 @profile.command(
@@ -97,5 +98,25 @@ def lock(obj: ContextObject, id_: int, name: str, retry: int, sleep: int):
     dur = DataUploadResponse(mv.cluster, mv.id)
     try:
         dur.wait(retry, sleep)
+        logging.info("Profiling job is successfully finished")
     except (DataUploadResponse.NotRegistered, DataUploadResponse.Failed) as e:
         logging.error(e)
+
+
+@profile.command(
+    context_settings=CONTEXT_SETTINGS)
+@click.option(
+    '--id', 'id_', 
+    type=int, 
+    help="Model version unique identifier.")
+@click.option(
+    "--name",
+    help="Model version reference string.")
+@click.pass_obj
+def status(obj: ContextObject, id_: int, name: str):
+    """
+    Get current profiling job status. 
+    """
+    mv = get_model_version_by_id_or_by_reference_string(obj, id_, name)
+    dur = DataUploadResponse(mv.cluster, mv.id)
+    logging.info(dur.get_status().name)
