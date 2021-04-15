@@ -15,7 +15,7 @@ setup(
         "click~=7.1.2",
         "click-log~=0.3",
         "click-aliases~=1.0.1",
-        "pyyaml~=5.3",
+        "pyyaml>=5.3",
         "protobuf~=3.6",
         "kafka-python==1.4.3",
         "hydro-serving-grpc>=3.0.0-dev3",
