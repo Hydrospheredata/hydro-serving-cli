@@ -29,10 +29,11 @@ def list(obj: ContextObject):
     """
     view = []
     for servable in obj.servable_service.list():
+        depconfig = servable.deployment_configuration.name if servable.deployment_configuration else ""
         view.append({
             'name': servable.name,
             'application': servable.meta.get('applicationName', ''),
-            'deployment configuration': servable.deployment_configuration.name,
+            'deployment configuration': depconfig,
             'status': servable.status.name,
             'message': servable.status_message,
         })

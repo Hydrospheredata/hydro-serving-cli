@@ -3,6 +3,7 @@ import logging
 from typing import Optional
 
 import click
+from click_aliases import ClickAliasedGroup
 
 from hydroserving.cli.commands.hs import hs_cli
 from hydroserving.cli.context import CONTEXT_SETTINGS
@@ -14,7 +15,8 @@ from hydroserving.util.err_handler import handle_cluster_error
 from hydrosdk.modelversion import DataUploadResponse
 
 
-@hs_cli.group()
+@hs_cli.group(
+    cls=ClickAliasedGroup)
 def profile():
     """
     Manage data profiles.
@@ -22,7 +24,9 @@ def profile():
     pass
 
 
-@profile.command(context_settings=CONTEXT_SETTINGS)
+@profile.command(
+    aliases=["push"],
+    context_settings=CONTEXT_SETTINGS)
 @click.option(
     '--id', 'id_', 
     type=int, 

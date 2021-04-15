@@ -2,21 +2,28 @@ from typing import List, Tuple, Callable, Optional
 import logging
 import functools
 
-from hydroserving.util.parseutil import _parse_model_reference, fill_arguments
 from hydrosdk.application import Application, ApplicationBuilder, ExecutionStageBuilder
 from hydrosdk.deployment_configuration import DeploymentConfiguration
 from hydrosdk.modelversion import ModelVersion
 from hydrosdk.builder import AbstractBuilder
 from hydrosdk.cluster import Cluster
 
+from hydroserving.util.parseutil import _parse_model_reference, fill_arguments
+from hydroserving.core.apply.context import ApplyContext
+
 
 def parse_application(in_dict: dict) -> Callable[[Cluster], Application]:
+    
     class LocalBuilder(AbstractBuilder):
         def __init__(self, in_dict: dict):
             self.in_dict = in_dict
         
-        def build(self, cluster: Cluster) -> Application:
+        def build(self, cluster: Cluster, **kwargs) -> Application:
             logging.info("Parsing an application definition")
+
+            apply_context: ApplyContext = kwargs.get("apply_context", ApplyContext())
+            logging.debug(f"Apply context: {apply_context.to_dict()}")
+
             name = _parse_name(self.in_dict)
             singular_def = self.in_dict.get("singular")
             pipeline_def = self.in_dict.get("pipeline")
@@ -27,7 +34,7 @@ def parse_application(in_dict: dict) -> Callable[[Cluster], Application]:
 
             if singular_def:
                 logging.debug("Detected a singular app definition, parsing")
-                model_version, config = _parse_singular_def(cluster, singular_def)
+                model_version, config = _parse_singular_def(cluster, singular_def, apply_context)
                 app_builder = ApplicationBuilder(name)
                 stage = ExecutionStageBuilder() \
                     .with_model_variant(model_version, weight=100, deployment_configuration=config) \
@@ -36,7 +43,7 @@ def parse_application(in_dict: dict) -> Callable[[Cluster], Application]:
 
             elif pipeline_def:
                 logging.debug("Detected a pipeline app definition, parsing")
-                pipeline = _parse_pipeline_def(cluster, pipeline_def)
+                pipeline = _parse_pipeline_def(cluster, pipeline_def, apply_context)
                 app_builder = ApplicationBuilder(name)
                 stages = []
                 for stage in pipeline:
@@ -57,7 +64,7 @@ def parse_application(in_dict: dict) -> Callable[[Cluster], Application]:
         lambda **kwargs: LocalBuilder(in_dict),
     )
 
-def _parse_singular_def(cluster: Cluster, in_dict: dict) -> Tuple[ModelVersion, Optional[DeploymentConfiguration]]:
+def _parse_singular_def(cluster: Cluster, in_dict: dict, apply_context: ApplyContext) -> Tuple[ModelVersion, Optional[DeploymentConfiguration]]:
     """
     singular: 
       model: identity:1
@@ -66,12 +73,16 @@ def _parse_singular_def(cluster: Cluster, in_dict: dict) -> Tuple[ModelVersion, 
     if reference is None:
         logging.error("Couldn't find model field")
         raise SystemExit(1)
-    name, version = _parse_model_reference(reference)
-    model_version = ModelVersion.find(cluster, name, version)
+    model_version = apply_context.parse_model_version(reference)
+    if model_version is None:
+        name, version = _parse_model_reference(reference)
+        model_version = ModelVersion.find(cluster, name, version)
     logging.debug(f"Found model: {model_version}")
     config = None
     if in_dict.get("deployment-configuration"):
-        config = DeploymentConfiguration.find(cluster, in_dict["deployment-configuration"])
+        config = apply_context.parse_deployment_configuration(in_dict["deployment-configuration"])
+        if config is None:
+            config = DeploymentConfiguration.find(cluster, in_dict["deployment-configuration"])
         logging.debug(f"Found deployment configuration: {config}")
     return model_version, config
 
@@ -90,7 +101,7 @@ def _parse_weight(in_dict: dict) -> int:
     return int(in_dict.get("weight", 100))
 
 
-def _parse_pipeline_def(cluster: Cluster, items: list) -> List[List[Tuple[Tuple[ModelVersion, Optional[DeploymentConfiguration]], int]]]:
+def _parse_pipeline_def(cluster: Cluster, items: list, apply_context: ApplyContext) -> List[List[Tuple[Tuple[ModelVersion, Optional[DeploymentConfiguration]], int]]]:
     """
     pipeline:
       - - model: identity-prep:1
@@ -103,7 +114,7 @@ def _parse_pipeline_def(cluster: Cluster, items: list) -> List[List[Tuple[Tuple[
     for i, stage in enumerate(items):
         variants = []
         for j, variant in enumerate(stage):
-            result = (_parse_singular_def(cluster, variant), _parse_weight(variant))
+            result = (_parse_singular_def(cluster, variant, apply_context), _parse_weight(variant))
             logging.debug(f"Parsed variant ({j}) in a stage ({i}): {result}")
             variants.append(result)
         logging.debug(f"Total number of variants in a stage ({i}): {len(variants)}")

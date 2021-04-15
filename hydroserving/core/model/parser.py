@@ -1,6 +1,7 @@
 import logging
 import functools
 import copy
+import os
 import json
 from typing import List, Dict, Callable, Tuple, Optional
 from google.protobuf.json_format import MessageToJson
@@ -10,6 +11,7 @@ from click import ClickException
 from hydroserving.util.parseutil import fill_arguments
 from hydroserving.core.model.package import enrich_and_normalize, assemble_model_on_local_fs
 from hydroserving.util.parseutil import _parse_model_reference
+from hydroserving.core.apply.context import ApplyContext
 
 from hydrosdk.modelversion import ModelVersion, ModelVersionBuilder, MonitoringConfiguration
 from hydrosdk.signature import ModelSignature, signature_dict_to_ModelSignature
@@ -18,8 +20,8 @@ from hydrosdk.image import DockerImage
 from hydrosdk.cluster import Cluster
 from hydrosdk.builder import AbstractBuilder
 
-    
-def parse_model(in_dict: dict) -> Callable[[Cluster, str], ModelVersion]:
+
+def parse_model(in_dict: dict) -> Callable[[Cluster], ModelVersion]:
     """
     Parse a model definition from the json/yaml description.
 
@@ -58,25 +60,41 @@ def parse_model(in_dict: dict) -> Callable[[Cluster, str], ModelVersion]:
             threshold: 12
             operator: "<="
     """
-    def apply(path: str) -> ModelVersionBuilder:
-        builder = ModelVersionBuilder(_parse_name(in_dict), path) \
-            .with_signature(_parse_signature(in_dict)) \
-            .with_runtime(_parse_runtime(in_dict)) \
-            .with_monitoring_configuration(_parse_monitoring_configuration(in_dict.get('monitoring', {}))) \
-            .with_metadata(_parse_metadata(in_dict))
-        payload = _parse_payload(in_dict)
-        if payload:
-            builder.with_payload(payload)
-        builder = enrich_and_normalize(builder)
-        _ = assemble_model_on_local_fs(builder)
-        install_command = in_dict.get("install-command")
-        if install_command:
-            builder.with_install_command(install_command)
-        training_data = in_dict.get("training-data")
-        if training_data:
-            builder.with_training_data(training_data)
-        return builder
-    return functools.partial(fill_arguments, apply) 
+    class LocalBuilder(AbstractBuilder):
+        def __init__(self, in_dict: dict):
+            self.in_dict = in_dict
+        
+        def build(self, cluster: Cluster, **kwargs) -> ModelVersion:
+            apply_context: ApplyContext = kwargs.get("apply_context", ApplyContext())
+            logging.debug(f"Apply context: {apply_context.to_dict()}")
+
+            path: str = kwargs.get("path")
+            if path is None:
+                path = os.getcwd()
+                logging.warning(f"Path was not provided, using current directory: {path}")
+
+            builder = ModelVersionBuilder(_parse_name(self.in_dict), path, self.in_dict.get('source-path')) \
+                .with_signature(_parse_signature(self.in_dict)) \
+                .with_runtime(_parse_runtime(self.in_dict)) \
+                .with_monitoring_configuration(_parse_monitoring_configuration(self.in_dict.get('monitoring', {}))) \
+                .with_metadata(_parse_metadata(self.in_dict))
+            payload = _parse_payload(self.in_dict)
+            if payload:
+                builder.with_payload(payload)
+            builder = enrich_and_normalize(builder)
+            _ = assemble_model_on_local_fs(builder)
+            install_command = self.in_dict.get("install-command")
+            if install_command:
+                builder.with_install_command(install_command)
+            training_data = self.in_dict.get("training-data")
+            if training_data:
+                builder.with_training_data(training_data)
+            return builder.build(cluster)
+    
+    return functools.partial(
+        fill_arguments,
+        lambda **kwargs: LocalBuilder(in_dict),
+    )
 
 
 def parse_metrics(in_dict: dict) -> Callable[[Cluster], List[Tuple[str, MetricSpecConfig]]]:
@@ -104,10 +122,14 @@ def parse_metrics(in_dict: dict) -> Callable[[Cluster], List[Tuple[str, MetricSp
             self.metrics = []
             self.in_dict = in_dict
 
-        def build(self, cluster: Cluster) -> List[Tuple[str, MetricSpecConfig]]:
+        def build(self, cluster: Cluster, **kwargs) -> List[Tuple[str, MetricSpecConfig]]:
             for metric in self.in_dict.get("metrics", []):
                 metric_name = metric["name"]
-                name, version = _parse_model_reference(metric["config"]["monitoring-model"])
+                reference = metric["config"]["monitoring-model"]
+                model_version = apply_context.parse_model_version(reference)
+                if model_version is None:
+                    name, version = _parse_model_reference(reference)
+                    model_version = ModelVersion.find(cluster, name, version)
                 operator = ThresholdOpToStr.get(metric["operator"])
                 if not operator:
                     raise TypeError(f"Invalid or undefined comparison operator: {operator}")
@@ -115,10 +137,9 @@ def parse_metrics(in_dict: dict) -> Callable[[Cluster], List[Tuple[str, MetricSp
                 if not thresholdCmpOp:
                     raise TypeError(f"Undefined threshold: {threshold}")
                 
-                mv = ModelVersion.find(cluster, name, version)
                 self.metrics.append((
                     metric_name, 
-                    MetricSpecConfig(mv.id, threshold, operator)
+                    MetricSpecConfig(model_version.id, threshold, operator)
                 ))
             return self.metrics
 
@@ -167,6 +188,13 @@ def _parse_signature(in_dict: dict) -> ModelSignature:
     signature = signature_dict_to_ModelSignature(raw_signature)
     logging.debug(f"Parsed signature: {MessageToJson(signature)}")
     return signature
+
+
+def _parse_training_data(training_path: str, source_path: str) -> str:
+    if training_path.startswith("s3://"):
+        return training_path
+    else:
+        return os.path.join(source_path, training_path)
 
 
 def _parse_runtime(in_dict: dict) -> DockerImage:

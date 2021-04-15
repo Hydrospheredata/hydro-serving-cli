@@ -6,7 +6,7 @@ from hydrosdk.cluster import Cluster
 from hydroserving.config import ConfigService
 from hydroserving.config.settings import HOME_PATH_EXPANDED
 from hydroserving.core.application.service import ApplicationService
-from hydroserving.core.apply import ApplyService
+from hydroserving.core.apply.service import ApplyService
 from hydroserving.core.deployment_config.service import DeploymentConfigurationService
 from hydroserving.core.model.service import ModelService
 from hydroserving.core.servable.service import ServableService

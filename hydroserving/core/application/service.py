@@ -2,11 +2,13 @@ import logging
 import time
 from typing import List, Callable
 
-from hydroserving.core.application.entities import model_variant
-from hydroserving.util.err_handler import handle_cluster_error
 from hydrosdk.cluster import Cluster
 from hydrosdk.application import Application, ApplicationBuilder
 from hydrosdk.exceptions import BadRequestException
+
+from hydroserving.core.apply.context import ApplyContext
+from hydroserving.core.application.entities import model_variant
+from hydroserving.util.err_handler import handle_cluster_error
 
 
 class ApplicationService:
@@ -14,14 +16,19 @@ class ApplicationService:
         self.cluster = cluster
 
     @handle_cluster_error
-    def apply(self, partial_parser: Callable[[Cluster], Application]) -> Application:
+    def apply(
+            self, 
+            partial_parser: Callable[[Cluster], Application], 
+            apply_context: ApplyContext, 
+            **kwargs,
+    ) -> Application:
         """
         Create a Application on the cluster.
         
         :param partial_parser: a partial function, which will create an application
         :return: Application instance
         """
-        return partial_parser(self.cluster)
+        return partial_parser(self.cluster, apply_context=apply_context, **kwargs)
 
     @handle_cluster_error
     def list(self) -> List[Application]:

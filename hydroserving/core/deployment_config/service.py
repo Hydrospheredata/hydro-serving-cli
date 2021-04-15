@@ -20,7 +20,7 @@ class DeploymentConfigurationService:
         return DeploymentConfiguration.find(self.cluster, name)
 
     @handle_cluster_error
-    def apply(self, partial_parser: Callable[[Cluster], DeploymentConfiguration]) -> DeploymentConfiguration:
+    def apply(self, partial_parser: Callable[[Cluster], DeploymentConfiguration], **kwargs) -> DeploymentConfiguration:
         """
         Create a DeploymentConfiguration on the cluster.
         

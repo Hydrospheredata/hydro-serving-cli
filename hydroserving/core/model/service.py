@@ -4,14 +4,15 @@ import itertools
 from typing import List, Iterable, Callable, Tuple, Optional
 from copy import deepcopy
 
-from hydroserving.util.err_handler import handle_cluster_error
-
 from hydrosdk.cluster import Cluster
 from hydrosdk.modelversion import ModelVersion, ModelVersionBuilder
 from hydrosdk.monitoring import MetricSpecConfig, MetricSpec
 from hydrosdk.utils import handle_request_error
 from hydrosdk.exceptions import BadRequestException
 from sseclient import Event
+
+from hydroserving.util.err_handler import handle_cluster_error
+from hydroserving.core.apply.context import ApplyContext
 
 
 class ModelService:
@@ -117,6 +118,7 @@ class ModelService:
             partial_model_parser: Callable[[Cluster, str], ModelVersion],
             partial_metric_parser: Callable[[Cluster], List[Tuple[str, MetricSpecConfig]]],
             path: str,
+            apply_context: ApplyContext,
             ignore_training_data: bool,
             ignore_metrics: bool,
             is_async: Optional[bool] = False,
@@ -147,6 +149,7 @@ class ModelService:
                     MetricSpec.create(self.cluster, metric_name, model_version.id, metric_config)
         
         if not is_async:
+            logging.info(f"Waiting for the model version to build, timeout set to {timeout} seconds")
             model_version.lock_till_released(timeout)
             logging.info("Build logs:")
             for log in model_version.build_logs():

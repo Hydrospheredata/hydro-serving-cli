@@ -1,0 +1,78 @@
+kind: Model
+name: infer
+runtime: runtime:latest
+install-command: "pip install -r requirements.txt"
+training-data: training-data.csv
+source-path: model/identity
+payload:
+  - 'file1.txt'
+  - "src/"
+  - "requirements.txt"
+signature:
+  name: infer
+  inputs:
+    input:
+      shape: scalar
+      type: int64
+      profile: numerical
+  outputs:
+    output:
+      shape: scalar
+      type: int64
+      profile: numerical
+monitoring:
+  configuration:
+    batch-size: 50
+---
+kind: Model
+name: combine 
+runtime: runtime:latest
+source-path: model/combine
+payload:
+  - "src/"
+signature:
+  name: infer
+  inputs:
+    output:
+      shape: scalar
+      type: int64
+      profile: numerical
+  outputs:
+    final:
+      shape: scalar
+      type: int64
+      profile: numerical
+monitoring:
+  configuration:
+    batch-size: 50
+---
+kind: Model
+name: combine 
+runtime: runtime:latest
+source-path: model/combine
+payload:
+  - "src/"
+signature:
+  name: infer
+  inputs:
+    output:
+      shape: scalar
+      type: int64
+      profile: numerical
+  outputs:
+    final:
+      shape: scalar
+      type: int64
+      profile: numerical
+monitoring:
+  configuration:
+    batch-size: 50
+---
+kind: Application
+name: infer-app
+pipeline:
+  - - model: "{{this.model.infer}}"
+  - - model: "{{this.model.combine:-1}}"
+      weight: 80
+    - model: "{{this.model.combine:-2}}"
+      weight: 20

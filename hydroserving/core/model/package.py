@@ -33,11 +33,9 @@ def assemble_model_on_local_fs(builder: ModelVersionBuilder):
     tar_path = os.path.join(hs_model_dir, tar_name)
     logging.debug("Creating archive: %s", tar_path)
     with tarfile.open(tar_path, "w:gz") as tar:
-        for entry in builder.payload.values():
-            source = os.path.join(builder.path, entry)
-            entry_name = os.path.basename(entry)
-            logging.debug("Archiving %s as %s", source, entry_name)
-            tar.add(source, arcname=entry_name)
+        for source, target in builder.payload.items():
+            logging.debug("Archiving %s as %s", source, target)
+            tar.add(source, arcname=target)
     return tar_path
 
 

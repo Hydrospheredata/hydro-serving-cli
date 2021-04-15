@@ -12,6 +12,7 @@ from hydroserving.core.model.parser import parse_model, parse_metrics
 from hydroserving.core.model.service import ModelService
 from hydroserving.util.fileutil import get_yamls, is_yaml
 from hydroserving.util.yamlutil import yaml_file_stream
+from hydroserving.core.apply.context import ApplyContext
 
 
 class ApplyService:
@@ -25,6 +26,7 @@ class ApplyService:
             application_service (ApplicationService):
             model_service (ModelService):
         """
+        self.apply_context = ApplyContext()
         self.application_service = application_service
         self.model_service = model_service
         self.deployment_configuration_service = deployment_configuration_service
@@ -73,23 +75,32 @@ class ApplyService:
             if kind == 'Model':
                 logging.debug("Model detected")
                 model_folder_path = path if os.path.isdir(path) else os.path.dirname(path)
-                responses.append(self.model_service.apply(
+                model_version = self.model_service.apply(
                     parse_model(doc_obj), 
                     parse_metrics(doc_obj), 
-                    model_folder_path, **kwargs
-                ))
+                    model_folder_path,
+                    self.apply_context,
+                    **kwargs)
+                self.apply_context.add_model_version(model_version)
+                responses.append(model_version)
             elif kind == 'Application':
                 logging.debug("Application detected")
                 partial_application_parser = parse_application(doc_obj)
-                responses.append(self.application_service.apply(
-                    partial_application_parser
-                ))
+                application = self.application_service.apply(
+                    partial_application_parser,
+                    self.apply_context,
+                    **kwargs)
+                self.apply_context.add_application(application)
+                responses.append(application)
             elif kind == 'DeploymentConfiguration':
                 logging.debug("DeploymentConfiguration detected")
                 partial_dc_parser = parse_deployment_configuration(doc_obj)
-                responses.append(self.deployment_configuration_service.apply(
-                    partial_dc_parser
-                ))
+                config = self.deployment_configuration_service.apply(
+                    partial_dc_parser,
+                    self.apply_context,
+                    **kwargs)
+                self.apply_context.add_deployment_configuration(config)
+                responses.append(config)
             else:
                 logging.warning("Unknown resource: {}, skipping".format(doc_obj))
                 continue

@@ -38,17 +38,6 @@ from hydroserving.util.yamlutil import yaml_file
     required=False,
     help="Override install command.")
 @click.option(
-    '--dir',
-    'target_dir',
-    type=click.Path(
-        exists=True,
-        file_okay=False,
-        dir_okay=True),
-    default=os.getcwd(),
-    show_default=True,
-    required=False,
-    help="Specify target dir for the model.")
-@click.option(
     '--ignore-training-data',
     type=bool,
     required=False,
@@ -69,20 +58,20 @@ from hydroserving.util.yamlutil import yaml_file
     default=False,
     help="Upload the model asynchronously.")
 @click.option(
-    '-t', '--timeout',
+    '--timeout',
     type=int,
     required=False,
     default=120,
     help="Default timeout for model build process.")
 @click.pass_obj
 def upload(
-        obj: ContextObject, name: str, runtime: str, target_dir: str, training_data: str, 
-        ignore_training_data: bool, ignore_metrics: bool, is_async: bool, timeout: int,
-        install_command: str, 
+        obj: ContextObject, name: str, runtime: str, training_data: str, ignore_training_data: bool, 
+        ignore_metrics: bool, is_async: bool, timeout: int, install_command: str, 
 ):
     """
     Upload a model version to the cluster.
     """
+    target_dir = os.getcwd()
     logging.debug(f"Checking for serving.yaml file in {target_dir}")
     target_dir = os.path.abspath(target_dir)
     serving_files = [
@@ -164,8 +153,21 @@ def upload(
     default=False,
     is_flag=True,
     help="Flag to omit upload of training data.")
+@click.option(
+    '--timeout',
+    type=int,
+    required=False,
+    default=120,
+    help="Default timeout for model build process.")
 @click.pass_obj
-def apply(obj: ContextObject, f: str, recursive: bool, ignore_metrics: bool, ignore_training_data: bool):
+def apply(
+        obj: ContextObject, 
+        f: str, 
+        recursive: bool, 
+        ignore_metrics: bool, 
+        ignore_training_data: bool,
+        timeout: int = 120,
+):
     """
     Create multiple resources on the cluster.
     """
@@ -179,7 +181,8 @@ def apply(obj: ContextObject, f: str, recursive: bool, ignore_metrics: bool, ign
             fs, 
             recursive,
             ignore_metrics=ignore_metrics, 
-            ignore_training_data=ignore_training_data
+            ignore_training_data=ignore_training_data,
+            timeout=timeout,
         )
         serialized = {
             key : [value.to_dict() for value in values]
