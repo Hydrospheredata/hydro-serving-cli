@@ -20,7 +20,7 @@ They can be managed with:
 - `hs cluster` - shows default cluster
 - `hs cluster add --name local --server http://localhost` - creates entry with name `local`
 and address `http://localhost`.
-- `hs cluster use local` - uses the previously created `local` cluster as default
+- `hs cluster set local` - uses the previously created `local` cluster as default
 - `hs cluster rm local` - removes `local` cluster entry
 
 The default cluster is used as endpoint for all API calls made from the CLI tool.
@@ -39,32 +39,13 @@ payload:
   - "saved_model.pb"
   - "variables/"
 
-monitoring:
-  - name: ks
-    kind: KSMetricSpec
-    config:
-      input: client_profile_42
-    with-health: true
-  - name: gan
-    kind: GANMetricSpec
-    with-health: true
-    config:
-      input: feature
-      application: claims-gan-app
-  - name: autoencoder
-    kind: AEMetricSpec
-    with-health: true
-    config:
-      application: claims-autoencoder-app
-      input: feature
-      threshold: 69
-  
-contract:
+signature:
   name: detect  # the name of signature
-  inputs:  # signature input fields
+  inputs:       # signature input fields
     image_b64:
+      shape: [-1]
       type: string
-  outputs:  # signature output fields
+  outputs:      # signature output fields
     scores:
       shape: [-1]
       type: double
@@ -83,18 +64,6 @@ These files can contain definition of a resource defined below:
 #### Model
 
 The model definition is the same as in `serving.yaml` file.
-
-#### HostSelector
-
-Example of a selector definition:
-
-```yaml
-kind: HostSelector
-name: xeon-cpu
-node_selector: "/* INSTANCE SELECTOR */"
-```
-
-Note that selector is a string that defines platform specific filter on instances.
 
 #### Application
 

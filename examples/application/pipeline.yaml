@@ -1,0 +1,10 @@
+kind: Application
+name: infer-app
+pipeline:
+  - - model: infer:1
+  - - model: combine:1
+      weight: 80
+      deployment-configuration: default
+    - model: combine:2
+      weight: 20
+      deployment-configuration: default

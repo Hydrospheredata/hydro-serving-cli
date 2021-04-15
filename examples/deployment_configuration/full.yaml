@@ -1,0 +1,125 @@
+kind: DeploymentConfiguration
+name: full-example
+hpa:
+  minReplicas: 1
+  maxReplicas: 4
+  cpuUtilization: 80
+deployment:
+  replicaCount: 2
+container:
+  resources:
+    limits:
+      cpu: 500m
+      memory: 2G
+    requests:
+      cpu: 250m
+      memory: 1G
+pod:
+  nodeSelector:
+    im: a_map
+    foo: bar
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: exp1
+            operator: Exists
+          matchFields:
+          - key: fields1
+            operator: Exists
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - preference:
+          matchExpressions:
+          - key: exp2
+            operator: NotIn
+            values:
+            - aaa
+            - bbb
+            - ccc
+          matchFields:
+          - key: fields3
+            operator: NotIn
+            values:
+            - aaa
+            - bbb
+            - ccc
+        weight: 100
+    podAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: foo
+            operator: Exists
+          - key: bar
+            operator: NotIn
+            values:
+            - a
+            - b
+        namespaces:
+        - namespace1
+        topologyKey: top
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              key: a
+            matchExpressions:
+            - key: foo
+              operator: In
+              values:
+              - a
+              - b
+            - key: bar
+              operator: NotIn
+              values:
+              - b
+          namespaces:
+          - namespace2
+          topologyKey: toptop
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: foo
+            operator: Exists
+          - key: bar
+            operator: NotIn
+            values:
+            - a
+            - b
+          - key: que
+            operator: DoesNotExist
+        namespaces:
+        - namespace1
+        topologyKey: top
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              key: a
+            matchExpressions:
+            - key: foo
+              operator: In
+              values:
+              - a
+              - b
+            - key: bar
+              operator: NotIn
+              values:
+              - b
+          namespaces:
+          - namespace2
+          topologyKey: toptop
+  tolerations:
+  - effect: PreferNoSchedule
+    key: equalToleration
+    tolerationSeconds: 30
+    operator: Equal
+    value: foo
+  - key: equalToleration
+    operator: Exists
+    effect: PreferNoSchedule
+    tolerationSeconds: 30

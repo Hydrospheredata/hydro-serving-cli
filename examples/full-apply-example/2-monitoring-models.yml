@@ -1,6 +1,0 @@
-version: 2
-kind: Model
-name: apply-demo-claims-autoencoder
-runtime: hydrosphere/serving-runtime-tensorflow:1.7.0-latest
-payload:
-  - /path/to/model

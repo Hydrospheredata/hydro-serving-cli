@@ -1,0 +1,29 @@
+kind: Model
+name: infer
+runtime: runtime:latest
+install-command: "pip install -r requirements.txt"
+source-path: model/identity
+payload:
+  - 'file1.txt'
+  - "src/"
+  - "requirements.txt"
+signature:
+  name: infer
+  inputs:
+    input:
+      shape: scalar
+      type: int64
+      profile: numerical
+  outputs:
+    output:
+      shape: scalar
+      type: int64
+      profile: numerical
+monitoring:
+  configuration:
+    batch-size: 50
+---
+kind: Application
+name: infer-app
+singular:
+  model: "{{this.model.infer}}"
