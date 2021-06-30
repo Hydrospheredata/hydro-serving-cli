@@ -1,0 +1,33 @@
+[tool.poetry]
+authors = ["Hydrospheredata"]
+description = "Hydro-serving command line tool"
+license = "Apache-2.0"
+name = "hs"
+version = "3.0.0-dev11"
+
+[tool.poetry.dependencies]
+click = "~7.1.2"
+click-aliases = "~1.0.1"
+click-log = "~0.3"
+gitpython = "~2.1"
+hydrosdk = "3.0.0a4"
+kafka-python = "1.4.3"
+protobuf = "^3.6"
+python = "^3.7"
+requests = "~2.23.0"
+requests-toolbelt = "~0.9"
+sseclient-py = "~1.7"
+tabulate = "~0.8"
+pydantic-yaml = "^0.4.0"
+
+[tool.poetry.dev-dependencies]
+mock = "^2.0.0"
+pytest = "^3.8.0"
+requests_mock = "^1.5.0"
+
+[tool.poetry.scripts]
+hs = "hs.cli.commands.hs:hs_cli"
+
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.0.0"]
