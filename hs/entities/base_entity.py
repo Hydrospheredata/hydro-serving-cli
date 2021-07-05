@@ -16,5 +16,9 @@ class BaseEntity(YamlModel):
     #         f.write(obj)
     #     return obj
 
+    def to_yaml(self):
+        return self.yaml(by_alias=True)
+
     class Config:
         alias_generator = to_kebab_case
+        allow_population_by_field_name = True

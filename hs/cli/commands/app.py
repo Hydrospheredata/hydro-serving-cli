@@ -11,7 +11,7 @@ from hydrosdk.application import Application
 @hs_cli.group(help=PROFILE_HELP)
 @click.pass_context
 def app(ctx):
-    ctx.obj = get_cluster_connection()
+    ctx.obj = get_cluster_connection(ctx.obj)
 
 
 @app.command(context_settings=CONTEXT_SETTINGS)

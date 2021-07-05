@@ -10,8 +10,6 @@ def yaml_file_stream(file):
         return res
     except ParserError as ex:
         raise ParserError(file, ex)
-    except KeyError as ex:
-        raise ParserError(file, "Can't find {} field".format(ex))
 
 
 def yaml_file(file):
@@ -20,8 +18,6 @@ def yaml_file(file):
         return yaml_dict
     except ParserError as ex:
         raise ParserError(file, ex)
-    except KeyError as ex:
-        raise ParserError(file, "Can't find {} field".format(ex))
 
 
 def write_yaml(yaml_path, data_dict):

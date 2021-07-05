@@ -15,14 +15,15 @@ from hs.settings import CONFIG_PATH
 @click.pass_context
 def cluster(ctx):
     if ctx.invoked_subcommand is None:
-        current_cluster = read_current_cluster(CONFIG_PATH)
+        current_cluster = read_current_cluster(ctx.obj)
         click.echo("Current cluster: {}".format(current_cluster))
 
 
 @cluster.command(help=CLUSTER_USE_HELP)
 @click.argument('cluster_name')
-def use(cluster_name):
-    config = read_cluster_config(CONFIG_PATH)
+@click.pass_obj
+def use(obj, cluster_name):
+    config = read_cluster_config(obj)
     if config is None:
         raise click.ClickException("Can't set current cluster. No clusters defined.")
 
@@ -34,11 +35,12 @@ def use(cluster_name):
     if current_cluster is None:
         raise click.ClickException(f"Can't find {cluster_name} cluster")
     config.current_cluster = current_cluster
-    write_cluster_config(CONFIG_PATH, config)
+    write_cluster_config(obj, config)
 
 @cluster.command(help=CLUSTER_LIST_HELP)
-def list():
-    config = read_cluster_config(CONFIG_PATH)
+@click.pass_obj
+def list(obj):
+    config = read_cluster_config(obj)
     click.echo(f"Current cluster: {config.current_cluster}")
     clusters_view = []
     for cluster in config.clusters:
@@ -52,12 +54,16 @@ def list():
 @cluster.command(help=CLUSTER_ADD_HELP)
 @click.option('--name', required=True)
 @click.option('--server', required=True)
-def add(name, server):
+@click.pass_obj
+def add(obj, name, server):
     new_cluster = ClusterDef(name=name, cluster=ClusterServerDef(server=server))
-    config = read_cluster_config(CONFIG_PATH)
-
+    config = read_cluster_config(obj)
+    
     if config is None:
-        config = ClusterConfig(current_cluster=new_cluster.name, clusters = [new_cluster])
+        config = ClusterConfig(
+            current_cluster=new_cluster.name,
+             clusters = [new_cluster]
+        )
     else:
         for cl in config.clusters:
             if cl.name == new_cluster.name:
@@ -74,14 +80,15 @@ def add(name, server):
         click.echo(f"Couldn't find current cluster. Setting {current_cluster.name} as current.")
         config.current_cluster = current_cluster.name
 
-    write_cluster_config(CONFIG_PATH, config)
+    write_cluster_config(obj, config)
     click.echo(f"Cluster {new_cluster.name} at {new_cluster.cluster.server} added successfully")
 
 
 @cluster.command(help=CLUSTER_RM_HELP)
 @click.argument("cluster_name")
-def rm(cluster_name):
-    config = read_cluster_config(CONFIG_PATH)
+@click.pass_obj
+def rm(obj, cluster_name):
+    config = read_cluster_config(obj)
 
     if config is None:
         raise click.ClickException("Can't delete. No clusters defined.")
@@ -96,7 +103,7 @@ def rm(cluster_name):
         raise click.ClickException(f"Can't delete. Cluster {cluster_name} is not found.")
 
     config.clusters.remove(to_delete)
-    write_cluster_config(CONFIG_PATH, config)
+    write_cluster_config(obj, config)
     click.echo("Deleted successfully")
 
 @cluster.command()
