@@ -26,6 +26,7 @@ pytest = "^3.8.0"
 requests_mock = "^1.5.0"
 dvc = "^2.5.0"
 devtools = "^0.6.1"
+requests-mock = "^1.9.3"
 
 [tool.poetry.scripts]
 hs = "hs.cli.commands.hs:hs_cli"

@@ -1,3 +1,4 @@
+from io import BytesIO
 import json
 import os
 import tempfile
@@ -131,7 +132,9 @@ def test_model_apply(cluster_config: str):
             ).encode("utf-8")
         elif request.path_url == '/api/v2/model/version/1/logs':
             resp = requests.Response()
-            resp.status_code = 404
+            resp.status_code = 200
+            resp.headers["Content-Type"] = "text/event-stream"
+            resp.raw = BytesIO("data: Hello there".encode("utf-8"))
         return resp
 
     with requests_mock.Mocker() as req_mock:

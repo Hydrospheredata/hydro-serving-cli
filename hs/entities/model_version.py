@@ -57,6 +57,9 @@ class ModelVersion(BaseEntity):
         logging.debug(f"Model version builder:\n{mv_builder}")
 
         mv = mv_builder.build(conn)
+        logging.info("Build logs:")
+        for ev in mv.build_logs():
+            logging.info(ev.data)
 
         if self.monitoring:
             logging.info(f"Uploading monitoring configuration for the model {mv.name}:{mv.version}")
