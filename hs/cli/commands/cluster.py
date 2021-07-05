@@ -4,9 +4,9 @@ import click
 from hs.cli.commands.hs import hs_cli
 from hs.cli.help import CLUSTER_HELP, CLUSTER_USE_HELP, CLUSTER_LIST_HELP, CLUSTER_ADD_HELP, \
     CLUSTER_RM_HELP
-from hs.config.cluster_config import ClusterConfig, ClusterDef, ClusterServerDef, \
+from hs.entities.cluster_config import ClusterConfig, ClusterDef, ClusterServerDef, \
      read_cluster_config, read_current_cluster, write_cluster_config
-from hs.config.settings import CONFIG_PATH
+from hs.settings import CONFIG_PATH
 
 @hs_cli.group(
     invoke_without_command=True,

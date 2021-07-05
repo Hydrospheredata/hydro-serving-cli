@@ -9,7 +9,6 @@ version = "3.0.0-dev11"
 click = "~7.1.2"
 click-aliases = "~1.0.1"
 click-log = "~0.3"
-gitpython = "~2.1"
 hydrosdk = "3.0.0a4"
 kafka-python = "1.4.3"
 protobuf = "^3.6"
@@ -19,11 +18,14 @@ requests-toolbelt = "~0.9"
 sseclient-py = "~1.7"
 tabulate = "~0.8"
 pydantic-yaml = "^0.4.0"
+GitPython = "^3.1.18"
 
 [tool.poetry.dev-dependencies]
 mock = "^2.0.0"
 pytest = "^3.8.0"
 requests_mock = "^1.5.0"
+dvc = "^2.5.0"
+devtools = "^0.6.1"
 
 [tool.poetry.scripts]
 hs = "hs.cli.commands.hs:hs_cli"

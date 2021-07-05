@@ -5,7 +5,7 @@ from tabulate import tabulate
 from hs.cli.commands.hs import hs_cli
 from hs.cli.context import CONTEXT_SETTINGS
 from hs.cli.help import PROFILE_HELP
-from hs.config.cluster_config import get_cluster_connection
+from hs.entities.cluster_config import get_cluster_connection
 from hydrosdk.application import Application
 
 @hs_cli.group(help=PROFILE_HELP)

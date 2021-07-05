@@ -1,18 +1,18 @@
+from hs.entities.base_entity import BaseEntity
 from click.exceptions import ClickException
 from pydantic import AnyHttpUrl
-from pydantic_yaml import YamlModel
 from typing import List
 from hydrosdk.cluster import Cluster
-from hs.config.settings import CONFIG_PATH
+from hs.settings import CONFIG_PATH
 
-class ClusterServerDef(YamlModel):
+class ClusterServerDef(BaseEntity):
     server: AnyHttpUrl
 
-class ClusterDef(YamlModel):
+class ClusterDef(BaseEntity):
     name: str
     cluster: ClusterServerDef
 
-class ClusterConfig(YamlModel):
+class ClusterConfig(BaseEntity):
     current_cluster: str
     clusters: List[ClusterDef]
 

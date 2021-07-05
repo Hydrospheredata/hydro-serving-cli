@@ -4,7 +4,7 @@ from hydrosdk.modelversion import ModelVersion, _upload_local_file, _upload_s3_f
 from hs.cli.commands.hs import hs_cli
 from hs.cli.context import CONTEXT_SETTINGS
 from hs.cli.help import PROFILE_HELP, PROFILE_PUSH_HELP, PROFILE_MODEL_VERSION_HELP
-from hs.config.cluster_config import get_cluster_connection
+from hs.entities.cluster_config import get_cluster_connection
 
 
 @hs_cli.group(help=PROFILE_HELP)

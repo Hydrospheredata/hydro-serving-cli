@@ -4,7 +4,7 @@ from tabulate import tabulate
 
 from hs.cli.commands.hs import hs_cli
 from hs.cli.context import CONTEXT_SETTINGS
-from hs.config.cluster_config import get_cluster_connection
+from hs.entities.cluster_config import get_cluster_connection
 from hydrosdk.servable import Servable
 
 

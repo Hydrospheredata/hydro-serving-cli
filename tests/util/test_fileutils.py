@@ -1,6 +1,6 @@
 import os
 
-from hydroserving.util.fileutil import get_visible_files, get_yamls
+from hs.util.fileutil import get_visible_files, get_yamls
 
 MODEL_FOLDER = "./examples/local_dev"
 
@@ -33,34 +33,3 @@ def test_get_all_yaml_files():
     files = get_yamls(MODEL_FOLDER)
     print(files)
     assert [os.path.join(MODEL_FOLDER, "serving.yaml")] == files
-
-# def test_assembly_with_metadata():
-#     def _test_assembly_with_metadata():
-#         folder_metadata = FolderMetadata.from_directory(".")
-#         print(folder_metadata)
-#         result = assemble_model(folder_metadata.model)
-#
-#         print(result)
-#         assert os.path.exists(os.path.join(".", TARGET_PATH, "example_script.tar.gz"))
-#         assert os.listdir(os.path.join(".", PACKAGE_FILES_PATH))
-#
-#     with_target_cwd(MODEL_FOLDER, _test_assembly_with_metadata)
-#
-#
-# def test_assemble_without_metadata():
-#     path = os.path.join(MODEL_FOLDER, "calculator")
-#
-#     def _test_assemble_without_metadata():
-#         model = ModelDefinition(
-#             "model",
-#             "test:test",
-#             None,
-#             ['.'],
-#             "Description"
-#         )
-#         result = assemble_model(model)
-#         print(result)
-#         assert os.path.exists(os.path.join(".", TARGET_PATH, "model.tar.gz"))
-#         assert os.listdir(os.path.join(".", PACKAGE_FILES_PATH))
-#
-#     with_target_cwd(path, _test_assemble_without_metadata)

@@ -6,7 +6,7 @@ import textwrap
 from hs.cli.commands.hs import hs_cli
 from hs.cli.help import DEPLOYMENT_CONFIGURATION_LIST_HELP, \
     DEPLOYMENT_CONFIGURATION_HELP, DEPLOYMENT_CONFIGURATION_RM_HELP
-from hs.config.cluster_config import get_cluster_connection
+from hs.entities.cluster_config import get_cluster_connection
 
 def wrap_text(text: str) -> str:
     return "\n".join(textwrap.wrap(str(text), width=50))
