@@ -30,7 +30,13 @@ class GitInfo(BaseModel):
             author = cur_commit.author
             date = time.asctime(time.gmtime(cur_commit.committed_date))
             cur_is_dirty = repo.is_dirty()
-            meta = GitInfo(cur_branch.name, cur_commit.hexsha, cur_is_dirty, author.name, author.email, date)
+            meta = GitInfo(
+                branch_name = cur_branch.name,
+                commit_sha = cur_commit.hexsha,
+                is_dirty = cur_is_dirty, 
+                author_name = author.name, 
+                author_email = author.email, 
+                date = date)
             return meta
         except Exception:
             logging.debug("Error while extracting .git metadata", exc_info=True)

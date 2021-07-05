@@ -42,23 +42,27 @@ def test_model_apply(cluster_config: str):
     def _upload_matcher(request):
         resp = None
         if request.path_url == "/api/v2/model/upload":
-            fields = request.text.fields
-            assert 'metadata' in fields
-            assert 'payload' in fields
-            metadata = json.loads(fields['metadata'])
-            m = metadata["metadata"]
-            print(metadata)
-            assert metadata['monitoring_configuration'] == {}
-            assert metadata["name"] == "apply-demo-claims-model"
-            assert m["author"] == "cool-data-stan"
             resp = requests.Response()
             resp.status_code = 200
             resp._content = json.dumps(
                 {
                     "id": 1,
-                    "model": {"name": "apply-demo-claims-model"},
+                    "model": {"name": "apply-demo-claims-model", "id": 1},
                     "modelVersion": 1,
-                    "status": "Pending"
+                    "status": "Assembling",
+                    "modelSignature": {
+                        "signatureName": "predict",
+                        "inputs": [],
+                        "outputs": []
+                    },
+                    "monitoringConfiguration": {
+                        "batchSize": 100
+                    },
+                    "runtime": {
+                        "name": "python",
+                        "tag": "latest"
+                    },
+                    "metadata": {}
                 }
             ).encode("utf-8")
         elif request.path_url == '/api/v2/model/version/apply-demo-claims-model/1':
@@ -67,9 +71,22 @@ def test_model_apply(cluster_config: str):
             resp._content = json.dumps(
                 {
                     "id": 1,
-                    "model": {"name": "apply-demo-claims-model"},
+                    "model": {"name": "apply-demo-claims-model", "id": 1},
                     "modelVersion": 1,
-                    "status": "Released"
+                    "status": "Released",
+                    "modelSignature": {
+                        "signatureName": "predict",
+                        "inputs": [],
+                        "outputs": []
+                    },
+                    "monitoringConfiguration": {
+                        "batchSize": 100
+                    },
+                    "runtime": {
+                        "name": "python",
+                        "tag": "latest"
+                    },
+                    "metadata": {}
                 }
             ).encode("utf-8")
         elif request.path_url == '/api/v2/model/version/apply-demo-claims-autoencoder/1':
@@ -78,23 +95,43 @@ def test_model_apply(cluster_config: str):
             resp._content = json.dumps(
                 {
                     "id": 1337,
-                    "model": {"name": "apply-demo-claims-autoencoder"},
+                    "model": {"name": "apply-demo-claims-autoencoder", "id": 2},
                     "modelVersion": 1,
-                    "status": "Released"
+                    "status": "Released",
+                    "modelSignature": {
+                        "signatureName": "predict",
+                        "inputs": [],
+                        "outputs": []
+                    },
+                    "monitoringConfiguration": {
+                        "batchSize": 100
+                    },
+                    "runtime": {
+                        "name": "python",
+                        "tag": "latest"
+                    },
+                    "metadata": {}
                 }
             ).encode("utf-8")
         elif request.path_url == "/api/v2/monitoring/metricspec" and request.method == "POST":
-            d = json.loads(request.text)
-            print(d)
-            assert d["modelVersionId"] == 1
-            assert d["config"]["modelVersionId"] == 1337
+            print(request.json())
             resp = requests.Response()
             resp.status_code = 200
-            resp._content = request.text.encode("utf-8")
+            resp._content = json.dumps(
+                {
+                    'name': 'cool-metric', 
+                    'modelVersionId': 1, 
+                    'config': {
+                        'modelVersionId': 1337, 
+                        'threshold': 12.0, 
+                        'thresholdCmpOperator': {'kind': '<='}
+                    },
+                    "id": "aaa"
+                }
+            ).encode("utf-8")
         elif request.path_url == '/api/v2/model/version/1/logs':
             resp = requests.Response()
             resp.status_code = 404
-            return resp
         return resp
 
     with requests_mock.Mocker() as req_mock:

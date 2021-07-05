@@ -7,7 +7,7 @@ from hs.entities.contract import Contract
 from hs.metadata_collectors.collected_metadata import CollectedMetadata
 
 from hydrosdk.cluster import Cluster
-from hydrosdk.modelversion import ModelVersionBuilder, ModelVersion as SDK_MV
+from hydrosdk.modelversion import ModelVersionBuilder, ModelVersion as SDK_MV, MonitoringConfiguration as SDK_MC
 from hydrosdk.monitoring import MetricSpecConfig, MetricSpec
 
 class MonitoringConfiguration(BaseEntity):
@@ -51,7 +51,8 @@ class ModelVersion(BaseEntity):
         mv_builder.with_metadata(self.metadata)
 
         if self.monitoring_configuration:
-            mv_builder.with_monitoring_configuration(self.monitoring_configuration.batch_size)
+            mc = SDK_MC(self.monitoring_configuration.batch_size)
+            mv_builder.with_monitoring_configuration(mc)
 
         logging.debug(f"Model version builder:\n{mv_builder}")
 
@@ -73,6 +74,6 @@ class ModelVersion(BaseEntity):
                     modelversion_id = mv.id,
                     config = sdk_conf
                 )
-                logging.debug(f"Created metric spec: {sdk_ms}")
+                logging.debug(f"Created metric spec: {sdk_ms.name} with id {sdk_ms.id}")
 
         return mv
