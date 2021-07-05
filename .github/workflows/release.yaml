@@ -1,0 +1,208 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - master
+      - main
+      
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: bump rule (major|minor|patch|premajor|preminor|prepatch|prerelease)
+        default: prerelease
+        required: false
+        
+      version:
+        description: manual version
+        default: ''
+        required: false
+        
+      sdk_version:
+        description: manual sdk version
+        default: ''
+        required: false
+        
+      release:
+        description: release type (local|global)
+        default: local
+        required: false
+        
+# Secrets:
+#   pypi_token - pypi API token
+      
+jobs:
+  Verify_version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Get latest tag
+        id: get-latest-tag
+        uses: actions-ecosystem/action-get-latest-tag@v1
+
+    outputs:
+      latest_version: ${{ steps.get-latest-tag.outputs.tag }}
+
+  Release:
+    needs: Verify_version
+    runs-on: ubuntu-latest
+    if: >
+      needs.Verify_version.outputs.latest_version != github.event.inputs.version && (
+      github.event_name == 'workflow_dispatch' || 
+      github.event_name == 'push')
+    steps:
+      - name: Validate inputs  #TODO create an action for this
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          case ${{ github.event.inputs.bump }} in
+            major)
+              ;;
+            premajor)
+              ;;
+            minor)
+              ;;
+            preminor)
+              ;;
+            patch)
+              ;;
+            prepatch)
+              ;;
+            prerelease)
+              ;;
+            *)
+              echo "invalid bump rule: ${{ github.event.inputs.bump }}"
+              exit 1
+              ;;
+          esac
+          
+          case ${{ github.event.inputs.release }} in 
+            local)
+              ;;
+            global)
+              ;;
+            *)
+              echo invalid release type: ${{ github.event.inputs.release }}
+              exit 1
+              ;;
+          esac
+          
+          echo BUMP=${{ github.event.inputs.bump }} >> $GITHUB_ENV
+          echo RELEASE=${{ github.event.inputs.release }} >> $GITHUB_ENV
+
+      # Checkout and prerequisite tools        
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2.2.2
+        with:
+          python-version: 3.7
+          
+      - name: Setup poetry
+        uses: abatilo/actions-poetry@v2.1.0
+        
+      # Bump version  
+      - name: Bump sdk
+        if: github.event.inputs.sdk_version == '' && env.RELEASE == 'local'
+        run: |
+          SDK_VERSION=$(curl -Ls https://pypi.org/pypi/hydrosdk/json | jq -r '.releases | keys[-1]')
+          echo $SDK_VERSION
+          poetry add hydrosdk=$SDK_VERSION
+          
+      - name: Bump sdk to latest stable version
+        if: github.event.inputs.sdk_version == '' && env.RELEASE == 'global'
+        run: |
+          SDK_VERSION=$(curl -Ls https://pypi.org/pypi/hydrosdk/json | jq -r .info.version)
+          echo $SDK_VERSION
+          poetry add hydrosdk=$SDK_VERSION
+          
+      - name: Set manual sdk version
+        if: github.event.inputs.sdk_version != ''
+        run: poetry add hydrosdk=${{ github.event.inputs.sdk_version }}
+
+      # Bump service version  
+      - name: Get latest tag
+        id: get-latest-tag
+        uses: actions-ecosystem/action-get-latest-tag@v1
+
+      - name: Bump release version
+        id: bump_version
+        uses: christian-draeger/increment-semantic-version@1.0.2
+        with:
+          current-version: ${{ steps.get-latest-tag.outputs.tag }}
+          version-fragment: ${{ github.event.inputs.bump }}
+
+      # Set version variable
+      - name: Set VERSION variable
+        if: github.event.inputs.version == '' && github.event_name == 'workflow_dispatch'
+        run: echo VERSION=${{ steps.bump_version.outputs.next-version }} >> $GITHUB_ENV
+        
+      - name: Set VERSION variable
+        if: github.event.inputs.version != '' && github.event_name == 'workflow_dispatch'
+        run: echo VERSION=${{ github.event.inputs.version }} >> $GITHUB_ENV
+
+      - name: Set VERSION variable
+        if: github.event_name == 'push'
+        run: echo VERSION=${{ github.sha }} >> $GITHUB_ENV
+
+      # Bump version
+      - name: Bump service version
+        if: github.event_name == 'workflow_dispatch'
+        run: poetry version ${{ env.VERSION }}
+
+      - name: Release to pypi
+        if: github.event_name == 'workflow_dispatch'
+        run: poetry publish -u __token__ -p ${{ secrets.pypi_token }}
+
+      - name: Commit new version
+        if: github.event_name == 'workflow_dispatch'
+        run: "echo ${{ env.VERSION }} > version"
+
+      - name: Push to repo
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git commit -m "Releasing hydro-serving-cli:${{ env.VERSION }}" -a
+          git push
+          
+      - name: Tag commit
+        if: github.event_name == 'workflow_dispatch'
+        run: "git tag ${{ env.VERSION }}"
+        
+      - name: Push tag
+        if: github.event_name == 'workflow_dispatch'
+        run: "git push --tags"
+          
+  slackNotification:
+    name: Slack Notification
+    needs: Release
+    runs-on: ubuntu-latest
+    steps:
+    - name: Slack Notification success
+      if: ${{ success() }}
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_CHANNEL: hydrosphere
+        SLACK_USERNAME: HydroRobot
+        SLACK_ICON: https://avatars.githubusercontent.com/u/17550625?s=200&v=4
+        SLACK_COLOR: ${{ job.status }}
+        SLACK_TITLE: Build status - success
+        SLACK_MESSAGE: "Releasing hydro-serving-cli ${{ needs.Release.outputs.tag }} :rocket:"
+        MSG_MINIMAL: true
+
+    - name: Slack Notification failure
+      if: ${{ failure() }}
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_CHANNEL: hydrosphere
+        SLACK_USERNAME: HydroRobot
+        SLACK_ICON: https://avatars.githubusercontent.com/u/17550625?s=200&v=4
+        SLACK_COLOR: ${{ job.status }}
+        SLACK_TITLE: Build status - failure
+        SLACK_MESSAGE: "Check build $GITHUB_RUN_ID status"
+        MSG_MINIMAL: true
