@@ -1,0 +1,40 @@
+name: ci
+on: pull_request
+
+jobs:
+
+  Test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2      
+
+      - name: Setup Python
+        uses: actions/setup-python@v2.2.2
+        with:
+          python-version: 3.7
+          
+      - name: Setup poetry
+        uses: abatilo/actions-poetry@v2.1.0
+
+      - name: Bump sdk
+        run: |
+          SDK_VERSION=$(curl -Ls https://pypi.org/pypi/hydrosdk/json | jq -r '.releases | keys[-1]')
+          echo $SDK_VERSION
+          poetry add hydrosdk=$SDK_VERSION
+
+      # Build Python    
+      - name: Install dependencies
+        run: poetry install
+        
+      - name: Bump version
+        run: poetry version prerelease
+
+      - name: Build
+        run: poetry build
+        
+      - name: Run test python
+        run: poetry run pytest tests
+
+
+          
