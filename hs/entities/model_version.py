@@ -1,4 +1,6 @@
 import logging
+
+from hydrosdk.image import DockerImage
 from hs.entities.base_entity import BaseEntity
 from typing import Dict, List, Optional, Union
 from hs.entities.contract import Contract
@@ -33,7 +35,7 @@ class ModelVersion(BaseEntity):
 
     def apply(self, conn: Cluster, cwd):
         mv_builder = ModelVersionBuilder(name = self.name,path = cwd) \
-            .with_runtime(self.runtime) \
+            .with_runtime(DockerImage.from_string(self.runtime)) \
             .with_payload(self.payload) \
             .with_signature(self.contract.to_proto())
 

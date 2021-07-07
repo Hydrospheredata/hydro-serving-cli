@@ -1,3 +1,5 @@
+from genericpath import exists
+import os
 from hs.entities.base_entity import BaseEntity
 from click.exceptions import ClickException
 from pydantic import AnyHttpUrl
@@ -31,6 +33,7 @@ def read_current_cluster(path: str) -> ClusterDef:
     return None
 
 def write_cluster_config(path: str, cluster_config: ClusterConfig):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, 'w') as f:
         d = cluster_config.yaml()
         f.write(d)
