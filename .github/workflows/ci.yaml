@@ -34,11 +34,11 @@ jobs:
         run: poetry run pytest --junitxml test-report.xml tests
 
       - name: Publish Unit Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v1
+        uses: mikepenz/action-junit-report@v2
         if: always()
         with:
           files: test-report.xml
-          
+
       - name: Build
         run: poetry build
 
