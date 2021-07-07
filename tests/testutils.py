@@ -1,9 +1,18 @@
+from io import BytesIO
 import shutil
 import os
+
+import requests
 
 from hs.settings import TARGET_FOLDER
 from hs.util.fileutil import with_cwd
 
+def mock_sse_response(data: bytes):
+    resp = requests.Response()
+    resp.status_code = 200
+    resp.headers["Content-Type"] = "text/event-stream"
+    resp.raw = BytesIO(data)
+    return resp
 
 def with_target_cwd(cwd, func, *args):
     """

@@ -1,6 +1,6 @@
+from hs.entities.deployment_config import DeploymentConfig
+from hs.entities.application import Application
 import os
-from hs.entities.model_version import ModelVersion
-from hs.util.yamlutil import yaml_file, yaml_file_stream
 import sys
 import logging
 
@@ -11,6 +11,8 @@ from yaml.scanner import ScannerError
 from hs.cli.commands.hs import hs_cli
 from hs.cli.context import CONTEXT_SETTINGS
 from hs.entities.cluster_config import get_cluster_connection
+from hs.entities.model_version import ModelVersion
+from hs.util.yamlutil import yaml_file_stream
 
 
 @hs_cli.command(
@@ -51,13 +53,6 @@ def apply(obj, f):
             logging.exception("Error while applying: {}".format(err))
             raise SystemExit(-1)
 
-KIND_MAPPING = {
-    "Model": ModelVersion.parse_obj,
-    # "Application": Application.parse_obj,
-    # "DeploymentConfig": DeploymentConfig.parse_obj,
-    # "Servable": Servable.parse_obj,
-}
-
 def parse_apply(arg, conn, cwd, raw_dict):
     kind = raw_dict.get('kind')
     if not kind:
@@ -68,5 +63,17 @@ def parse_apply(arg, conn, cwd, raw_dict):
         click.echo(mv_def.to_yaml())
         result = mv_def.apply(conn, cwd)
         click.echo(f"Model {result.name}:{result.version} was applied successfully")
+    elif kind == "Application":
+        app_def = Application.parse_obj(raw_dict)
+        click.echo("Applying the following application:")
+        click.echo(app_def.to_yaml())
+        result = app_def.apply(conn)
+        click.echo(f"Application {result.name} with id {result.id} was applied successfully")
+    elif kind == "DeploymentConfiguration":
+        dc_def = DeploymentConfig.parse_obj(raw_dict)
+        click.echo("Applying the following deployment configuration:")
+        click.echo(dc_def.to_yaml())
+        result = dc_def.apply(conn)
+        click.echo(f"Deployment configuration {result.name} was applied successfully")
     else:
         raise click.ClickException(f"Kind {kind} in {arg} is not supported")

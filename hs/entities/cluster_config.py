@@ -1,4 +1,3 @@
-from genericpath import exists
 import os
 from hs.entities.base_entity import BaseEntity
 from click.exceptions import ClickException
