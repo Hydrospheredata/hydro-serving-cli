@@ -30,11 +30,15 @@ jobs:
       - name: Bump version
         run: poetry version prerelease
 
+      - name: Run test python
+        run: poetry run pytest --junitxml test-report.xml tests
+
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        if: always()
+        with:
+          files: test-report.xml
+          
       - name: Build
         run: poetry build
-        
-      - name: Run test python
-        run: poetry run pytest tests
 
-
-          
