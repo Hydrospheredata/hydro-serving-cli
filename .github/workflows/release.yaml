@@ -9,8 +9,8 @@ on:
   workflow_dispatch:
     inputs:
       bump:
-        description: bump rule (major|minor|patch|premajor|preminor|prepatch|prerelease)
-        default: prerelease
+        description: bump rule (major|feature|bug|alpha|beta|rc)
+        default: alpha
         required: false
         
       version:
