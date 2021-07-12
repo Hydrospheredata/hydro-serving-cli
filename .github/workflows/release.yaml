@@ -48,6 +48,9 @@ jobs:
   Release:
     needs: Verify_version
     runs-on: ubuntu-latest
+    env:
+      BUMP: alpha # default values for push-triggered run
+      RELEASE: local
     if: >
       needs.Verify_version.outputs.latest_version != github.event.inputs.version && (
       github.event_name == 'workflow_dispatch' || 
@@ -105,14 +108,14 @@ jobs:
         
       # Bump version  
       - name: Bump sdk
-        if: github.event.inputs.sdk_version == '' && ${{ env.RELEASE }} == 'local'
+        if: github.event.inputs.sdk_version == '' && env.RELEASE == 'local'
         run: |
           SDK_VERSION=$(curl -Ls https://pypi.org/pypi/hydrosdk/json | jq -r '.releases | keys[-1]')
           echo $SDK_VERSION
           poetry add hydrosdk=$SDK_VERSION
           
       - name: Bump sdk to latest stable version
-        if: github.event.inputs.sdk_version == '' && ${{ env.RELEASE }} == 'global'
+        if: github.event.inputs.sdk_version == '' && env.RELEASE == 'global'
         run: |
           SDK_VERSION=$(curl -Ls https://pypi.org/pypi/hydrosdk/json | jq -r .info.version)
           echo $SDK_VERSION
@@ -122,54 +125,40 @@ jobs:
         if: github.event.inputs.sdk_version != ''
         run: poetry add hydrosdk=${{ github.event.inputs.sdk_version }}
 
-      # Bump service version  
-      - name: Get latest tag
-        id: get-latest-tag
-        uses: actions-ecosystem/action-get-latest-tag@v1
-
-      - name: Bump release version
-        id: bump_version
-        uses: christian-draeger/increment-semantic-version@1.0.2
-        with:
-          current-version: ${{ steps.get-latest-tag.outputs.tag }}
-          version-fragment: ${{ github.event.inputs.bump }}
-
-      # Set version variable
-      - name: Set VERSION variable
-        if: github.event.inputs.version == ''
-        run: echo VERSION=${{ steps.bump_version.outputs.next-version }} >> $GITHUB_ENV
-        
-      - name: Set VERSION variable
-        if: github.event.inputs.version != ''
-        run: echo VERSION=${{ github.event.inputs.version }} >> $GITHUB_ENV
-
       # Bump version
       - name: Bump service version
-        run: poetry version ${{ env.VERSION }}
+        run: poetry version ${{ env.BUMP }}
+
+      - name: force bump version
+        if: github.events.inputs.version != ''
+        run: poetry version ${{ github.events.inputs.version }}
+
+      - name: Build
+        run: poetry build
 
       - name: Release to pypi
         run: poetry publish -u __token__ -p ${{ secrets.pypi_token }}
 
       - name: Commit new version
-        run: "echo ${{ env.VERSION }} > version"
+        run: "echo $(poetry version -s) > version"
 
       - name: Push to repo
         run: |
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git commit -m "Releasing hydro-serving-cli:${{ env.VERSION }}" -a
+          git commit -m "Releasing hydro-serving-cli:$(poetry version -s)" -a
           git push
           
       - name: Reports
         id: generate-output
-        run: echo "::set-output name=tag-output::${{ env.VERSION }}"
+        run: echo "::set-output name=tag-output::$(poetry version -s)"
 
       - name: Create github release
         if: github.event_name == 'workflow_dispatch'
         uses: meeDamian/github-release@2.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ env.VERSION }}
+          tag: $(poetry version -s)
 
     outputs:
       tag: ${{ steps.generate-output.outputs.tag-output }}
