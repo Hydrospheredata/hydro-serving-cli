@@ -3,7 +3,8 @@ name: apply-demo-claims-model
 payload:
   - ./   # mocked path to real model files
 runtime: hydrosphere/serving-runtime-python:3.6-latest
-#training-data: s3://bucket/object.csv
+training-data: s3://bucket/object.csv
+install-command: echo 123
 metadata:
   author: cool-data-stan
   type: example
@@ -22,7 +23,7 @@ contract:
     amount:
       shape: scalar
       type: int64
-      profile: real
+      profile: numerical
 
 monitoring:
   - name: cool-metric
@@ -30,3 +31,6 @@ monitoring:
       monitoring-model: apply-demo-claims-autoencoder:1
       threshold: 12
       operator: "<="
+
+monitoring-configuration:
+  batch-size: 100
