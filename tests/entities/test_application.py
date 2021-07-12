@@ -8,6 +8,7 @@ from hydrosdk.application import Application as HS_APP, ExecutionGraph
 import pytest
 import pathlib
 from unittest.mock import patch
+import os
 
 @pytest.fixture()
 def singular_yaml_path():
@@ -54,7 +55,7 @@ def test_singluar_apply(mock_app_build, mock_app_find, mock_mv_find, singular_ya
         kafka_streaming=[]
     )
     app: Application = Application.parse_file(singular_yaml_path)
-    app.apply(conn)
+    app.apply(conn, os.path.dirname(singular_yaml_path))
 
 @patch('hydrosdk.modelversion.ModelVersion.find')
 @patch('hydrosdk.application.Application.find')
@@ -83,8 +84,8 @@ def test_pipeline_apply(mock_app_build, mock_app_find, mock_mv_find, pipeline_ya
         signature=ModelSignature(),
         kafka_streaming=[]
     )
-    app: Application = Application.parse_file(singular_yaml_path)
-    app.apply(conn)
+    app: Application = Application.parse_file(pipeline_yaml_path)
+    app.apply(conn, os.path.dirname(pipeline_yaml_path))
 
 @patch('hydrosdk.modelversion.ModelVersion.find')
 @patch('hydrosdk.application.Application.find')
@@ -123,4 +124,4 @@ def test_pipeline_apply(mock_app_build, mock_app_delete, mock_app_find, mock_mv_
         kafka_streaming=[]
     )
     app: Application = Application.parse_file(singular_yaml_path)
-    app.apply(conn)
+    app.apply(conn, os.path.dirname(singular_yaml_path))

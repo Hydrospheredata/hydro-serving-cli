@@ -1,3 +1,5 @@
+import yaml
+from yaml.error import MarkedYAMLError, YAMLError
 from hs.entities.deployment_config import DeploymentConfig
 from hs.entities.application import Application
 import os
@@ -12,7 +14,6 @@ from hs.cli.commands.hs import hs_cli
 from hs.cli.context import CONTEXT_SETTINGS
 from hs.entities.cluster_config import get_cluster_connection
 from hs.entities.model_version import ModelVersion
-from hs.util.yamlutil import yaml_file_stream
 
 
 @hs_cli.command(
@@ -31,27 +32,18 @@ from hs.util.yamlutil import yaml_file_stream
 @click.pass_obj
 def apply(obj, f):
     conn = get_cluster_connection(obj)
-
     for path in f:
-        try:
-            if path == "-":
-                content = yaml_file_stream(sys.stdin)
-                cwd = os.getcwd()
-            else:
-                with open(path, "r") as f:
-                    content = yaml_file_stream(f)
-                    cwd = os.path.dirname(path)
-            for doc in content:
-                parse_apply(path, conn, cwd, doc)
-        except ParserError as ex:
-            logging.exception("Error while parsing: {}".format(ex))
-            raise SystemExit(-1)
-        except ScannerError as ex:
-            logging.exception("Error while applying: Invalid YAML: {}".format(ex))
-            raise SystemExit(-1)
-        except Exception as err:
-            logging.exception("Error while applying: {}".format(err))
-            raise SystemExit(-1)
+        if path == "-":
+            content = list(yaml.safe_load_all(sys.stdin))
+            cwd = os.getcwd()
+        else:
+            with open(path, "r") as f:
+                content = list(yaml.safe_load_all(f))
+                cwd = os.path.dirname(path)
+        for doc in content:
+            parse_apply(path, conn, cwd, doc)
+
+
 
 def parse_apply(arg, conn, cwd, raw_dict):
     kind = raw_dict.get('kind')
@@ -67,7 +59,7 @@ def parse_apply(arg, conn, cwd, raw_dict):
         app_def = Application.parse_obj(raw_dict)
         click.echo("Applying the following application:")
         click.echo(app_def.to_yaml())
-        result = app_def.apply(conn)
+        result = app_def.apply(conn, cwd)
         click.echo(f"Application {result.name} with id {result.id} was applied successfully")
     elif kind == "DeploymentConfiguration":
         dc_def = DeploymentConfig.parse_obj(raw_dict)

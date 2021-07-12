@@ -1,3 +1,4 @@
+from hs.util.dockerutils import DockerLogHandler
 import logging
 
 from hydrosdk.image import DockerImage
@@ -48,7 +49,7 @@ class ModelVersion(BaseEntity):
         collected_meta = CollectedMetadata.collect(cwd).to_metadata()
         if self.metadata:
             collected_meta.update(self.metadata)
-        mv_builder.with_metadata(self.metadata)
+        mv_builder.with_metadata(collected_meta)
 
         if self.monitoring_configuration:
             mc = SDK_MC(self.monitoring_configuration.batch_size)
@@ -57,9 +58,10 @@ class ModelVersion(BaseEntity):
         logging.debug(f"Model version builder:\n{mv_builder}")
 
         mv = mv_builder.build(conn)
+        build_log_handler = DockerLogHandler()
         logging.info("Build logs:")
         for ev in mv.build_logs():
-            logging.info(ev.data)
+            build_log_handler.show(ev.data)
 
         if self.monitoring:
             logging.info(f"Uploading monitoring configuration for the model {mv.name}:{mv.version}")

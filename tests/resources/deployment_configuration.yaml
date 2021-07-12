@@ -1,5 +1,5 @@
 kind: DeploymentConfiguration
-name: cool-deployment-config
+name: test-deployment-config
 hpa:
   minReplicas: 2
   maxReplicas: 10

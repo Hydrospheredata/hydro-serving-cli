@@ -1,3 +1,4 @@
+from hs.metadata_collectors.collected_metadata import CollectedMetadata
 import logging
 from typing import Dict, List, Optional
 from pydantic import root_validator
@@ -34,10 +35,11 @@ class Application(BaseEntity):
         assert not both_exist, "Invalid application: can't have both 'singular' and 'pipeline' fields"
         return values
 
-    def app_builder(self, conn: Cluster) -> ApplicationBuilder:
+    def app_builder(self, conn: Cluster, metadata: Dict[str, str]) -> ApplicationBuilder:
         builder = ApplicationBuilder(self.name)
         if self.metadata:
-            builder.with_metadatas(self.metadata)
+            metadata.update(self.metadata)
+        builder.with_metadatas(metadata)
         if self.singular:
             name, version = self.singular.model.split(":")
             mv = ModelVersion.find(conn, name, version)
@@ -64,8 +66,9 @@ class Application(BaseEntity):
             raise ValueError("Invalid application: no 'singular' or 'pipeline' fields")
         return builder
 
-    def apply(self, conn: Cluster) -> HS_APP:
-        builder = self.app_builder(conn)
+    def apply(self, conn: Cluster, cwd) -> HS_APP:
+        collected_meta = CollectedMetadata.collect(cwd).to_metadata()
+        builder = self.app_builder(conn, collected_meta)
         found_app = None
         try:
             found_app = HS_APP.find(conn, self.name)

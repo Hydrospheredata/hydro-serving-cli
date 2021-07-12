@@ -1,3 +1,4 @@
+from hs.metadata_collectors.collected_metadata import CollectedMetadata
 from pydantic.main import BaseModel
 from typing import Optional
 

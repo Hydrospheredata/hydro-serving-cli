@@ -5,7 +5,6 @@ import os
 import requests
 
 from hs.settings import TARGET_FOLDER
-from hs.util.fileutil import with_cwd
 
 def mock_sse_response(data: bytes):
     resp = requests.Response()
@@ -13,6 +12,24 @@ def mock_sse_response(data: bytes):
     resp.headers["Content-Type"] = "text/event-stream"
     resp.raw = BytesIO(data)
     return resp
+
+def with_cwd(new_cwd, func, *args):
+    """
+    Wrapper util to run some function in new Current Working Directory
+    :param new_cwd: path to the new CWD
+    :param func: callback
+    :param args: args to the `func`
+    :return: result of `func`
+    """
+    old_cwd = os.getcwd()
+    try:
+        os.chdir(new_cwd)
+        result = func(*args)
+        return result
+    except Exception as err:
+        raise err
+    finally:
+        os.chdir(old_cwd)
 
 def with_target_cwd(cwd, func, *args):
     """

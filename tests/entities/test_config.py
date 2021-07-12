@@ -1,4 +1,4 @@
-from hydroserving.config.cluster_config import ClusterConfig
+from hs.entities.cluster_config import ClusterConfig
 import pytest
 
 @pytest.mark.xfail
@@ -20,7 +20,7 @@ def test_config_read_successful():
         ],
         "current_cluster": "local",
     }
-    res = ClusterConfig.deserialize(d)
+    res = ClusterConfig.parse_obj(d)
     print(res)
 
 def test_config_write_successful():
@@ -33,10 +33,9 @@ def test_config_write_successful():
                 "name": "local"
             }
         ],
-        "current_cluster": "local",
-        "kind": "Config"
+        "current-cluster": "local",
     }
-    res = ClusterConfig.deserialize(d)
-    dict = res.serialize()
+    res = ClusterConfig.parse_obj(d)
+    dict = res.dict(by_alias=True)
     print(d, dict, sep="\n")
     assert d == dict

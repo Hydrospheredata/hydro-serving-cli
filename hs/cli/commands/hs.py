@@ -3,7 +3,7 @@ import logging
 import click
 import click_log
 
-from hs.util.log_handler import StdoutLogHandler
+from hs.util.logutils import StdoutLogHandler
 from hs.cli.context import CONTEXT_SETTINGS
 from hs.settings import CONFIG_PATH
 
