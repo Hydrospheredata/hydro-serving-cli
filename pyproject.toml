@@ -3,7 +3,7 @@ authors = ["Hydrospheredata"]
 description = "Hydro-serving command line tool"
 license = "Apache-2.0"
 name = "hs"
-version = "3.0.0-dev11"
+version = "3.0.0-dev12"
 
 [tool.poetry.dependencies]
 click = "~7.1.2"
