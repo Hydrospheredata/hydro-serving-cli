@@ -168,13 +168,19 @@ jobs:
           git commit -m "Releasing hydro-serving-cli:${{ env.VERSION }}" -a
           git push
           
-      - name: Tag commit
+      - name: Reports
+        id: generate-output
+        run: echo "::set-output name=tag-output::${{ env.VERSION }}"
+
+      - name: Create github release
         if: github.event_name == 'workflow_dispatch'
-        run: "git tag ${{ env.VERSION }}"
-        
-      - name: Push tag
-        if: github.event_name == 'workflow_dispatch'
-        run: "git push --tags"
+        uses: meeDamian/github-release@2.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ env.VERSION }}
+
+    outputs:
+      tag: ${{ steps.generate-output.outputs.tag-output }}
           
   slackNotification:
     name: Slack Notification
