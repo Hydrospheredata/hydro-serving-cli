@@ -3,13 +3,13 @@ authors = ["Hydrospheredata"]
 description = "Hydro-serving command line tool"
 license = "Apache-2.0"
 name = "hs"
-version = "3.0.0-alpha.13"
+version = "3.0.0-alpha.14"
 
 [tool.poetry.dependencies]
 click = "~7.1.2"
 click-aliases = "~1.0.1"
 click-log = "~0.3"
-hydrosdk = ">=3.0.0a8"
+hydrosdk = "3.0.0a9"
 kafka-python = "1.4.3"
 protobuf = "^3.6"
 python = "^3.7"
