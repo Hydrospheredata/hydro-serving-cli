@@ -2,7 +2,7 @@
 name = "appdirs"
 version = "1.4.4"
 description = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
-category = "main"
+category = "dev"
 optional = false
 python-versions = "*"
 
@@ -40,12 +40,19 @@ tests = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)"
 tests_no_zope = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins"]
 
 [[package]]
-name = "cached-property"
-version = "1.5.2"
-description = "A decorator for caching properties in classes."
-category = "dev"
+name = "backports.entry-points-selectable"
+version = "1.1.0"
+description = "Compatibility shim providing selectable entry points for older implementations"
+category = "main"
 optional = false
-python-versions = "*"
+python-versions = ">=2.7"
+
+[package.dependencies]
+importlib-metadata = {version = "*", markers = "python_version < \"3.8\""}
+
+[package.extras]
+docs = ["sphinx", "jaraco.packaging (>=8.2)", "rst.linker (>=1.9)"]
+testing = ["pytest (>=4.6)", "pytest-flake8", "pytest-cov", "pytest-black (>=0.3.7)", "pytest-mypy", "pytest-checkdocs (>=2.4)", "pytest-enabler (>=1.0.1)"]
 
 [[package]]
 name = "certifi"
@@ -329,7 +336,7 @@ atpublic = "*"
 
 [[package]]
 name = "fsspec"
-version = "2021.6.1"
+version = "2021.7.0"
 description = "File-system specification"
 category = "dev"
 optional = false
@@ -448,7 +455,7 @@ protobuf = ">=3.17.2,<4.0.0"
 
 [[package]]
 name = "hydrosdk"
-version = "3.0.0a8"
+version = "3.0.0a9"
 description = " This package's purpose is to provide a simple and convenient way of integrating user's workflow scripts with Serving API."
 category = "main"
 optional = false
@@ -635,6 +642,14 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "platformdirs"
+version = "2.0.2"
+description = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
+category = "main"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+
+[[package]]
 name = "pluggy"
 version = "0.13.1"
 description = "plugin and hook calling mechanisms for python"
@@ -754,7 +769,6 @@ optional = false
 python-versions = "*"
 
 [package.dependencies]
-cached-property = "*"
 cffi = ">=1.4.0"
 
 [[package]]
@@ -821,7 +835,7 @@ xmltodict = "*"
 
 [[package]]
 name = "python-dateutil"
-version = "2.8.1"
+version = "2.8.2"
 description = "Extensions to the standard Python datetime module"
 category = "main"
 optional = false
@@ -934,7 +948,7 @@ requests = ">=2.0.1,<3.0.0"
 
 [[package]]
 name = "rich"
-version = "10.5.0"
+version = "10.6.0"
 description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
 category = "dev"
 optional = false
@@ -1117,17 +1131,18 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 
 [[package]]
 name = "virtualenv"
-version = "20.4.7"
+version = "20.5.0"
 description = "Virtual Python Environment builder"
 category = "main"
 optional = false
-python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,>=2.7"
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
 
 [package.dependencies]
-appdirs = ">=1.4.3,<2"
+"backports.entry-points-selectable" = ">=1.0.4"
 distlib = ">=0.3.1,<1"
 filelock = ">=3.0.0,<4"
 importlib-metadata = {version = ">=0.12", markers = "python_version < \"3.8\""}
+platformdirs = ">=2,<3"
 six = ">=1.9.0,<2"
 
 [package.extras]
@@ -1192,7 +1207,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "51dd3babac8c5310e534beb8df4ee54de23e5d069c362b942de45ea2f8428835"
+content-hash = "9aadc5901251008df9050417253991ea9eb2a9bbc1dd66d91221ea3b6a57f7fb"
 
 [metadata.files]
 appdirs = [
@@ -1210,9 +1225,9 @@ attrs = [
     {file = "attrs-21.2.0-py2.py3-none-any.whl", hash = "sha256:149e90d6d8ac20db7a955ad60cf0e6881a3f20d37096140088356da6c716b0b1"},
     {file = "attrs-21.2.0.tar.gz", hash = "sha256:ef6aaac3ca6cd92904cdd0d83f629a15f18053ec84e6432106f7a4d04ae4f5fb"},
 ]
-cached-property = [
-    {file = "cached-property-1.5.2.tar.gz", hash = "sha256:9fa5755838eecbb2d234c3aa390bd80fbd3ac6b6869109bfc1b499f7bd89a130"},
-    {file = "cached_property-1.5.2-py2.py3-none-any.whl", hash = "sha256:df4f613cf7ad9a588cc381aaf4a512d26265ecebd5eb9e1ba12f1319eb85a6a0"},
+"backports.entry-points-selectable" = [
+    {file = "backports.entry_points_selectable-1.1.0-py2.py3-none-any.whl", hash = "sha256:a6d9a871cde5e15b4c4a53e3d43ba890cc6861ec1332c9c2428c92f977192acc"},
+    {file = "backports.entry_points_selectable-1.1.0.tar.gz", hash = "sha256:988468260ec1c196dab6ae1149260e2f5472c9110334e5d51adcb77867361f6a"},
 ]
 certifi = [
     {file = "certifi-2021.5.30-py2.py3-none-any.whl", hash = "sha256:50b1e4f8446b06f41be7dd6338db18e0990601dce795c2b1686458aa7e8fa7d8"},
@@ -1352,8 +1367,8 @@ flatten-dict = [
     {file = "flufl.lock-3.2.tar.gz", hash = "sha256:a8d66accc9ab41f09961cd8f8db39f9c28e97e2769659a3567c63930a869ff5b"},
 ]
 fsspec = [
-    {file = "fsspec-2021.6.1-py3-none-any.whl", hash = "sha256:0ca23992f425c1ba61bf11d3cb3af8ad5363be8612e26732b520090556f173f2"},
-    {file = "fsspec-2021.6.1.tar.gz", hash = "sha256:2cdaafb51dd71e062afffcabcbc4925acef95f9bdd8d822d2010e4bf92951bd7"},
+    {file = "fsspec-2021.7.0-py3-none-any.whl", hash = "sha256:86822ccf367da99957f49db64f7d5fd3d8d21444fac4dfdc8ebc38ee93d478c6"},
+    {file = "fsspec-2021.7.0.tar.gz", hash = "sha256:792ebd3b54de0b30f1ce73f0ba0a8bcc864724f2d9f248cb8d0ece47db0cbde8"},
 ]
 ftfy = [
     {file = "ftfy-6.0.3.tar.gz", hash = "sha256:ba71121a9c8d7790d3e833c6c1021143f3e5c4118293ec3afb5d43ed9ca8e72b"},
@@ -1438,8 +1453,8 @@ hydro-serving-grpc = [
     {file = "hydro_serving_grpc-3.0.0a9.tar.gz", hash = "sha256:ce6272b91ccd82c3b0ba85fa18e234dd2fc46c01d121784451de09ad32d32277"},
 ]
 hydrosdk = [
-    {file = "hydrosdk-3.0.0a8-py3-none-any.whl", hash = "sha256:8a310ab6dad84eece32d86a3036dcb7576dadf7c26781efba6e1066333a7c78d"},
-    {file = "hydrosdk-3.0.0a8.tar.gz", hash = "sha256:b9673c8f30af07b1cc3dfdece242421b314e855f75d2185a2632fcb49314db18"},
+    {file = "hydrosdk-3.0.0a9-py3-none-any.whl", hash = "sha256:e1231da1eb9c146bef380d6adef15b37ed268131b0b0e17aa0ae43def3b128af"},
+    {file = "hydrosdk-3.0.0a9.tar.gz", hash = "sha256:b274e82a1ed3f9c150fb2607867e9d607249b1be39d3c7f1c545d84d7a6dd1f7"},
 ]
 idna = [
     {file = "idna-2.10-py2.py3-none-any.whl", hash = "sha256:b97d804b1e9b523befed77c48dacec60e6dcb0b5391d57af6a65a312a90648c0"},
@@ -1541,6 +1556,10 @@ phonenumbers = [
     {file = "phonenumbers-8.12.27-py2.py3-none-any.whl", hash = "sha256:64ecba30985d580d03086598d977dba812ac499514f2e1f8a2795af2f0de1aa6"},
     {file = "phonenumbers-8.12.27.tar.gz", hash = "sha256:856f6bebf19eafe5ab1d50b2f4972f8d7474a7e1b8c0f9cf3263a26602ac81f3"},
 ]
+platformdirs = [
+    {file = "platformdirs-2.0.2-py2.py3-none-any.whl", hash = "sha256:0b9547541f599d3d242078ae60b927b3e453f0ad52f58b4d4bc3be86aed3ec41"},
+    {file = "platformdirs-2.0.2.tar.gz", hash = "sha256:3b00d081227d9037bbbca521a5787796b5ef5000faea1e43fd76f1d44b06fcfa"},
+]
 pluggy = [
     {file = "pluggy-0.13.1-py2.py3-none-any.whl", hash = "sha256:966c145cd83c96502c3c3868f50408687b38434af77734af1e9ca461a4081d2d"},
     {file = "pluggy-0.13.1.tar.gz", hash = "sha256:15b2acde666561e1298d71b523007ed7364de07029219b604cf808bfa1c765b0"},
@@ -1568,13 +1587,9 @@ protobuf = [
     {file = "protobuf-3.17.3-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:2ae692bb6d1992afb6b74348e7bb648a75bb0d3565a3f5eea5bec8f62bd06d87"},
     {file = "protobuf-3.17.3-cp38-cp38-manylinux2014_aarch64.whl", hash = "sha256:99938f2a2d7ca6563c0ade0c5ca8982264c484fdecf418bd68e880a7ab5730b1"},
     {file = "protobuf-3.17.3-cp38-cp38-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:6902a1e4b7a319ec611a7345ff81b6b004b36b0d2196ce7a748b3493da3d226d"},
-    {file = "protobuf-3.17.3-cp38-cp38-win32.whl", hash = "sha256:59e5cf6b737c3a376932fbfb869043415f7c16a0cf176ab30a5bbc419cd709c1"},
-    {file = "protobuf-3.17.3-cp38-cp38-win_amd64.whl", hash = "sha256:ebcb546f10069b56dc2e3da35e003a02076aaa377caf8530fe9789570984a8d2"},
     {file = "protobuf-3.17.3-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:4ffbd23640bb7403574f7aff8368e2aeb2ec9a5c6306580be48ac59a6bac8bde"},
     {file = "protobuf-3.17.3-cp39-cp39-manylinux2014_aarch64.whl", hash = "sha256:26010f693b675ff5a1d0e1bdb17689b8b716a18709113288fead438703d45539"},
     {file = "protobuf-3.17.3-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:e76d9686e088fece2450dbc7ee905f9be904e427341d289acbe9ad00b78ebd47"},
-    {file = "protobuf-3.17.3-cp39-cp39-win32.whl", hash = "sha256:a38bac25f51c93e4be4092c88b2568b9f407c27217d3dd23c7a57fa522a17554"},
-    {file = "protobuf-3.17.3-cp39-cp39-win_amd64.whl", hash = "sha256:85d6303e4adade2827e43c2b54114d9a6ea547b671cb63fafd5011dc47d0e13d"},
     {file = "protobuf-3.17.3-py2.py3-none-any.whl", hash = "sha256:2bfb815216a9cd9faec52b16fd2bfa68437a44b67c56bee59bc3926522ecb04e"},
     {file = "protobuf-3.17.3.tar.gz", hash = "sha256:72804ea5eaa9c22a090d2803813e280fb273b62d5ae497aaf3553d141c4fdd7b"},
 ]
@@ -1706,8 +1721,8 @@ python-benedict = [
     {file = "python_benedict-0.24.0-py3-none-any.whl", hash = "sha256:af30f2a93aa15c0136c13bb528ded18b0e23171e8c567e968ee522a2b1cfa3b9"},
 ]
 python-dateutil = [
-    {file = "python-dateutil-2.8.1.tar.gz", hash = "sha256:73ebfe9dbf22e832286dafa60473e4cd239f8592f699aa5adaf10050e6e1823c"},
-    {file = "python_dateutil-2.8.1-py2.py3-none-any.whl", hash = "sha256:75bb3f31ea686f1197762692a9ee6a7550b59fc6ca3a1f4b5d7e32fb98e2da2a"},
+    {file = "python-dateutil-2.8.2.tar.gz", hash = "sha256:0123cacc1627ae19ddf3c27a5de5bd67ee4586fbdd6440d9748f8abb483d3e86"},
+    {file = "python_dateutil-2.8.2-py2.py3-none-any.whl", hash = "sha256:961d03dc3453ebbc59dbdea9e4e11c5651520a876d0f4db161e8674aae935da9"},
 ]
 python-fsutil = [
     {file = "python-fsutil-0.5.0.tar.gz", hash = "sha256:02a347540d10c1616390a536ced73fd67df8d01c499f497d0ab3de3fbb236f0e"},
@@ -1728,10 +1743,6 @@ pywin32 = [
     {file = "pywin32-301-cp36-cp36m-win_amd64.whl", hash = "sha256:dafa18e95bf2a92f298fe9c582b0e205aca45c55f989937c52c454ce65b93c78"},
     {file = "pywin32-301-cp37-cp37m-win32.whl", hash = "sha256:98f62a3f60aa64894a290fb7494bfa0bfa0a199e9e052e1ac293b2ad3cd2818b"},
     {file = "pywin32-301-cp37-cp37m-win_amd64.whl", hash = "sha256:fb3b4933e0382ba49305cc6cd3fb18525df7fd96aa434de19ce0878133bf8e4a"},
-    {file = "pywin32-301-cp38-cp38-win32.whl", hash = "sha256:88981dd3cfb07432625b180f49bf4e179fb8cbb5704cd512e38dd63636af7a17"},
-    {file = "pywin32-301-cp38-cp38-win_amd64.whl", hash = "sha256:8c9d33968aa7fcddf44e47750e18f3d034c3e443a707688a008a2e52bbef7e96"},
-    {file = "pywin32-301-cp39-cp39-win32.whl", hash = "sha256:595d397df65f1b2e0beaca63a883ae6d8b6df1cdea85c16ae85f6d2e648133fe"},
-    {file = "pywin32-301-cp39-cp39-win_amd64.whl", hash = "sha256:87604a4087434cd814ad8973bd47d6524bd1fa9e971ce428e76b62a5e0860fdf"},
 ]
 pyyaml = [
     {file = "PyYAML-5.4.1-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:3b2b1824fe7112845700f815ff6a489360226a5609b96ec2190a45e62a9fc922"},
@@ -1821,8 +1832,8 @@ requests-toolbelt = [
     {file = "requests_toolbelt-0.9.1-py2.py3-none-any.whl", hash = "sha256:380606e1d10dc85c3bd47bf5a6095f815ec007be7a8b69c878507068df059e6f"},
 ]
 rich = [
-    {file = "rich-10.5.0-py3-none-any.whl", hash = "sha256:d36d4dddbb6cb87cdcb2c02f8ffd7836e1b136e3ba45d4b5a4da057f3b5e7798"},
-    {file = "rich-10.5.0.tar.gz", hash = "sha256:f8a16484b3d70708bdafd04f659f9ca0e2c0129b33a343c10c734838d361777f"},
+    {file = "rich-10.6.0-py3-none-any.whl", hash = "sha256:d3f72827cd5df13b2ef7f1a97f81ec65548d4fdeb92cef653234f227580bbb2a"},
+    {file = "rich-10.6.0.tar.gz", hash = "sha256:128261b3e2419a4ef9c97066ccc2abbfb49fa7c5e89c3fe4056d00aa5e9c1e65"},
 ]
 "ruamel.yaml" = [
     {file = "ruamel.yaml-0.17.10-py3-none-any.whl", hash = "sha256:ffb9b703853e9e8b7861606dfdab1026cf02505bade0653d1880f4b2db47f815"},
@@ -1908,8 +1919,8 @@ urllib3 = [
     {file = "urllib3-1.25.11.tar.gz", hash = "sha256:8d7eaa5a82a1cac232164990f04874c594c9453ec55eef02eab885aa02fc17a2"},
 ]
 virtualenv = [
-    {file = "virtualenv-20.4.7-py2.py3-none-any.whl", hash = "sha256:2b0126166ea7c9c3661f5b8e06773d28f83322de7a3ff7d06f0aed18c9de6a76"},
-    {file = "virtualenv-20.4.7.tar.gz", hash = "sha256:14fdf849f80dbb29a4eb6caa9875d476ee2a5cf76a5f5415fa2f1606010ab467"},
+    {file = "virtualenv-20.5.0-py2.py3-none-any.whl", hash = "sha256:b7afa7f32abbf7dd4c24269a596cfbb0a422bb83c47215a785a7bf607cb88e1b"},
+    {file = "virtualenv-20.5.0.tar.gz", hash = "sha256:6b0e3eeb6cb081c9c81ec85633785e29edcdf6ff271d70e0d1e2bd616495c08c"},
 ]
 voluptuous = [
     {file = "voluptuous-0.12.1-py3-none-any.whl", hash = "sha256:8ace33fcf9e6b1f59406bfaf6b8ec7bcc44266a9f29080b4deb4fe6ff2492386"},
