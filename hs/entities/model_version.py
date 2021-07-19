@@ -81,4 +81,9 @@ class ModelVersion(BaseEntity):
                 )
                 logging.debug(f"Created metric spec: {sdk_ms.name} with id {sdk_ms.id}")
 
+        if mv.training_data:
+            logging.info("Uploading training data")
+            resp = mv.upload_training_data()
+            logging.info(f"Training data profile is available at {resp.url}")
+
         return mv
