@@ -129,6 +129,10 @@ def test_model_apply(cluster_config: str):
             ).encode("utf-8")
         elif request.path_url == '/api/v2/model/version/1/logs':
             resp = mock_sse_response("data: Hello there".encode("utf-8"))
+        elif request.path_url == '/monitoring/profiles/batch/1/s3':
+            resp = requests.Response()
+            resp._content = "".encode("utf-8")
+            resp.status_code = 200
         return resp
 
     with requests_mock.Mocker() as req_mock:
