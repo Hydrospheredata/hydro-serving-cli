@@ -21,7 +21,7 @@ jobs:
         run: |
           SDK_VERSION=$(curl -Ls https://pypi.org/pypi/hydrosdk/json | jq -r '.releases | keys[]' | sort -V | tail -n 1)
           echo $SDK_VERSION
-          poetry add hydrosdk=$SDK_VERSION
+        #  poetry add hydrosdk=$SDK_VERSION
 
       # Build Python    
       - name: Install dependencies

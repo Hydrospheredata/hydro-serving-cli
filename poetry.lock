@@ -463,7 +463,7 @@ protobuf = ">=3.17.2,<4.0.0"
 
 [[package]]
 name = "hydrosdk"
-version = "3.0.0a9"
+version = "3.0.0a10"
 description = " This package's purpose is to provide a simple and convenient way of integrating user's workflow scripts with Serving API."
 category = "main"
 optional = false
@@ -1216,7 +1216,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "50a1c123b6c5c0bec7ac1cb222b17ef3bbb9e38ece4e4c1ef58de5ef59e7286d"
+content-hash = "188d8fa0d3f192e72b90b21407a58898c6395ebac1faff9bf8ee9bfd0c170747"
 
 [metadata.files]
 appdirs = [
@@ -1471,8 +1471,8 @@ hydro-serving-grpc = [
     {file = "hydro_serving_grpc-3.0.0a9.tar.gz", hash = "sha256:ce6272b91ccd82c3b0ba85fa18e234dd2fc46c01d121784451de09ad32d32277"},
 ]
 hydrosdk = [
-    {file = "hydrosdk-3.0.0a9-py3-none-any.whl", hash = "sha256:e1231da1eb9c146bef380d6adef15b37ed268131b0b0e17aa0ae43def3b128af"},
-    {file = "hydrosdk-3.0.0a9.tar.gz", hash = "sha256:b274e82a1ed3f9c150fb2607867e9d607249b1be39d3c7f1c545d84d7a6dd1f7"},
+    {file = "hydrosdk-3.0.0a10-py3-none-any.whl", hash = "sha256:fd97b28661a537dde12b79c2e0494b197a274bec296020933fa55cab49dd94c1"},
+    {file = "hydrosdk-3.0.0a10.tar.gz", hash = "sha256:c74b29c161801656dd82d3a1eaef1a2fac342d1aca03c4bdb5bd6f18f551f893"},
 ]
 idna = [
     {file = "idna-2.10-py2.py3-none-any.whl", hash = "sha256:b97d804b1e9b523befed77c48dacec60e6dcb0b5391d57af6a65a312a90648c0"},
