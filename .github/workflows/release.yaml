@@ -139,25 +139,28 @@ jobs:
       - name: Release to pypi
         run: poetry publish -u __token__ -p ${{ secrets.pypi_token }}
 
-      - name: Commit new version
-        run: "echo $(poetry version -s) > version"
+      - name: Add version env
+        run: echo VERSION=$(poetry version -s) >> $GITHUB_ENV
 
+      - name: Commit new version
+        run: "echo ${{ env.VERSION }} > version"
+ 
       - name: Push to repo
         run: |
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git commit -m "Releasing hydro-serving-cli:$(poetry version -s)" -a
+          git commit -m "Releasing hydro-serving-cli:${{ env.VERSION }}" -a
           git push
           
       - name: Reports
         id: generate-output
-        run: echo "::set-output name=tag-output::$(poetry version -s)"
+        run: echo "::set-output name=tag-output::${{ env.VERSION }}"
 
       - name: Create github release
         uses: meeDamian/github-release@2.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag: $(poetry version -s)
+          tag: ${{ env.VERSION }}
 
     outputs:
       tag: ${{ steps.generate-output.outputs.tag-output }}
