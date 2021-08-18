@@ -1,4 +1,3 @@
-from hs.metadata_collectors.collected_metadata import CollectedMetadata
 from pydantic.main import BaseModel
 from typing import Optional
 
@@ -28,5 +27,4 @@ class DeploymentConfig(BaseModel):
         builder._with_pod_spec(self.pod)
         builder._with_deployment_spec(self.deployment)
         builder._with_hpa_spec(self.hpa)
-        print(builder)
         return builder.build(conn)

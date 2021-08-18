@@ -1,14 +1,11 @@
 import yaml
-from yaml.error import MarkedYAMLError, YAMLError
 from hs.entities.deployment_config import DeploymentConfig
 from hs.entities.application import Application
 import os
 import sys
-import logging
+import pprint
 
 import click
-from yaml.parser import ParserError
-from yaml.scanner import ScannerError
 
 from hs.cli.commands.hs import hs_cli
 from hs.cli.context import CONTEXT_SETTINGS
@@ -64,7 +61,7 @@ def parse_apply(arg, conn, cwd, raw_dict):
     elif kind == "DeploymentConfiguration":
         dc_def = DeploymentConfig.parse_obj(raw_dict)
         click.echo("Applying the following deployment configuration:")
-        click.echo(dc_def.to_yaml())
+        click.echo(dc_def.dict(by_alias=True))
         result = dc_def.apply(conn)
         click.echo(f"Deployment configuration {result.name} was applied successfully")
     else:
