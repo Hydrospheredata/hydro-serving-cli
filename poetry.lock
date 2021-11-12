@@ -284,7 +284,7 @@ hdfs = ["pyarrow (>=2.0.0)"]
 oss = ["oss2 (==2.6.1)", "pycryptodome (>=3.10)"]
 s3 = ["s3fs (==2021.6.1)", "aiobotocore[boto3] (==1.3.0)"]
 ssh = ["paramiko[invoke] (>=2.7.0)"]
-ssh_gssapi = ["paramiko[invoke,gssapi] (>=2.7.0)"]
+ssh_gssapi = ["paramiko[gssapi,invoke] (>=2.7.0)"]
 tests = ["wheel (==0.36.2)", "pytest (==6.2.4)", "pytest-cov (==2.12.1)", "pytest-xdist (==2.3.0)", "pytest-mock (==3.6.1)", "pytest-lazy-fixture (==0.6.3)", "pytest-timeout (==1.4.2)", "pytest-docker (==0.10.3)", "flaky (==3.7.0)", "mock (==4.0.3)", "rangehttpserver (==1.2.0)", "mock-ssh-server (==0.9.0)", "beautifulsoup4 (==4.9.3)", "wget (==3.2)", "filelock (==3.0.12)", "wsgidav (==3.1.0)", "crc32c (==2.2.post0)", "xmltodict (==0.12.0)", "google-compute-engine (==2.8.13)", "google-cloud-storage (==1.40.0)", "urllib3 (==1.26.6)", "Pygments (==2.9.0)", "collective.checkdocs (==0.2)", "pydocstyle (==6.1.1)", "jaraco.windows (==5.5.0)", "pylint (==2.8.3)", "pylint-pytest (==1.0.3)", "pylint-plugin-utils (==0.6)", "mypy (==0.910)", "types-requests", "types-paramiko", "types-tabulate", "types-toml"]
 webdav = ["webdav4 (>=0.8.1)"]
 webhdfs = ["hdfs (==2.5.8)"]
@@ -420,7 +420,7 @@ protobuf = ["grpcio-tools (>=1.41.1)"]
 
 [[package]]
 name = "hydro-serving-grpc"
-version = "3.0.2"
+version = "3.0.3"
 description = "Protobuf messages and GRPC API for Hydrosphere Serving platform"
 category = "main"
 optional = false
@@ -432,7 +432,7 @@ protobuf = ">=3.17.2,<4.0.0"
 
 [[package]]
 name = "hydrosdk"
-version = "3.0.2"
+version = "3.0.3"
 description = " This package's purpose is to provide a simple and convenient way of integrating user's workflow scripts with Serving API."
 category = "main"
 optional = false
@@ -440,7 +440,7 @@ python-versions = ">=3.6.2,<4.0.0"
 
 [package.dependencies]
 docker-image-py = ">=0.1.10,<0.2.0"
-hydro-serving-grpc = "3.0.2"
+hydro-serving-grpc = "3.0.3"
 importlib_metadata = ">=1.7.0,<2.0.0"
 numpy = "1.18.3"
 pandas = ">=1.1.5"
@@ -1133,7 +1133,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "f6226eb283a8f48fb5dec858b0efaa05e4f590ea1c8e83089e93a6b51cd7e643"
+content-hash = "f3f57bdc75551bbd51785389cab2e071d1321495d5e0d28322f9ba057a6a4759"
 
 [metadata.files]
 appdirs = [
@@ -1366,12 +1366,12 @@ grpcio = [
     {file = "grpcio-1.41.1.tar.gz", hash = "sha256:9b751271b029432a526a4970dc9b70d93eb6f0963b6a841b574f780b72651969"},
 ]
 hydro-serving-grpc = [
-    {file = "hydro_serving_grpc-3.0.2-py3-none-any.whl", hash = "sha256:8c35a93c4f532f65f24e241127ea2be4ffb293b44b2dbc0c9be225bb3f512ded"},
-    {file = "hydro_serving_grpc-3.0.2.tar.gz", hash = "sha256:b5f7ff824c8f09b0065203dd1f6ae104571dafc5ee940b4a3e5ee2c5c8961f3d"},
+    {file = "hydro_serving_grpc-3.0.3-py3-none-any.whl", hash = "sha256:a15d419eb6e75af0a100a368111fdef5c9da6817dd872cfc0fa7add419cc6d3a"},
+    {file = "hydro_serving_grpc-3.0.3.tar.gz", hash = "sha256:bbe2be4f910db49d41ee6f3cc82978db53b3bfd485d31ce83272a55e162138a2"},
 ]
 hydrosdk = [
-    {file = "hydrosdk-3.0.2-py3-none-any.whl", hash = "sha256:8e0fb759dda462d4a1fae6d2bdad70befb272e9439a160c273d4e8a1510786ea"},
-    {file = "hydrosdk-3.0.2.tar.gz", hash = "sha256:5b9cd1475587fbd2cf66b18c7a8cb661ee1524d38aa8935a4c109f1722d6ac97"},
+    {file = "hydrosdk-3.0.3-py3-none-any.whl", hash = "sha256:06d7f476ff13075abf47de133581b39d2a9deb01282456ffe4beca8d1e5b8acb"},
+    {file = "hydrosdk-3.0.3.tar.gz", hash = "sha256:c0187f38d76c2d8b995a41cabcab4208ebf7763347655f761b9736e3a765c82e"},
 ]
 idna = [
     {file = "idna-2.10-py2.py3-none-any.whl", hash = "sha256:b97d804b1e9b523befed77c48dacec60e6dcb0b5391d57af6a65a312a90648c0"},
